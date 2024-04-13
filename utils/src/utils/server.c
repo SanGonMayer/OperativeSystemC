@@ -30,10 +30,7 @@ int iniciar_servidor(char* PUERTO, t_log* logger, char* clienteEsperado){
         error_show("Error al iniciar el servidor");
         exit(EXIT_FAILURE);
     } else{
-        //MEJORAR
-        char mensaje [100];
-        sprintf(mensaje ,"Listo para escuchar a mi cliente: %s", clienteEsperado);
-        log_info(logger, mensaje);
+        log_info(logger, "Listo para escuchar a mi cliente: %s", clienteEsperado);
     }
 
 	return socket_servidor;
