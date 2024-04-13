@@ -39,10 +39,10 @@ int iniciar_servidor(char* PUERTO, t_log* logger, char* clienteEsperado){
 int esperar_cliente(int socket_servidor, t_log* logger)
 {
 	// Aceptamos un nuevo cliente
-	int socket_cliente, err;
+	int socket_cliente;
 	socket_cliente = accept(socket_servidor, NULL, NULL);
 
-    if(err == -1){
+    if(socket_cliente == -1){
         error_show("Error en la espera del cliente");
         exit(EXIT_FAILURE);
     } else{
@@ -50,4 +50,49 @@ int esperar_cliente(int socket_servidor, t_log* logger)
     }
 
 	return socket_cliente;
+}
+
+int recibir_operacion(int socket_cliente)
+{
+	int cod_op;
+	if(recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+		return cod_op;
+	else
+	{
+		close(socket_cliente);
+		return -1;
+	}
+}
+void* recibir_buffer(int* size, int socket_cliente)
+{
+	void * buffer;
+
+	recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
+	buffer = malloc(*size);
+	recv(socket_cliente, buffer, *size, MSG_WAITALL);
+
+	return buffer;
+}
+
+void handshake_server(int socket_cliente){
+    size_t bytes;
+
+    int32_t handshake;
+    int32_t resultOk = 1;
+    int32_t resultError = -1;
+
+    bytes = recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
+    if (handshake == 1) {
+        bytes = send(socket_cliente, &resultOk, sizeof(int32_t), 0);
+    } else {
+        bytes = send(socket_cliente, &resultError, sizeof(int32_t), 0);
+    }
+}
+
+void recibir_mensaje(int socket_cliente)
+{
+	int size;
+	char* buffer = recibir_buffer(&size, socket_cliente);
+	log_info(logger, "Me llego el mensaje %s", buffer);
+	free(buffer);
 }

@@ -25,4 +25,12 @@ int iniciar_servidor(char* PUERTO, t_log* logger, char* aQuienEspera);
 */
 int esperar_cliente(int socket_servidor, t_log* logger);
 
+int recibir_operacion(int socket_cliente);
+
+void* recibir_buffer(int* size, int socket_cliente);
+
+void handshake_server(int socket_cliente);
+
+void recibir_mensaje(int socket_cliente);
+
 #endif
