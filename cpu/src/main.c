@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
     int cliente_interrupt_fd = esperar_cliente(server_interrupt_fd, logger);
 
-    void handshake_server(cliente_dispatch_fd);
+    handshake_server(cliente_dispatch_fd, logger);
     
     int iterador = 1;
 
@@ -40,11 +40,9 @@ int main(int argc, char* argv[]) {
             recibir_mensaje(cliente_dispatch_fd);
             break;
         case -1:
-            error_show("error al recibir la operacion");
+            error_show("cliente desconectado de CPU dispatch");
             close(server_dispatch_fd);
-            close(server_interrupt_fd);
             close(cliente_dispatch_fd);
-            close(cliente_interrupt_fd);
             iterador = 0;
             break;
         default:
@@ -53,6 +51,28 @@ int main(int argc, char* argv[]) {
             break;
         }
         
+    }
+
+    iterador =1;
+    while (iterador){
+        int cod_op = recibir_operacion(cliente_interrupt_fd);
+        
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje(cliente_interrupt_fd);
+            break;
+        case -1:
+            error_show("cliente desconectado de CPU interrupt");
+            close(server_interrupt_fd);
+            close(cliente_interrupt_fd);
+            iterador = 0;
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            iterador = 0;
+            break;
+        }
     }
 
     config_destroy(config);

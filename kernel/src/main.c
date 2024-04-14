@@ -30,15 +30,16 @@ int main(void){
 
     handshake_cliente(conexion_cpu_dispatch, logger);
 
-    enviar_mensaje("todo bien con el dispactch", conexion_cpu_dispatch);
-    
-    //enviar_mensaje("todo bien con el interrupt", conexion_cpu_interrupt);
+    enviar_mensaje("primer mensaje enviado de cliente kernel a cpu dispatch", conexion_cpu_dispatch);
+    close(conexion_cpu_dispatch);
+
+    enviar_mensaje("primer mensaje enviado de cliente kernel a cpu interrupt", conexion_cpu_interrupt);
+    close(conexion_cpu_interrupt);
 
     config_destroy(config);
     log_destroy(logger);
-	close(conexion_cpu_dispatch);
-    //close(conexion_cpu_interrupt);
-
+	
+    
     return 0;
 }
 

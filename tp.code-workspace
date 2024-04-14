@@ -4,7 +4,8 @@
 		"files.associations": {
 			"*.h": "c",
 			"cstdlib": "c",
-			"buffer": "c"
+			"buffer": "c",
+			"socket": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 	},
