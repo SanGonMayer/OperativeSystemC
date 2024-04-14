@@ -2,7 +2,7 @@
 #include<sys/socket.h>
 #include<netdb.h>
 
-int crear_conexion(char *ip, char* puerto, char* nombreServer)
+int crear_conexion(char *ip, char* puerto, char* nombreServer, t_log* logger)
 {
 	int err;
 	
@@ -30,12 +30,7 @@ int crear_conexion(char *ip, char* puerto, char* nombreServer)
         printf("\n");
         exit(EXIT_FAILURE);
     } else{
-        // t_log *logger;
-        // log_info(logger, "Listo para enviar peticiones a: %s", nombreServer);
-        t_log *logger;
-	    logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
         log_info (logger, "Conexion exitosa a: %s", nombreServer);
-        log_destroy(logger);
     }
 
 	freeaddrinfo(server_info);
@@ -47,7 +42,7 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = MENSAJE;
+	paquete->codigo_operacion = 1;
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -101,7 +96,7 @@ void crear_buffer(t_paquete* paquete)
 t_paquete* crear_paquete(void)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PAQUETE;
+	paquete->codigo_operacion = 0;
 	crear_buffer(paquete);
 	return paquete;
 }

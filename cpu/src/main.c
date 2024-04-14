@@ -27,12 +27,12 @@ int main(int argc, char* argv[]) {
 
     int cliente_interrupt_fd = esperar_cliente(server_interrupt_fd, logger);
 
-    void handshake_server(cliente_dispatch_fd);
+    //void handshake_server(cliente_dispatch_fd);
 
     int iterador = 1;
 
     while(iterador){
-        int cod_op = recibir_operacion(server_dispatch_fd);
+        int cod_op = recibir_operacion(cliente_dispatch_fd);
         
         switch (cod_op)
         {
