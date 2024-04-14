@@ -38,6 +38,11 @@ int main(int argc, char* argv[]) {
             recibir_mensaje(cliente_dispatch_fd);
         case -1: 
             error_show("error al recibir la operacion");
+        case 0:
+            close(server_dispatch_fd);
+            close(server_interrupt_fd);
+            close(cliente_dispatch_fd);
+            close(cliente_interrupt_fd);
         default:
             log_info(logger, "No entiendo el mensaje");
         }
