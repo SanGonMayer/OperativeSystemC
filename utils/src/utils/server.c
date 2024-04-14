@@ -93,6 +93,10 @@ void recibir_mensaje(int socket_cliente)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
+
+	t_log *logger = log_create("cpu.log", "messagge", 1, LOG_LEVEL_INFO);
 	log_info(logger, "Me llego el mensaje %s", buffer);
+	log_destroy(logger);
+
 	free(buffer);
 }
