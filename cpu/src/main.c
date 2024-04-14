@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
 
     int cliente_interrupt_fd = esperar_cliente(server_interrupt_fd, logger);
 
-    //void handshake_server(cliente_dispatch_fd);
-
+    void handshake_server(cliente_dispatch_fd);
+    
     int iterador = 1;
 
     while(iterador){
@@ -39,15 +39,13 @@ int main(int argc, char* argv[]) {
         case 1:
             recibir_mensaje(cliente_dispatch_fd);
             break;
-        case -1: 
+        case -1:
             error_show("error al recibir la operacion");
-            iterador = 0;
-            break;
-        case 0:
             close(server_dispatch_fd);
             close(server_interrupt_fd);
             close(cliente_dispatch_fd);
             close(cliente_interrupt_fd);
+            iterador = 0;
             break;
         default:
             log_info(logger, "No entiendo el mensaje");
@@ -56,6 +54,9 @@ int main(int argc, char* argv[]) {
         }
         
     }
+
+    config_destroy(config);
+    log_destroy(logger);
 
     return 0;
 }

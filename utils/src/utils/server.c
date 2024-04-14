@@ -74,17 +74,19 @@ void* recibir_buffer(int* size, int socket_cliente)
 	return buffer;
 }
 
-void handshake_server(int socket_cliente){
+void handshake_server(int socket_cliente, t_log* logger){
     size_t bytes;
 
     int32_t handshake;
-    int32_t resultOk = 1;
+    int32_t resultOk = 0;
     int32_t resultError = -1;
 
     bytes = recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
     if (handshake == 1) {
+		log_info(logger, "Handshake recibido");
         bytes = send(socket_cliente, &resultOk, sizeof(int32_t), 0);
     } else {
+		log_error(logger, "Handshake Error");
         bytes = send(socket_cliente, &resultError, sizeof(int32_t), 0);
     }
 }

@@ -38,6 +38,26 @@ int crear_conexion(char *ip, char* puerto, char* nombreServer, t_log* logger)
 	return socket_cliente;
 }
 
+void handshake_cliente(int socket_conexion, t_log* logger){
+	size_t bytes;
+
+	int32_t handshake = 1;
+	int32_t result;
+
+	bytes = send(socket_conexion, &handshake, sizeof(int32_t), 0);
+	bytes = recv(socket_conexion, &result, sizeof(int32_t), MSG_WAITALL);
+
+	if (result == 0) {
+		log_info(logger, "Handshake OK");
+		return;
+	} else {
+		log_error(logger, "Handshake Error");
+		error_show("Error al establecer la comunicacion");
+		printf("\n"); 
+		exit(EXIT_FAILURE);
+	}
+}
+
 void enviar_mensaje(char* mensaje, int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
