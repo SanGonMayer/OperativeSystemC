@@ -1,6 +1,6 @@
 #include "server.h"
 
-int iniciar_servidor(char* PUERTO, t_log* logger, char* clienteEsperado){
+int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
     int socket_servidor, err;
 
 	struct addrinfo hints, *servinfo, *p;
@@ -10,7 +10,7 @@ int iniciar_servidor(char* PUERTO, t_log* logger, char* clienteEsperado){
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	err = getaddrinfo(NULL, PUERTO, &hints, &servinfo);
+	err = getaddrinfo(NULL, puerto, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
 
@@ -101,4 +101,26 @@ void recibir_mensaje(int socket_cliente)
 	log_destroy(logger);
 
 	free(buffer);
+}
+
+t_list* recibir_paquete(int socket_cliente)
+{
+    int size;
+    int desplazamiento = 0;
+    void * buffer;
+    t_list* valores = list_create();
+    int tamanio;
+
+    buffer = recibir_buffer(&size, socket_cliente);
+    while(desplazamiento < size)
+    {
+        memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
+        desplazamiento+=sizeof(int);
+        char* valor = malloc(tamanio);
+        memcpy(valor, buffer+desplazamiento, tamanio);
+        desplazamiento+=tamanio;
+        list_add(valores, valor);
+    }
+    free(buffer);
+    return valores;
 }

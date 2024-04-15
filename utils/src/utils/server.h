@@ -14,11 +14,17 @@
 #include <commons/error.h>
 #include <commons/collections/list.h>
 
+typedef enum
+{
+    MENSAJE,
+    PAQUETE
+}op_code;
+
 /**
 * @fn    iniciar_servidor
 * @brief inicia un nuevo servidor en modo escucha y devuelve un fd con el socket. Recibe como parametro el puerto de escucha.
 */
-int iniciar_servidor(char* PUERTO, t_log* logger, char* aQuienEspera);
+int iniciar_servidor(char* puerto, t_log* logger, char* aQuienEspera);
 /**
 * @fn    esperar_cliente
 * @brief Devuelve el Socket del cliente. Recibe como paramentro el socket del servidor.
@@ -32,5 +38,7 @@ void* recibir_buffer(int* size, int socket_cliente);
 void handshake_server(int socket_cliente, t_log* logger);
 
 void recibir_mensaje(int socket_cliente);
+
+t_list* recibir_paquete(int);
 
 #endif
