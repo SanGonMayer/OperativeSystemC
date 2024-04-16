@@ -5,12 +5,13 @@
 #include <stdio.h>
 #include <commons/config.h>
 #include <utils/server.h>
+#include <utils/client.h>
 
 t_log* logger;
 t_config* config;
 
 char* ip_memoria;
-uint32_t puerto_memoria;
+char* puerto_memoria;
 char* puerto_escucha_dispatch;
 char* puerto_escucha_interrupt;
 uint32_t cantidad_entradas_tlb;
