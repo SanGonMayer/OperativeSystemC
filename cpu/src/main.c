@@ -29,6 +29,10 @@ int main(int argc, char* argv[]) {
 
     handshake_server(cliente_dispatch_fd, logger);
     
+   
+
+    // Modo servidor dispatch con Kernel
+
     int iterador = 1;
 
     while(iterador){
@@ -53,6 +57,8 @@ int main(int argc, char* argv[]) {
         
     }
 
+    //Modo servidor interrupt kernel
+
     iterador =1;
     while (iterador){
         int cod_op = recibir_operacion(cliente_interrupt_fd);
@@ -74,6 +80,13 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
+
+    //Modo cliente con Memoria
+    int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
+    handshake_cliente(conexion_memoria_fd, logger);
+
+    enviar_mensaje("Conexion CPU a MEMORIA, Mandando desde CPu", conexion_memoria_fd);
+    close(conexion_memoria_fd);
 
     config_destroy(config);
     log_destroy(logger);
