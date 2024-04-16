@@ -12,11 +12,16 @@ int main(int argc, char* argv[]) {
     }
 
     ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-    puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
     puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
     puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
     cantidad_entradas_tlb = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
     algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
+
+    int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
+    
+    enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
+    close(conexion_memoria_fd);
 
     //Server Dispatch
     int server_dispatch_fd = iniciar_servidor(puerto_escucha_dispatch, logger, "CLIENTE DISPATCH");
@@ -27,8 +32,11 @@ int main(int argc, char* argv[]) {
 
     int cliente_interrupt_fd = esperar_cliente(server_interrupt_fd, logger);
 
+
     handshake_server(cliente_dispatch_fd, logger);
-    
+
+    // Modo servidor dispatch con Kernel
+
     int iterador = 1;
 
     while(iterador){
@@ -53,6 +61,8 @@ int main(int argc, char* argv[]) {
         
     }
 
+    //Modo servidor interrupt kernel
+
     iterador =1;
     while (iterador){
         int cod_op = recibir_operacion(cliente_interrupt_fd);
@@ -74,6 +84,8 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
+
+    //Modo cliente con Memoria
 
     config_destroy(config);
     log_destroy(logger);

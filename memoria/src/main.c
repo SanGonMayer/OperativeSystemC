@@ -28,34 +28,55 @@ int main(int argc, char* argv[]) {
     
     int cliente_fd = esperar_cliente(server_fd, logger);
 
-    handshake_server(cliente_fd, logger);
+    //handshake_server(cliente_fd, logger);
 
     t_list* lista;
+    int iterador = 1;
 
-    while (1) {
+    while (iterador) {
         int cod_op = recibir_operacion(cliente_fd);
-        switch (cod_op) {
-        case MENSAJE:
+
+        switch (cod_op) 
+        {
+        case 1:
             recibir_mensaje(cliente_fd);
             break;
-        case PAQUETE:
-            lista = recibir_paquete(cliente_fd);
-            log_info(logger, "Me llegaron los siguientes valores:\n");
-            list_iterate(lista, (void*) iterator);
-            break;
         case -1:
-            log_error(logger, "el cliente se desconecto. Terminando servidor");
-            return EXIT_FAILURE;
+            log_error(logger, "el cliente se desconectó.");
+            iterador = 0;
+            break;
         default:
             log_warning(logger,"Operacion desconocida.");
             break;
         }
     }
 
+    iterador = 1;
 
+    cliente_fd = esperar_cliente(server_fd, logger);
+
+    while (iterador) {
+        int cod_op = recibir_operacion(cliente_fd);
+
+        switch (cod_op) 
+        {
+        case 1:
+            recibir_mensaje(cliente_fd);
+            break;
+        case -1:
+            log_error(logger, "el cliente se desconectó.");
+            iterador = 0;
+            break;
+        default:
+            log_warning(logger,"Operacion desconocida.");
+            break;
+        }
+    }   
+
+    close(server_fd);
+    close(cliente_fd);
     log_destroy(logger);
     config_destroy(config);
-
 
     return 0;
 }
