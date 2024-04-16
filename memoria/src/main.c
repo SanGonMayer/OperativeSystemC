@@ -32,19 +32,20 @@ int main(int argc, char* argv[]) {
 
     t_list* lista;
 
-    while (1) {
+    int iterador = 1;
+
+    while (iterador) {
         int cod_op = recibir_operacion(cliente_fd);
-        switch (cod_op) {
-        case MENSAJE:
+
+        switch (cod_op) 
+        {
+        case 1:
             recibir_mensaje(cliente_fd);
-            break;
-        case PAQUETE:
-            lista = recibir_paquete(cliente_fd);
-            log_info(logger, "Me llegaron los siguientes valores:\n");
-            list_iterate(lista, (void*) iterator);
             break;
         case -1:
             log_error(logger, "el cliente se desconecto. Terminando servidor");
+            close(server_fd);
+            close(cliente_fd);
             return EXIT_FAILURE;
         default:
             log_warning(logger,"Operacion desconocida.");
