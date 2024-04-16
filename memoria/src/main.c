@@ -32,6 +32,26 @@ int main(int argc, char* argv[]) {
 
     t_list* lista;
 
+       int iterador = 1;
+
+        while (iterador) {
+        int cod_op = recibir_operacion(cliente_fd);
+
+        switch (cod_op) 
+        {
+        case 1:
+            recibir_mensaje(cliente_fd);
+            break;
+        case -1:
+            log_error(logger, "el cliente CPU se desconecto.");
+            iterador = 0;
+            break;
+        default:
+            log_warning(logger,"Operacion desconocida.");
+            break;
+        }
+    }
+
     int iterador = 1;
 
     while (iterador) {
@@ -43,7 +63,7 @@ int main(int argc, char* argv[]) {
             recibir_mensaje(cliente_fd);
             break;
         case -1:
-            log_error(logger, "el cliente se desconecto. Terminando servidor");
+            log_error(logger, "el cliente KERNEL se desconecto.");
             close(server_fd);
             close(cliente_fd);
             return EXIT_FAILURE;
@@ -56,7 +76,6 @@ int main(int argc, char* argv[]) {
 
     log_destroy(logger);
     config_destroy(config);
-
 
     return 0;
 }
