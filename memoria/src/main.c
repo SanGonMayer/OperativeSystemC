@@ -31,9 +31,9 @@ int main(int argc, char* argv[]) {
     //handshake_server(cliente_fd, logger);
 
     t_list* lista;
+    int iterador = 1;
 
-    int i = 0;
-    while (i < 2) {
+    while (iterador) {
         int cod_op = recibir_operacion(cliente_fd);
 
         switch (cod_op) 
@@ -43,13 +43,35 @@ int main(int argc, char* argv[]) {
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");
-            i++;
+            iterador = 0;
             break;
         default:
             log_warning(logger,"Operacion desconocida.");
             break;
         }
     }
+
+    iterador = 1;
+
+    cliente_fd = esperar_cliente(server_fd, logger);
+
+    while (iterador) {
+        int cod_op = recibir_operacion(cliente_fd);
+
+        switch (cod_op) 
+        {
+        case 1:
+            recibir_mensaje(cliente_fd);
+            break;
+        case -1:
+            log_error(logger, "el cliente se desconectó.");
+            iterador = 0;
+            break;
+        default:
+            log_warning(logger,"Operacion desconocida.");
+            break;
+        }
+    }   
 
     close(server_fd);
     close(cliente_fd);
