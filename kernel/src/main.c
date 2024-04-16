@@ -26,21 +26,20 @@ int main(void){
 	puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT" );
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
-    int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU", logger);
-    int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU", logger);
+    int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", logger);
+    int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", logger);
 
     handshake_cliente(conexion_cpu_dispatch, logger);
 
-    enviar_mensaje("primer mensaje enviado de cliente kernel a cpu dispatch", conexion_cpu_dispatch);
+    enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", conexion_cpu_dispatch);
     close(conexion_cpu_dispatch);
 
-    enviar_mensaje("primer mensaje enviado de cliente kernel a cpu interrupt", conexion_cpu_interrupt);
+    enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", conexion_cpu_interrupt);
     close(conexion_cpu_interrupt);
 
     int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
-    handshake_cliente(conexion_memoria_fd, logger);
 
-    enviar_mensaje("Conexion CPU a MEMORIA, Mandando desde CPu", conexion_memoria_fd);
+    enviar_mensaje("Mensaje KERNEL a MEMORIA", conexion_memoria_fd);
     close(conexion_memoria_fd);
 
     config_destroy(config);

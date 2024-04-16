@@ -81,9 +81,11 @@ int main(int argc, char* argv[]) {
 
     //Modo cliente con Memoria
     int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
-    handshake_cliente(conexion_memoria_fd, logger);
 
-    enviar_mensaje("Conexion CPU a MEMORIA, Mandando desde CPu", conexion_memoria_fd);
+    int numero;
+    scanf("%d", &numero);
+
+    enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
     close(conexion_memoria_fd);
 
     config_destroy(config);

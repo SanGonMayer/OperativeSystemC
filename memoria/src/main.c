@@ -28,13 +28,12 @@ int main(int argc, char* argv[]) {
     
     int cliente_fd = esperar_cliente(server_fd, logger);
 
-    handshake_server(cliente_fd, logger);
+    //handshake_server(cliente_fd, logger);
 
     t_list* lista;
 
-       int iterador = 1;
-
-        while (iterador) {
+    int i = 0;
+    while (i < 2) {
         int cod_op = recibir_operacion(cliente_fd);
 
         switch (cod_op) 
@@ -43,8 +42,8 @@ int main(int argc, char* argv[]) {
             recibir_mensaje(cliente_fd);
             break;
         case -1:
-            log_error(logger, "el cliente CPU se desconecto.");
-            iterador = 0;
+            log_error(logger, "el cliente se desconectó.");
+            i++;
             break;
         default:
             log_warning(logger,"Operacion desconocida.");
@@ -52,28 +51,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    int iterador = 1;
-
-    while (iterador) {
-        int cod_op = recibir_operacion(cliente_fd);
-
-        switch (cod_op) 
-        {
-        case 1:
-            recibir_mensaje(cliente_fd);
-            break;
-        case -1:
-            log_error(logger, "el cliente KERNEL se desconecto.");
-            close(server_fd);
-            close(cliente_fd);
-            return EXIT_FAILURE;
-        default:
-            log_warning(logger,"Operacion desconocida.");
-            break;
-        }
-    }
-
-
+    close(server_fd);
+    close(cliente_fd);
     log_destroy(logger);
     config_destroy(config);
 
