@@ -52,6 +52,25 @@ int esperar_cliente(int socket_servidor, t_log* logger)
 	return socket_cliente;
 }
 
+void atender_clientes(int socket_servidor, t_log* logger,ProcesarRequestFunc procesar_request){
+	while (true) {
+		pthread_t thread;
+		int *fd_conexion_ptr = malloc(sizeof(int));
+		*fd_conexion_ptr = accept(socket_servidor, NULL, NULL);
+		if(*fd_conexion_ptr == -1){
+			error_show("Error en la espera del cliente");
+			exit(EXIT_FAILURE);
+		} else{
+			log_info(logger, "Se conecto un cliente!");
+		}
+		pthread_create(&thread,
+						NULL,
+						(void*) procesar_request,
+						fd_conexion_ptr);
+		pthread_detach(thread);
+	}
+}
+
 int recibir_operacion(int socket_cliente)
 {
 	int cod_op;
@@ -99,6 +118,15 @@ void recibir_mensaje(int socket_cliente)
 	t_log *logger = log_create("cpu.log", "messagge", 1, LOG_LEVEL_INFO);
 	log_info(logger, "Me llego el mensaje %s", buffer);
 	log_destroy(logger);
+
+	free(buffer);
+}
+
+void recibir_mensaje_logger(int socket_cliente, t_log* logger){
+	int size;
+	char* buffer = recibir_buffer(&size, socket_cliente);
+
+	log_info(logger, "Me llego el mensaje %s", buffer);
 
 	free(buffer);
 }
