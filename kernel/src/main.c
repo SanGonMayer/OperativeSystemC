@@ -24,7 +24,8 @@ int main(void){
     ip_cpu = config_get_string_value(config, "IP_CPU");
     puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_CPU_DISPATCH" );
 	puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT" );
-
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
+    ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU", logger);
     int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU", logger);
 
@@ -35,6 +36,12 @@ int main(void){
 
     enviar_mensaje("primer mensaje enviado de cliente kernel a cpu interrupt", conexion_cpu_interrupt);
     close(conexion_cpu_interrupt);
+
+    int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
+    handshake_cliente(conexion_memoria_fd, logger);
+
+    enviar_mensaje("Conexion CPU a MEMORIA, Mandando desde CPu", conexion_memoria_fd);
+    close(conexion_memoria_fd);
 
     config_destroy(config);
     log_destroy(logger);
