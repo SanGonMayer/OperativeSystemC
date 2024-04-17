@@ -3,8 +3,6 @@
 #include <utils/hello.h>
 #include "io.h"
 
-
-
 ConfiguracionIO* config;
 t_log* logger;
 
@@ -15,15 +13,18 @@ int main(int argc, char* argv[]){
     config = leer_configuracion(logger, config_file);
 
     int conexion_kernel = crear_conexion(config->ip_kernel, config->puerto_kernel, "KERNEL", logger);
-
     handshake_cliente(conexion_kernel, logger);
-
     enviar_mensaje("primer mensaje enviado de cliente io a kernel", conexion_kernel);
     close(conexion_kernel);
 
-    free(config);
-    config_destroy(config_file);
+    int conexion_memoria = crear_conexion(config->ip_memoria, config->puerto_memoria, "KERNEL", logger);
+    handshake_cliente(conexion_memoria, logger);
+    enviar_mensaje("primer mensaje enviado de cliente io a memoria", conexion_memoria);
+    close(conexion_memoria);
+
     log_destroy(logger);
+    config_destroy(config_file);
+    configuracionIO_destroy(config);
     return 0;
 }
 

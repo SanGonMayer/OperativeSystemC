@@ -1,5 +1,55 @@
 #include "cpu.h"
 
+void servidor_dispatch(){
+    int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
+    int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
+    handshake_server(cliente_dispatch_fd, logger);
+
+    
+    while(true){
+        int cod_op = recibir_operacion(cliente_dispatch_fd);
+        
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje_logger(cliente_dispatch_fd, logger);
+            break;
+        case -1:
+            error_show("cliente desconectado de CPU dispatch");
+            close(cliente_dispatch_fd);
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            break;
+        }
+    }
+}
+
+void servidor_interrupt(){
+    int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, logger, "CPU INTERRUPT");
+    int cliente_interrupt_fd = esperar_cliente(socket_servidor, logger);
+    handshake_server(cliente_interrupt_fd, logger);
+
+    while(true){
+
+        int cod_op = recibir_operacion(cliente_interrupt_fd);
+        
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje_logger(cliente_interrupt_fd, logger);
+            break;
+        case -1:
+            error_show("cliente desconectado de CPU interrupt");
+            close(cliente_interrupt_fd);
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            break;
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     
     logger = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
@@ -19,74 +69,19 @@ int main(int argc, char* argv[]) {
     algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
 
     int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
-    
+    handshake_cliente(conexion_memoria_fd, logger);
     enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
     close(conexion_memoria_fd);
 
-    //Server Dispatch
-    int server_dispatch_fd = iniciar_servidor(puerto_escucha_dispatch, logger, "CLIENTE DISPATCH");
-    //Server Interrupt
-    int server_interrupt_fd = iniciar_servidor(puerto_escucha_interrupt, logger, "CLIENTE INTERRUPT");
-    //while para estar siempre esperando
-    int cliente_dispatch_fd = esperar_cliente(server_dispatch_fd, logger);
+    pthread_t hilo_dispatch;
+    pthread_t hilo_interrupt;
 
-    int cliente_interrupt_fd = esperar_cliente(server_interrupt_fd, logger);
+    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, NULL);
+    pthread_create(&hilo_interrupt, NULL, (void*)servidor_interrupt, NULL);
 
-
-    handshake_server(cliente_dispatch_fd, logger);
-
-    // Modo servidor dispatch con Kernel
-
-    int iterador = 1;
-
-    while(iterador){
-        int cod_op = recibir_operacion(cliente_dispatch_fd);
-        
-        switch (cod_op)
-        {
-        case 1:
-            recibir_mensaje(cliente_dispatch_fd);
-            break;
-        case -1:
-            error_show("cliente desconectado de CPU dispatch");
-            close(server_dispatch_fd);
-            close(cliente_dispatch_fd);
-            iterador = 0;
-            break;
-        default:
-            log_info(logger, "No entiendo el mensaje");
-            iterador = 0;
-            break;
-        }
-        
-    }
-
-    //Modo servidor interrupt kernel
-
-    iterador =1;
-    while (iterador){
-        int cod_op = recibir_operacion(cliente_interrupt_fd);
-        
-        switch (cod_op)
-        {
-        case 1:
-            recibir_mensaje(cliente_interrupt_fd);
-            break;
-        case -1:
-            error_show("cliente desconectado de CPU interrupt");
-            close(server_interrupt_fd);
-            close(cliente_interrupt_fd);
-            iterador = 0;
-            break;
-        default:
-            log_info(logger, "No entiendo el mensaje");
-            iterador = 0;
-            break;
-        }
-    }
-
-    //Modo cliente con Memoria
-
+    pthread_join(hilo_dispatch, NULL);
+    pthread_join(hilo_interrupt, NULL);
+    
     config_destroy(config);
     log_destroy(logger);
 

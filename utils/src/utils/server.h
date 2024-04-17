@@ -39,7 +39,7 @@ int recibir_operacion(int socket_cliente);
 
 void* recibir_buffer(int* size, int socket_cliente);
 
-void handshake_server(int socket_cliente, t_log* logger);
+void handshake_server(int fd, t_log* logger);
 
 void recibir_mensaje(int socket_cliente);
 

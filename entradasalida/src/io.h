@@ -20,5 +20,6 @@ typedef struct {
 } ConfiguracionIO;
 
 ConfiguracionIO* leer_configuracion(t_log* logger, t_config* config);
+void configuracionIO_destroy(ConfiguracionIO* config);
 
 #endif

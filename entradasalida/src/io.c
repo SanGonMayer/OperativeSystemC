@@ -22,3 +22,13 @@ ConfiguracionIO* leer_configuracion(t_log* logger, t_config* config){
     
     return config_io;
 }
+
+void configuracionIO_destroy(ConfiguracionIO* config){
+    
+    free(config->ip_kernel);
+    free(config->ip_memoria);
+    free(config->puerto_kernel);
+    free(config->tipo_interfaz);
+    free(config->path_base_dialfs);
+    free(config);
+}

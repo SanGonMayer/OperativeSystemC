@@ -43,7 +43,7 @@ int main(void){
     close(conexion_cpu_dispatch);
 
     int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", logger);
-    handshake_cliente(conexion_cpu_dispatch, logger);
+    handshake_cliente(conexion_cpu_interrupt, logger);
     enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", conexion_cpu_interrupt);
     close(conexion_cpu_interrupt);
 
