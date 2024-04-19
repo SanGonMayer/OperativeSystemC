@@ -10,7 +10,7 @@
 typedef struct {
     int tiempo_unidad_trabajo;
     char* puerto_kernel;
-    int puerto_memoria;
+    char* puerto_memoria;
     int block_size;
     int block_count;
     char* tipo_interfaz;

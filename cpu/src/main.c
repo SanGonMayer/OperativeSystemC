@@ -5,8 +5,9 @@ void servidor_dispatch(){
     int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
     handshake_server(cliente_dispatch_fd, logger);
 
+    int conectado = 1;
     
-    while(true){
+    while(conectado){
         int cod_op = recibir_operacion(cliente_dispatch_fd);
         
         switch (cod_op)
@@ -17,6 +18,7 @@ void servidor_dispatch(){
         case -1:
             error_show("cliente desconectado de CPU dispatch");
             close(cliente_dispatch_fd);
+            conectado = 0;
             break;
         default:
             log_info(logger, "No entiendo el mensaje");
@@ -30,7 +32,8 @@ void servidor_interrupt(){
     int cliente_interrupt_fd = esperar_cliente(socket_servidor, logger);
     handshake_server(cliente_interrupt_fd, logger);
 
-    while(true){
+    int conectado = 1;
+    while(conectado){
 
         int cod_op = recibir_operacion(cliente_interrupt_fd);
         
@@ -42,6 +45,7 @@ void servidor_interrupt(){
         case -1:
             error_show("cliente desconectado de CPU interrupt");
             close(cliente_interrupt_fd);
+            conectado = 0;
             break;
         default:
             log_info(logger, "No entiendo el mensaje");
@@ -71,7 +75,6 @@ int main(int argc, char* argv[]) {
     int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
     handshake_cliente(conexion_memoria_fd, logger);
     enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
-    close(conexion_memoria_fd);
 
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
@@ -82,6 +85,7 @@ int main(int argc, char* argv[]) {
     pthread_join(hilo_dispatch, NULL);
     pthread_join(hilo_interrupt, NULL);
     
+    close(conexion_memoria_fd);
     config_destroy(config);
     log_destroy(logger);
 

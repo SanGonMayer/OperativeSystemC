@@ -1,8 +1,7 @@
 #include <memoria.h>
+#include <commons/log.h>
 
-t_log* logger;
-
-void iterator(char* value) {
+void iterator(char* value, t_log* logger) {
     log_info(logger,"%s", value);
 }
 

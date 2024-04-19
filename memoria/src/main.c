@@ -1,43 +1,30 @@
+#include <memoria.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <utils/hello.h>
-#include <memoria.h>
+#include <commons/config.h>
+#include <utils/server.h>
 
+t_log* logger;
+t_config* config;
 
-int main(int argc, char* argv[]) {
-    decir_hola("Memoria");
+char* puerto_escucha;
+int tam_memoria;
+int tam_pagina;
+char* path_instrucciones;
+int retardo_respuesta;
 
-    t_log* logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+void procesar_cliente(int* fd){
 
-
-    t_config* config = config_create("../memoria/memoria.config");
-
-    if(config == NULL){
-        log_error(logger, "Error al crear la configuracion");
-        exit(EXIT_FAILURE);
-    }
-    
-    char* puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
-    int tam_memoria = config_get_int_value(config, "TAM_MEMORIA");
-    int tam_pagina = config_get_int_value(config, "TAM_PAGINA");
-    char* path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
-    int retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
-    
-
-    int socket = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
-    
-    int cliente_fd = esperar_cliente(socket, logger);
-
-    handshake_server(cliente_fd, logger);
+    handshake_server(*fd, logger);
     int iterador = 1;
-    
+
     while (iterador) {
-        int cod_op = recibir_operacion(cliente_fd);
+        int cod_op = recibir_operacion(*fd);
 
         switch (cod_op) 
         {
         case 1:
-            recibir_mensaje(cliente_fd);
+            recibir_mensaje(*fd);
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");
@@ -48,8 +35,33 @@ int main(int argc, char* argv[]) {
             break;
         }
     }  
+}
 
-    close(cliente_fd);
+
+int main(int argc, char* argv[]) {
+    decir_hola("Memoria");
+
+    logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+
+
+    config = config_create("../memoria/memoria.config");
+
+    if(config == NULL){
+        log_error(logger, "Error al crear la configuracion");
+        exit(EXIT_FAILURE);
+    }
+    
+    puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
+    tam_memoria = config_get_int_value(config, "TAM_MEMORIA");
+    tam_pagina = config_get_int_value(config, "TAM_PAGINA");
+    path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+    retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
+    
+
+    int socket = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
+    
+    atender_clientes(socket, logger, &procesar_cliente);
+
     log_destroy(logger);
     config_destroy(config);
 

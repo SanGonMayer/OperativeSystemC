@@ -1,13 +1,8 @@
 #ifndef MEMORIA_H_
 #define MEMORIA_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <commons/config.h>
-#include <utils/server.h>
+#include <commons/log.h>
 
-void iterator(char* value);
-
-
+void iterator(char* value, t_log* logger);
 
 #endif

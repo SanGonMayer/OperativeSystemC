@@ -12,7 +12,7 @@ ConfiguracionIO* leer_configuracion(t_log* logger, t_config* config){
 
     config_io->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
     config_io->puerto_kernel = config_get_string_value(config, "PUERTO_KERNEL");
-    config_io->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
+    config_io->puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
     config_io->block_size = config_get_int_value(config, "BLOCK_SIZE");
     config_io->block_count = config_get_int_value(config, "BLOCK_COUNT");
     config_io->ip_kernel = config_get_string_value(config, "IP_KERNEL");
@@ -24,7 +24,7 @@ ConfiguracionIO* leer_configuracion(t_log* logger, t_config* config){
 }
 
 void configuracionIO_destroy(ConfiguracionIO* config){
-    
+
     free(config->ip_kernel);
     free(config->ip_memoria);
     free(config->puerto_kernel);

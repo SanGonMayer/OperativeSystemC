@@ -116,7 +116,7 @@ void recibir_mensaje(int fd)
 	char* buffer = recibir_buffer(&size, fd);
 
 	t_log *logger = log_create("cpu.log", "messagge", 1, LOG_LEVEL_INFO);
-	log_info(logger, "Me llego el mensaje %s", buffer);
+	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
 	log_destroy(logger);
 
 	free(buffer);
@@ -126,7 +126,7 @@ void recibir_mensaje_logger(int fd, t_log* logger){
 	int size;
 	char* buffer = recibir_buffer(&size, fd);
 
-	log_info(logger, "Me llego el mensaje %s", buffer);
+	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
 
 	free(buffer);
 }
