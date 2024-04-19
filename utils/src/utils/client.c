@@ -26,7 +26,7 @@ int crear_conexion(char *ip, char* puerto, char* nombreServer, t_log* logger)
 	err = connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
 
     if(err == -1){
-        error_show("Error al iniciar el servidor");
+        error_show("Error al conectar con el servidor");
         printf("\n");
         exit(EXIT_FAILURE);
     } else{

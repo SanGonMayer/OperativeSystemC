@@ -1,80 +1,67 @@
+#include <memoria.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <utils/hello.h>
-#include <memoria.h>
+#include <commons/config.h>
+#include <utils/server.h>
+
+t_log* logger;
+t_config* config;
+
+char* puerto_escucha;
+int tam_memoria;
+int tam_pagina;
+char* path_instrucciones;
+int retardo_respuesta;
+
+void procesar_cliente(int* fd){
+
+    handshake_server(*fd, logger);
+    int iterador = 1;
+
+    while (iterador) {
+        int cod_op = recibir_operacion(*fd);
+
+        switch (cod_op) 
+        {
+        case 1:
+            recibir_mensaje(*fd);
+            break;
+        case -1:
+            log_error(logger, "el cliente se desconectó.");
+            iterador = 0;
+            break;
+        default:
+            log_warning(logger,"Operacion desconocida.");
+            break;
+        }
+    }  
+}
 
 
 int main(int argc, char* argv[]) {
     decir_hola("Memoria");
 
-    t_log* logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+    logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
 
 
-    t_config* config = config_create("../memoria/memoria.config");
+    config = config_create("../memoria/memoria.config");
 
     if(config == NULL){
         log_error(logger, "Error al crear la configuracion");
         exit(EXIT_FAILURE);
     }
     
-    char* puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
-    int tam_memoria = config_get_int_value(config, "TAM_MEMORIA");
-    int tam_pagina = config_get_int_value(config, "TAM_PAGINA");
-    char* path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
-    int retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
+    puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
+    tam_memoria = config_get_int_value(config, "TAM_MEMORIA");
+    tam_pagina = config_get_int_value(config, "TAM_PAGINA");
+    path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+    retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
     
 
-    int server_fd = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
+    int socket = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
     
-    int cliente_fd = esperar_cliente(server_fd, logger);
+    atender_clientes(socket, logger, &procesar_cliente);
 
-    //handshake_server(cliente_fd, logger);
-
-    t_list* lista;
-    int iterador = 1;
-
-    while (iterador) {
-        int cod_op = recibir_operacion(cliente_fd);
-
-        switch (cod_op) 
-        {
-        case 1:
-            recibir_mensaje(cliente_fd);
-            break;
-        case -1:
-            log_error(logger, "el cliente se desconectó.");
-            iterador = 0;
-            break;
-        default:
-            log_warning(logger,"Operacion desconocida.");
-            break;
-        }
-    }
-
-    iterador = 1;
-
-    cliente_fd = esperar_cliente(server_fd, logger);
-
-    while (iterador) {
-        int cod_op = recibir_operacion(cliente_fd);
-
-        switch (cod_op) 
-        {
-        case 1:
-            recibir_mensaje(cliente_fd);
-            break;
-        case -1:
-            log_error(logger, "el cliente se desconectó.");
-            iterador = 0;
-            break;
-        default:
-            log_warning(logger,"Operacion desconocida.");
-            break;
-        }
-    }   
-
-    close(server_fd);
-    close(cliente_fd);
     log_destroy(logger);
     config_destroy(config);
 
