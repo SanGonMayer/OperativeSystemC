@@ -10,6 +10,7 @@ char *algoritmo_planificacion;
 
 t_config* config;
 t_log* logger;
+t_queue* cola_new;
 
 void procesar_cliente(int* fd){
 
@@ -36,8 +37,10 @@ void procesar_cliente(int* fd){
 }
 
 int main(void){
-	logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
+	cola_new = queue_create();
+    logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
     config = config_create("../kernel/kernel.config");
+
 
     if(config == NULL){
         log_error(logger, "Mal el path");
@@ -65,6 +68,13 @@ int main(void){
     enviar_mensaje("Mensaje KERNEL a MEMORIA", conexion_memoria_fd);
 
     int socket_servidor = iniciar_servidor(puerto_escucha, logger, "CLIENTE KERNEL");
+
+    iniciar_proceso("hola", cola_new);
+
+    for(int i = 0; i <= queue_size(cola_new); i++){
+        t_PCB* pcb = queue_pop(cola_new);
+        log_info(logger, "%d", pcb->PID);
+    }
 
     atender_clientes(socket_servidor, logger, &procesar_cliente);
 
