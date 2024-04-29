@@ -6,8 +6,8 @@ char * puerto_memoria;
 char * ip_cpu;
 char * puerto_cpu_dispatch;
 char * puerto_cpu_interrupt;
-char *algoritmo_planificacion;
-char * grado_multiprogramacion;
+char * algoritmo_planificacion;
+int grado_multiprogramacion;
 int quantum;
 
 t_config* config;
@@ -66,6 +66,17 @@ int main(void){
     grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
 
     algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+    
+    int algoritmo_planificacion_enum;
+    
+    if(strcmp(algoritmo_planificacion, "FIFO") == 0){
+        algoritmo_planificacion_enum == FIFO;
+    } else if(strcmp(algoritmo_planificacion, "RR") == 0){
+        algoritmo_planificacion_enum == RR;
+    } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+        algoritmo_planificacion_enum == VRR;
+    }
+    
     quantum = config_get_int_value(config, "QUANTUM");
 
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", logger);
@@ -91,28 +102,31 @@ int main(void){
         enviar_proceso_a_ready(cola_new, cola_ready);
         grado_multiprogramacion --;
     }
-
+    log_info(logger, "grado multiprogramacion = %d", grado_multiprogramacion);
+    t_PCB* pcb = queue_pop(cola_ready);
+    ejecutar_cpu_FIFO(pcb, conexion_cpu_dispatch, logger);
 
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta.
     while(!queue_is_empty(cola_ready)){
         t_PCB* pcb = queue_pop(cola_ready);
         if(queue_is_empty(cola_exec)){
             queue_push(cola_exec, pcb);
-            switch (algoritmo_planificacion)
+            switch (algoritmo_planificacion_enum)
             {
-            case "FIFO":
+            case FIFO:
                 //va a tener conexion cliente servidor, es bloqueante, espera recibir el PCB
-                //ejecutar_cpu_FIFO(pcb);
+                ejecutar_cpu_FIFO(pcb, conexion_cpu_dispatch, logger);
+                //pcb ya esta actualizado
 
                 //Crea Hilo para manejar el desalojo, mientras tanto sigue ejecutando para liberar cola_exec y usar la CPU.
                 //manejar_desalojo(pcb);
-
+                
                 //libera cola_exec para volver a entrar al switch.
                 //queue_pop(cola_exec);
                 break;
-            case "RR":
+            case RR:
                 break;
-            case "VRR":
+            case VRR:
                 break;
             default:
                 break;
@@ -120,13 +134,14 @@ int main(void){
         }
     }
 
+    free(pcb);
 
-
+    /*
     for(int i = 0; i <= queue_size(cola_new); i++){
         t_PCB* pcb = queue_pop(cola_new);
         log_info(logger, "%d", pcb->PID);
     }
-
+    */
     atender_clientes(socket_servidor, logger, &procesar_cliente);
 
     close(conexion_cpu_dispatch);

@@ -1,0 +1,65 @@
+#ifndef PROCESOS_H_
+#define PROCESOS_H_
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <commons/config.h>
+#include <utils/client.h>
+#include <utils/server.h>
+#include <unistd.h>
+#include <commons/collections/queue.h>
+#include <commons/collections/list.h>
+#include <pthread.h>
+
+typedef struct{
+    uint32_t pc;
+    uint8_t  ax;
+    uint8_t  bx;
+    uint8_t  cx;
+    uint8_t  dx;
+    uint32_t eax;
+    uint32_t ebx;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t si;
+    uint32_t di;
+
+} t_registrosCPU;
+
+typedef struct{
+    uint32_t codigo;
+    uint32_t datos;
+    uint32_t heap;
+
+} t_registrosMem;
+
+typedef enum {
+    NEW = 1,
+    READY = 2,
+    EXEC = 3,
+    BLOCKED = 4,
+    EXIT = 5
+} t_estadoProceso;
+
+typedef struct{
+    uint32_t PID;
+    t_estadoProceso estado;
+    t_registrosCPU registrosCPU;
+    t_registrosMem registrosMem;
+    int quantum;
+    char * path;
+} t_PCB;
+
+t_PCB* crear_PCB();
+
+void serializar_pcb(const t_PCB *pcb, uint8_t *buffer, size_t *size_out);
+
+int enviar_pcb(int socket, const t_PCB *pcb);
+
+void deserializar_pcb(const uint8_t *buffer, t_PCB *pcb);
+
+int recibir_pcb(int socket, t_PCB *pcb);
+
+void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
+
+#endif

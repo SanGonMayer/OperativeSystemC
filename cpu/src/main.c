@@ -1,5 +1,15 @@
 #include "cpu.h"
 
+t_log* logger;
+t_config* config;
+
+char* ip_memoria;
+char* puerto_memoria;
+char* puerto_escucha_dispatch;
+char* puerto_escucha_interrupt;
+uint32_t cantidad_entradas_tlb;
+char* algoritmo_tlb;
+
 void servidor_dispatch(){
     int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
     int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
@@ -8,23 +18,21 @@ void servidor_dispatch(){
     int conectado = 1;
     
     while(conectado){
-        int cod_op = recibir_operacion(cliente_dispatch_fd);
-        
-        switch (cod_op)
-        {
-        case 1:
-            recibir_mensaje_logger(cliente_dispatch_fd, logger);
-            break;
-        case -1:
-            error_show("cliente desconectado de CPU dispatch");
-            close(cliente_dispatch_fd);
+        t_PCB* pcb = crear_PCB();
+        int err;
+        err = recibir_pcb(cliente_dispatch_fd, pcb);
+        log_info(logger, "pcb recibido: %d", pcb->PID);
+        if(err = -1){
             conectado = 0;
-            break;
-        default:
-            log_info(logger, "No entiendo el mensaje");
-            break;
         }
+        //Hace el ciclo de ejecucionle
+        //...
+        //actualiza pcb
+        pcb->PID = 8949;
+        enviar_pcb(cliente_dispatch_fd, pcb);
+        free(pcb);
     }
+    close(cliente_dispatch_fd);
 }
 
 void servidor_interrupt(){
@@ -91,3 +99,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
+

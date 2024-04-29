@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <commons/config.h>
 #include <commons/log.h>
+#include <string.h>
 
 typedef struct
 {

@@ -160,7 +160,7 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 	void* a_enviar = serializar_paquete(paquete, bytes);
 
 	send(socket_cliente, a_enviar, bytes, 0);
-
+	
 	free(a_enviar);
 }
 

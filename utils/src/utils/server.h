@@ -13,6 +13,7 @@
 #include <commons/log.h>
 #include <commons/error.h>
 #include <commons/collections/list.h>
+#include <pthread.h>
 
 typedef enum
 {
