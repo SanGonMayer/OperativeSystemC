@@ -7,10 +7,14 @@ char * ip_cpu;
 char * puerto_cpu_dispatch;
 char * puerto_cpu_interrupt;
 char *algoritmo_planificacion;
+char * grado_multiprogramacion;
+int quantum;
 
 t_config* config;
 t_log* logger;
 t_queue* cola_new;
+t_queue* cola_ready;
+t_queue* cola_exec;
 
 void procesar_cliente(int* fd){
 
@@ -37,15 +41,19 @@ void procesar_cliente(int* fd){
 }
 
 int main(void){
-	cola_new = queue_create();
+	
     logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
     config = config_create("../kernel/kernel.config");
-
 
     if(config == NULL){
         log_error(logger, "Mal el path");
         exit(EXIT_FAILURE);
     }
+
+    //colas de planificacion
+    cola_new = queue_create();
+    cola_ready = queue_create();
+    cola_exec = queue_create();
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -54,6 +62,11 @@ int main(void){
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
+
+    grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
+
+    algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+    quantum = config_get_int_value(config, "QUANTUM");
 
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", logger);
     handshake_cliente(conexion_cpu_dispatch, logger);
@@ -69,7 +82,45 @@ int main(void){
 
     int socket_servidor = iniciar_servidor(puerto_escucha, logger, "CLIENTE KERNEL");
 
-    iniciar_proceso("hola", cola_new);
+    //Consola es un Hilo.
+
+    //Pedido por consola
+    iniciar_proceso("path", cola_new);
+    //Si hay lugar lo mete en cola ready
+    if(grado_multiprogramacion>0){
+        enviar_proceso_a_ready(cola_new, cola_ready);
+        grado_multiprogramacion --;
+    }
+
+
+    //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta.
+    while(!queue_is_empty(cola_ready)){
+        t_PCB* pcb = queue_pop(cola_ready);
+        if(queue_is_empty(cola_exec)){
+            queue_push(cola_exec, pcb);
+            switch (algoritmo_planificacion)
+            {
+            case "FIFO":
+                //va a tener conexion cliente servidor, es bloqueante, espera recibir el PCB
+                //ejecutar_cpu_FIFO(pcb);
+
+                //Crea Hilo para manejar el desalojo, mientras tanto sigue ejecutando para liberar cola_exec y usar la CPU.
+                //manejar_desalojo(pcb);
+
+                //libera cola_exec para volver a entrar al switch.
+                //queue_pop(cola_exec);
+                break;
+            case "RR":
+                break;
+            case "VRR":
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+
 
     for(int i = 0; i <= queue_size(cola_new); i++){
         t_PCB* pcb = queue_pop(cola_new);

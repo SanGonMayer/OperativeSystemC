@@ -8,6 +8,7 @@
 #include <utils/server.h>
 #include <unistd.h>
 #include <commons/collections/queue.h>
+#include <commons/collections/list.h>
 
 typedef struct{
     uint32_t pc;
@@ -44,14 +45,15 @@ typedef struct{
     t_estadoProceso estado;
     t_registrosCPU registrosCPU;
     t_registrosMem registrosMem;
+    char * path;
 } t_PCB;
 
 void iniciar_proceso(char* path, t_queue* cola_new);
 
-void eliminar_proceso();
-
-uint32_t enviar_path_a_memoria();
+uint32_t enviar_path_a_memoria(char* path);
 
 t_PCB* crear_PCB();
+
+void enviar_proceso_a_ready(t_queue* cola_new,t_queue* cola_ready);
 
 #endif
