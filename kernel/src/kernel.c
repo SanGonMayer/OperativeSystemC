@@ -2,19 +2,25 @@
 #include <string.h>
 #include<readline/readline.h>
 
-int contadorPID = 1;
-
 
 //aca recibe manda mensaje a memoria y recibe direccion
 uint32_t enviar_path_a_memoria(char* path){
     return 5;
 }
 
-void iniciar_proceso(char* path, t_queue* cola_new){
+void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* contadorPID){
     t_PCB* PCB = crear_PCB();
-    //aca se deberia usar enviar_path_a_memoria
-    PCB->path = path;
+    pcb -> PID = *contadorPID;
+    pcb -> estado = NEW;
+    cargar_lista_paths(*contadorPID, lista_paths);
     queue_push(cola_new, PCB);
+}
+
+void cargar_lista_paths(int contadorPID,t_list* lista_paths, char* path){
+    t_listaPID contenido = malloc(sizeof(t_listaPID));
+    contenido -> PID = contadorPID;
+    contenido -> path = path;
+    list_add(lista_paths, contenido);
 }
 
 void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready){

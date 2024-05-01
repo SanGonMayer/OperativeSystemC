@@ -27,7 +27,12 @@ typedef enum {
     PROCESO_ESTADO= 7,
 } t_funciones_consola;
 
-void iniciar_proceso(char* path, t_queue* cola_new);
+typedef struct{
+    int PID;
+    char* path;
+}t_listaPID 
+
+void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths);
 
 uint32_t enviar_path_a_memoria(char* path);
 

@@ -47,7 +47,6 @@ typedef struct{
     t_registrosCPU registrosCPU;
     t_registrosMem registrosMem;
     int quantum;
-    char * path;
 } t_PCB;
 
 t_PCB* crear_PCB();

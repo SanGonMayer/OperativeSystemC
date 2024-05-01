@@ -15,6 +15,7 @@ t_log* logger;
 t_queue* cola_new;
 t_queue* cola_ready;
 t_queue* cola_exec;
+t_list* lista_paths;
 
 void procesar_cliente(int* fd){
 
@@ -50,10 +51,15 @@ int main(void){
         exit(EXIT_FAILURE);
     }
 
+    int contadorPID = 1;
+
     //colas de planificacion
     cola_new = queue_create();
     cola_ready = queue_create();
     cola_exec = queue_create();
+
+    //lista paths
+    lista_paths = list_create();
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -103,7 +109,8 @@ int main(void){
         log_error(logger, "error con el join del hilo de la consola interactiva");
 
     //Pedido por consola
-    iniciar_proceso("path", cola_new);
+    iniciar_proceso("path", cola_new, lista_paths);
+
     //Si hay lugar lo mete en cola ready
     if(grado_multiprogramacion>0){
         enviar_proceso_a_ready(cola_new, cola_ready);

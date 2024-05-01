@@ -2,8 +2,6 @@
 
 t_PCB* crear_PCB(){
     t_PCB* pcb = malloc(sizeof(t_PCB));
-    pcb -> PID = 1;
-    pcb -> estado = NEW;
     return pcb;
 }
 
