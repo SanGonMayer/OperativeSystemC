@@ -41,20 +41,22 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
 void consola_interactiva(t_log *logger){
     
     char* linea_leida;
+    char * parametro;
+    char *funcion;
 
 	linea_leida = readline(">");
 
 	while (strcmp(linea_leida, "q")){
 
     //falta cortar el string para sacar el path
-    char *funcion = strtok(linea_leida," ");
+    funcion = strtok(linea_leida," ");
 
-    char * parametro = strtok(NULL," "); //tendrá el valor del pid o el path en caso que corresponda, en caso de que lafuncion sea si parametro va a tener el valor null
+    parametro = strtok(NULL," "); //tendrá el valor del pid o el path en caso que corresponda, en caso de que lafuncion sea si parametro va a tener el valor null
 
     int opcion_funciones_consola;
 
-    if (strcmp(linea_leida, "EJECUTAR_STRIPT") == 0) {
-        opcion_funciones_consola = EJECUTAR_STRIPT;
+    if (strcmp(linea_leida, "EJECUTAR_SCRIPT") == 0) {
+        opcion_funciones_consola = EJECUTAR_SCRIPT;
     } else if (strcmp(linea_leida, "INICIAR_PROCESO") == 0) {
         opcion_funciones_consola = INICIAR_PROCESO;
     } else if (strcmp(linea_leida, "FINALIZAR_PROCESO") == 0) {
@@ -72,26 +74,26 @@ void consola_interactiva(t_log *logger){
 
     switch (opcion_funciones_consola) {
 
-        case EJECUTAR_STRIPT:
-            printf("e\n");
+        case EJECUTAR_SCRIPT:
+            printf("Se seleccionó iniciar  ejecutar script, con el path: %s\n", parametro);
             break;
         case INICIAR_PROCESO:
-            printf("Se seleccionó la opción 2\n");
+            printf("Se seleccionó iniciar proceso, con el path: %s\n", parametro);
             break;
         case FINALIZAR_PROCESO:
-            printf("Se seleccionó la opción 3\n");
+            printf("Se seleccionó finalizar proceso, con el PID: %s\n", parametro);
             break;
         case DETENER_PLANIFICACION:
-            printf("Opción no válida\n");
+            printf("Se seleccionó detener planificacion\n");
             break;
         case INICIAR_PLANIFIACION:
-            printf("Opción no válida\n");
+            printf("Se seleccionó iniciar planificacion\n");
             break;
         case MULTIPROGRAMACION:
-            printf("Opción no válida\n");
+            printf("Se seleccionó multiprogramacion con el valor: %s\n", parametro);
             break;
         case PROCESO_ESTADO:
-            printf("Opción no válida\n");
+            printf("Se seleccionó proceso estado\n");
             break;
     }
 
@@ -101,11 +103,12 @@ void consola_interactiva(t_log *logger){
 
 		linea_leida = readline(">");
 
-        free(funcion);
-        free(parametro);
+        
 	}
 
-	free(linea_leida);
-    
+    log_info(logger, "se termino la terminal XD");
+
+    free(linea_leida);
+
     return 0;
 }
