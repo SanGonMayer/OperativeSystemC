@@ -17,6 +17,16 @@ typedef enum {
     VRR= 3,
 } t_algoritmoPlanificacion;
 
+typedef enum {
+    EJECUTAR_STRIPT= 1,
+    INICIAR_PROCESO= 2,
+    FINALIZAR_PROCESO= 3,
+    DETENER_PLANIFICACION= 4,
+    INICIAR_PLANIFIACION= 5,
+    MULTIPROGRAMACION =6, 
+    PROCESO_ESTADO= 7,
+} t_funciones_consola;
+
 void iniciar_proceso(char* path, t_queue* cola_new);
 
 uint32_t enviar_path_a_memoria(char* path);
@@ -24,5 +34,7 @@ uint32_t enviar_path_a_memoria(char* path);
 void enviar_proceso_a_ready(t_queue* cola_new,t_queue* cola_ready);
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
+
+void consola_interactiva(t_log *logger);
 
 #endif
