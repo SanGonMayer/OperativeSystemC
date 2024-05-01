@@ -23,9 +23,12 @@ void cargar_lista_paths(int contadorPID,t_list* lista_paths, char* path){
     list_add(lista_paths, contenido);
 }
 
-void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready){
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, t_list* lista_paths){
         t_PCB* pcb = queue_pop(cola_new);
         queue_push(cola_ready, pcb);
+        //pidProceso = pcb -> pid;
+        //list_find(lista_paths, )
+        //la linea de abajo hay que cambiarla
         pcb->registrosMem.codigo = enviar_path_a_memoria(pcb->path);
         pcb-> estado = READY;
 }
