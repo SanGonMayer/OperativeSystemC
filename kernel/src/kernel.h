@@ -18,7 +18,7 @@ typedef enum {
 } t_algoritmoPlanificacion;
 
 typedef enum {
-    EJECUTAR_SCRIPT= 1,
+    EJECUTAR_STRIPT= 1,
     INICIAR_PROCESO= 2,
     FINALIZAR_PROCESO= 3,
     DETENER_PLANIFICACION= 4,

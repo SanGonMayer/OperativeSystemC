@@ -101,11 +101,12 @@ int main(void){
 
     //Consola interactiva
     pthread_t hilo_consola_interactiva;
+    consola_interactiva(logger);
     
-    if (pthread_create(&hilo_consola_interactiva, NULL, (void*)consola_interactiva, logger) != 0)
+    if (pthread_create(&hilo_consola_interactiva, NULL, consola_interactiva, (void*)logger) != 0)
         log_error(logger, "error al crear el hilo de la cosola interactiva");
     
-    if (pthread_detach(hilo_consola_interactiva))
+    if (pthread_join(hilo_consola_interactiva, NULL))
         log_error(logger, "error con el join del hilo de la consola interactiva");
 
     //Pedido por consola
