@@ -30,13 +30,13 @@ typedef enum {
 typedef struct{
     int PID;
     char* path;
-}t_listaPID 
+}t_listaPID;
 
-void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths);
+void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* contadorPID);
 
 uint32_t enviar_path_a_memoria(char* path);
 
-void enviar_proceso_a_ready(t_queue* cola_new,t_queue* cola_ready);
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, t_list* lista_paths);
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
 

@@ -25,6 +25,8 @@ void procesar_cliente(int* fd){
     while (iterador) {
         int cod_op = recibir_operacion(*fd);
 
+
+
         switch (cod_op) 
         {
         case 1:
@@ -88,6 +90,7 @@ int main(void){
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", logger);
     handshake_cliente(conexion_cpu_dispatch, logger);
     enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", conexion_cpu_dispatch);
+    
 
     int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", logger);
     handshake_cliente(conexion_cpu_interrupt, logger);
@@ -101,20 +104,19 @@ int main(void){
 
     //Consola interactiva
     pthread_t hilo_consola_interactiva;
-    consola_interactiva(logger);
+    // consola_interactiva(logger);
     
     if (pthread_create(&hilo_consola_interactiva, NULL, consola_interactiva, (void*)logger) != 0)
         log_error(logger, "error al crear el hilo de la cosola interactiva");
     
-    if (pthread_join(hilo_consola_interactiva, NULL))
-        log_error(logger, "error con el join del hilo de la consola interactiva");
+    pthread_detach(hilo_consola_interactiva);
 
     //Pedido por consola
-    iniciar_proceso("path", cola_new, lista_paths);
+    iniciar_proceso("path", cola_new, lista_paths, &contadorPID);
 
     //Si hay lugar lo mete en cola ready
     if(grado_multiprogramacion>0){
-        enviar_proceso_a_ready(cola_new, cola_ready);
+        enviar_proceso_a_ready(cola_new, cola_ready, NULL);
         grado_multiprogramacion --;
     }
     log_info(logger, "grado multiprogramacion = %d", grado_multiprogramacion);

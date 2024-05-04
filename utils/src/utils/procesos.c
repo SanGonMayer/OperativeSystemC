@@ -1,61 +1,39 @@
 #include "procesos.h"
+#include "buffer.h"
 
 t_PCB* crear_PCB(){
     t_PCB* pcb = malloc(sizeof(t_PCB));
     return pcb;
 }
 
-void serializar_pcb(const t_PCB *pcb, uint8_t *buffer, size_t *size_out) {
-    // Serializa todos los campos excepto el path
-    size_t base_size = sizeof(t_PCB) - sizeof(char *);
-    memcpy(buffer, pcb, base_size);
-
-    // Serializa el path
-    uint32_t path_len = strlen(pcb->path) + 1; // Incluye el terminador nulo
-    memcpy(buffer + base_size, &path_len, sizeof(path_len)); // Longitud del path
-    memcpy(buffer + base_size + sizeof(path_len), pcb->path, path_len); // Contenido del path
-    
-    // Establece el tamaño total del buffer
-    *size_out = base_size + sizeof(path_len) + path_len;
-}
-
 int enviar_pcb(int socket, const t_PCB *pcb) {
-    // Calcular el tamaño total necesario para el buffer
-    size_t buffer_size;
-    uint8_t *buffer = (uint8_t *)malloc(sizeof(t_PCB) + 256); // Buffer de tamaño máximo probable
 
-    serializar_pcb(pcb, buffer, &buffer_size);
+    t_buffer* buffer = serializar_pcb(pcb);
 
-    int result = send(socket, buffer, buffer_size, 0);
+    t_paquete* paquete = malloc(sizeof(t_paquete));
 
-    free(buffer); // Liberar la memoria del buffer
+    paquete->codigo_operacion = 2;
+    paquete->buffer = buffer; 
+
+    void* a_enviar = malloc(buffer->size + sizeof(int) + sizeof(uint32_t));
+    int offset = 0;
+
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
+    offset += sizeof(int);
+    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+
+    // Por último enviamos
+    int result = send(socket, a_enviar, buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+
+    // No nos olvidamos de liberar la memoria que ya no usaremos
+    free(a_enviar);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
 
     return result;
-}
-
-void deserializar_pcb(const uint8_t *buffer, t_PCB *pcb) {
-    // Deserializa todos los campos excepto el path
-    size_t base_size = sizeof(t_PCB) - sizeof(char *);
-    memcpy(pcb, buffer, base_size);
-
-    // Deserializa el path
-    uint32_t path_len;
-    memcpy(&path_len, buffer + base_size, sizeof(path_len)); // Obtiene la longitud del path
-    pcb->path = (char *)malloc(path_len);
-    memcpy(pcb->path, buffer + base_size + sizeof(path_len), path_len); // Copia el contenido del path
-}
-
-int recibir_pcb(int socket, t_PCB *pcb) {
-    uint8_t temp_buffer[1024]; // Buffer temporal para recibir datos
-    size_t received = 0;
-
-    int bytes = recv(socket, temp_buffer, sizeof(temp_buffer), 0);
-    if (bytes > 0) {
-        received += bytes;
-        deserializar_pcb(temp_buffer, pcb);
-    }
-
-    return bytes;
 }
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo) {
@@ -80,4 +58,40 @@ void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo) {
         memcpy(pcb_viejo->path, pcb_nuevo->path, path_len); // Copiar el nuevo path
     }
     */
+}
+
+
+t_buffer* serializar_pcb(t_PCB* pcb){
+
+    t_buffer* buffer = buffer_create(
+        sizeof(pcb->PID) + 
+        sizeof(pcb->estado) + 
+        sizeof(pcb->quantum) + 
+        sizeof(pcb->registrosCPU) + 
+        sizeof(pcb->registrosMem) + 
+        sizeof(pcb->path_length)
+    );
+
+    buffer_add_uint32(buffer, pcb->PID);
+    buffer_add_uint32(buffer, pcb->estado);
+    buffer_add_uint32(buffer, pcb->quantum);
+    buffer_add(buffer, &pcb->registrosCPU, sizeof(t_registrosCPU));
+    buffer_add(buffer, &pcb->registrosMem, sizeof(t_registrosMem));
+    buffer_add_string(buffer, pcb->path_length, pcb->path);
+
+    return buffer;
+}
+
+
+t_PCB* deserializar_pcb(t_buffer* buffer){
+    t_PCB* pcb = malloc(sizeof(t_PCB));
+
+    pcb->PID = buffer_read_uint32(buffer);
+    pcb->estado = buffer_read_uint32(buffer);
+    pcb->quantum = buffer_read_uint32(buffer);
+    buffer_read(buffer, &pcb->registrosCPU, sizeof(t_registrosCPU));
+    buffer_read(buffer, &pcb->registrosMem, sizeof(t_registrosMem));
+    pcb->path = buffer_read_string(buffer, &pcb->path_length);
+
+    return pcb;
 }

@@ -58,6 +58,7 @@ void handshake_cliente(int socket_conexion, t_log* logger){
 	}
 }
 
+
 void enviar_mensaje(char* mensaje, int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));

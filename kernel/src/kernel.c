@@ -1,7 +1,7 @@
 #include "kernel.h"
 #include <string.h>
-#include<readline/readline.h>
-
+#include <readline/readline.h>
+#include <stdio.h>
 
 //aca recibe manda mensaje a memoria y recibe direccion
 uint32_t enviar_path_a_memoria(char* path){
@@ -9,17 +9,17 @@ uint32_t enviar_path_a_memoria(char* path){
 }
 
 void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* contadorPID){
-    t_PCB* PCB = crear_PCB();
-    pcb -> PID = *contadorPID;
-    pcb -> estado = NEW;
+    t_PCB* pcb = crear_PCB();
+    pcb->PID = *contadorPID;
+    pcb->estado = NEW;
     cargar_lista_paths(*contadorPID, lista_paths);
-    queue_push(cola_new, PCB);
+    queue_push(cola_new, pcb);
 }
 
 void cargar_lista_paths(int contadorPID,t_list* lista_paths, char* path){
-    t_listaPID contenido = malloc(sizeof(t_listaPID));
-    contenido -> PID = contadorPID;
-    contenido -> path = path;
+    t_listaPID* contenido = malloc(sizeof(t_listaPID));
+    contenido->PID = contadorPID;
+    contenido->path = path;
     list_add(lista_paths, contenido);
 }
 
@@ -40,12 +40,12 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     err = enviar_pcb(conexion_cpu_dispatch, pcb);
     //log_info(logger, "PCB ENVIADA: %d", pcb->PID);
     
-    err = recibir_pcb(conexion_cpu_dispatch, pcb_auxiliar);
-    
-    actualizar_pcb(pcb, pcb_auxiliar);
+    // actualizar_pcb(pcb, pcb_auxiliar);
     //log_info(logger, "PCB RECIBIDA: %d", pcb->PID);
     free(pcb_auxiliar);
 }
+
+
 
 void consola_interactiva(t_log *logger){
     

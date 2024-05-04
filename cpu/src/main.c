@@ -18,19 +18,26 @@ void servidor_dispatch(){
     int conectado = 1;
     
     while(conectado){
-        t_PCB* pcb = crear_PCB();
-        int err;
-        err = recibir_pcb(cliente_dispatch_fd, pcb);
-        log_info(logger, "pcb recibido: %d", pcb->PID);
-        if(err = -1){
-            conectado = 0;
+        // agrego logs para ver si se conecta
+        int cod_op = recibir_operacion(cliente_dispatch_fd);
+        
+        log_info(logger, "Recibí la operación %d", cod_op);
+
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje_logger(cliente_dispatch_fd, logger);
+            break;
+        case 2:
+            t_buffer* buffer = malloc(sizeof(t_buffer));
+            buffer->stream = recibir_buffer(&buffer->size, cliente_dispatch_fd);
+            buffer->offset = 0;
+            t_PCB* pcb = deserializar_pcb(buffer);
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            break;
         }
-        //Hace el ciclo de ejecucionle
-        //...
-        //actualiza pcb
-        pcb->PID = 8949;
-        enviar_pcb(cliente_dispatch_fd, pcb);
-        free(pcb);
     }
     close(cliente_dispatch_fd);
 }

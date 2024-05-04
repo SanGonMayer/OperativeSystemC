@@ -10,6 +10,7 @@
 #include <commons/collections/queue.h>
 #include <commons/collections/list.h>
 #include <pthread.h>
+#include "buffer.h"
 
 typedef struct{
     uint32_t pc;
@@ -47,17 +48,17 @@ typedef struct{
     t_registrosCPU registrosCPU;
     t_registrosMem registrosMem;
     int quantum;
+    int path_length;
+    char* path;
 } t_PCB;
 
 t_PCB* crear_PCB();
 
-void serializar_pcb(const t_PCB *pcb, uint8_t *buffer, size_t *size_out);
+t_buffer* serializar_pcb(t_PCB* pcb);
+
+t_PCB* deserializar_pcb(t_buffer* buffer);
 
 int enviar_pcb(int socket, const t_PCB *pcb);
-
-void deserializar_pcb(const uint8_t *buffer, t_PCB *pcb);
-
-int recibir_pcb(int socket, t_PCB *pcb);
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
 

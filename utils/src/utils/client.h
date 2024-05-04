@@ -6,12 +6,8 @@
 #include <commons/config.h>
 #include <commons/log.h>
 #include <string.h>
+#include "buffer.h"
 
-typedef struct
-{
-	int size;
-	void* stream;
-} t_buffer;
 
 typedef struct
 {
