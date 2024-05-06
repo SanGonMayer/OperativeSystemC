@@ -15,7 +15,6 @@ t_log* logger;
 t_queue* cola_new;
 t_queue* cola_ready;
 t_queue* cola_exec;
-t_list* lista_paths;
 
 void procesar_cliente(int* fd){
 
@@ -24,9 +23,6 @@ void procesar_cliente(int* fd){
 
     while (iterador) {
         int cod_op = recibir_operacion(*fd);
-
-
-
         switch (cod_op) 
         {
         case 1:
@@ -59,9 +55,6 @@ int main(void){
     cola_new = queue_create();
     cola_ready = queue_create();
     cola_exec = queue_create();
-
-    //lista paths
-    lista_paths = list_create();
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -111,6 +104,7 @@ int main(void){
     
     pthread_detach(hilo_consola_interactiva);
 
+    /*
     //Pedido por consola
     iniciar_proceso("path", cola_new, lista_paths, &contadorPID);
 
@@ -122,7 +116,8 @@ int main(void){
     log_info(logger, "grado multiprogramacion = %d", grado_multiprogramacion);
     t_PCB* pcb = queue_pop(cola_ready);
     ejecutar_cpu_FIFO(pcb, conexion_cpu_dispatch, logger);
-
+    */
+    
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta.
     while(!queue_is_empty(cola_ready)){
         t_PCB* pcb = queue_pop(cola_ready);
