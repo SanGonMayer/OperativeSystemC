@@ -3,6 +3,8 @@
 #include <readline/readline.h>
 #include <stdio.h>
 
+//PENE ERECTO
+
 //aca recibe manda mensaje a memoria y recibe direccion
 uint32_t enviar_path_a_memoria(char* path){
     return 5;
