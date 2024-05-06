@@ -3,11 +3,65 @@
 #include <readline/readline.h>
 #include <stdio.h>
 
-//PENE ERECTO
 
 //aca recibe manda mensaje a memoria y recibe direccion
-uint32_t enviar_path_a_memoria(char* path){
-    return 5;
+int enviar_contexto_memoria(t_paquete* paquete, int socket){
+
+    void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
+    int offset = 0;
+
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
+    offset += sizeof(int);
+    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+
+    // Por último enviamos
+    int result = send(socket, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+
+    // No nos olvidamos de liberar la memoria que ya no usaremos
+    free(a_enviar);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+
+    return result;
+}
+
+uint32_t recibir_contexto_memoria(int socket){
+    uint32_t posicionDeCodigo;
+    recv(socket, &posicionDeCodigo, sizeof(uint32_t), MSG_WAITALL);
+
+    return posicionDeCodigo;
+}
+
+t_paquete* crear_contexto_memoria(t_PCB* pcb){
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    t_buffer* buffer = buffer_create(
+        sizeof(uint32_t)+
+        sizeof(t_registrosMem)+
+        sizeof(uint32_t)+
+        pcb->path_length
+    )
+    paquete->codigo_operacion = 2;
+    paquete->buffer = buffer;
+    buffer_add_uint32(paquete->buffer, &(pcb->PID));
+    buffer_add(paquete->buffer, &(pcb->registrosMem), sizeof(t_registrosMem));
+    buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
+
+    return paquete;
+}
+
+uint32_t enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
+    t_paquete* paquete = crear_contexto_memoria(pcb);
+    int result = enviar_contexto_memoria(paquete, socketMemoria);
+    //verificar
+    if (result == -1){
+        return result; 
+    }
+    uint32_t posicionDeCodigo = recibir_contexto_memoria(socketMemoria);
+
+    return posicionDeCodigo;
 }
 
 void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* contadorPID){
@@ -17,10 +71,10 @@ void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* co
     queue_push(cola_new, pcb);
 }
 
-void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, t_list* lista_paths){
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria){
         t_PCB* pcb = queue_pop(cola_new);
         queue_push(cola_ready, pcb);
-        pcb->registrosMem.codigo = enviar_path_a_memoria(pcb->path);
+        pcb->registrosMem.codigo = enviar_proceso_a_memoria(pcb, socketMemoria);
         pcb-> estado = READY;
 }
 
