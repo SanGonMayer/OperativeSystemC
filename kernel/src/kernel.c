@@ -39,14 +39,12 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb){
     t_paquete* paquete = malloc(sizeof(t_paquete));
     t_buffer* buffer = buffer_create(
         sizeof(uint32_t)+
-        sizeof(t_registrosMem)+
         sizeof(uint32_t)+
         pcb->path_length
     )
     paquete->codigo_operacion = 2;
     paquete->buffer = buffer;
     buffer_add_uint32(paquete->buffer, &(pcb->PID));
-    buffer_add(paquete->buffer, &(pcb->registrosMem), sizeof(t_registrosMem));
     buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
 
     return paquete;
