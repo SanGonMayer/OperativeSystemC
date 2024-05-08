@@ -29,10 +29,9 @@ int enviar_contexto_memoria(t_paquete* paquete, int socket){
 }
 
 uint32_t recibir_contexto_memoria(int socket){
-    uint32_t posicionDeCodigo;
-    recv(socket, &posicionDeCodigo, sizeof(uint32_t), MSG_WAITALL);
-
-    return posicionDeCodigo;
+    t_registrosMem registrosMemoria;
+    recv(socket, &registrosMemoria, sizeof(t_registrosMem), MSG_WAITALL);
+    return registrosMemoria;
 }
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb){
@@ -50,19 +49,23 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb){
     return paquete;
 }
 
-uint32_t enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
+void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
     t_paquete* paquete = crear_contexto_memoria(pcb);
     int result = enviar_contexto_memoria(paquete, socketMemoria);
     //verificar
     if (result == -1){
         return result; 
     }
-    uint32_t posicionDeCodigo = recibir_contexto_memoria(socketMemoria);
-
-    return posicionDeCodigo;
+    uint32_t posicionDeCodigo;
+    uint32_t finalDeCodigo;
+    recv(socketMemoria, &posicionDeCodigo, sizeof(uint32_t), MSG_WAITALL);
+    recv(socketMemoria, &finalDeCodigo, sizeof(uint32_t), MSG_WAITALL);
+    pcb->registrosMem.codigo = posicionDeCodigo;
+    pcb->registrosMem.posicionFinal = finalDeCodigo;
+    return;
 }
 
-void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* contadorPID){
+void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
     t_PCB* pcb = crear_PCB();
     pcb->PID = *contadorPID;
     pcb->estado = NEW;
@@ -72,7 +75,7 @@ void iniciar_proceso(char* path, t_queue* cola_new, t_list* lista_paths, int* co
 void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria){
         t_PCB* pcb = queue_pop(cola_new);
         queue_push(cola_ready, pcb);
-        pcb->registrosMem.codigo = enviar_proceso_a_memoria(pcb, socketMemoria);
+        enviar_proceso_a_memoria(pcb, socketMemoria);
         pcb-> estado = READY;
 }
 

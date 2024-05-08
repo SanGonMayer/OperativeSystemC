@@ -103,7 +103,7 @@ int main(void){
         log_error(logger, "error al crear el hilo de la cosola interactiva");
     
     pthread_detach(hilo_consola_interactiva);
-
+    iniciar_proceso("path", cola_new, lista_paths, &contadorPID);
     /*
     //Pedido por consola
     iniciar_proceso("path", cola_new, lista_paths, &contadorPID);

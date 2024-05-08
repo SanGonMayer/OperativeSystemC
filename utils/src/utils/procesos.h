@@ -31,7 +31,7 @@ typedef struct{
     uint32_t codigo;
     uint32_t datos;
     uint32_t heap;
-
+    uint32_t posicionFinal;
 } t_registrosMem;
 
 typedef enum {
