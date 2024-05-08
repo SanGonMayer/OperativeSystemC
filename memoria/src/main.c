@@ -13,18 +13,26 @@ int tam_pagina;
 char* path_instrucciones;
 int retardo_respuesta;
 
-void procesar_cliente(int* fd){
+void procesar_cliente(int* socket){
 
-    handshake_server(*fd, logger);
+    handshake_server(*socket, logger);
     int iterador = 1;
 
     while (iterador) {
-        int cod_op = recibir_operacion(*fd);
+        int cod_op = recibir_operacion(*socket);
 
         switch (cod_op) 
         {
         case 1:
-            recibir_mensaje(*fd);
+            recibir_mensaje(*socket);
+            break;
+        case 2:
+            uint32_t posicionDeCodigo = 0;
+            t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
+            recibir_contexto_de_kernel(*socket, paqueteMemoria);
+            //logica para conseguir la posicionDeCodigo
+            enviar_posicion_de_codigo(*socket, posicionDeCodigo);
+            free(*paqueteMemoria);
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");
