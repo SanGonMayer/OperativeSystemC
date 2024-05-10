@@ -9,8 +9,10 @@
 #include <unistd.h>
 #include <commons/collections/queue.h>
 #include <commons/collections/list.h>
+#include <commons/log.h>
+#include <utils/buffer.h>
 #include <pthread.h>
-#include "buffer.h"
+
 
 typedef struct{
     uint32_t pc;

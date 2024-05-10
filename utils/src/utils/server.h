@@ -38,7 +38,7 @@ void atender_clientes(int socket_servidor, t_log* logger,ProcesarRequestFunc pro
 
 int recibir_operacion(int socket_cliente);
 
-void* recibir_buffer(int* size, int socket_cliente);
+void* recibir_buffer_piton(int* size, int socket_cliente);
 
 void handshake_server(int fd, t_log* logger);
 

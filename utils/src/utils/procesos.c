@@ -1,5 +1,4 @@
 #include "procesos.h"
-#include "buffer.h"
 
 t_PCB* crear_PCB(){
     t_PCB* pcb = malloc(sizeof(t_PCB));
@@ -35,8 +34,6 @@ int enviar_pcb(int socket, const t_PCB *pcb) {
 
     return result;
 }
-
-enviar_contexto_memoria(t_paquete )
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo) {
     // Copiar datos básicos
