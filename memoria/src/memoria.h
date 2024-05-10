@@ -15,4 +15,12 @@ t_paqueteMemoria* inicializar_paquete_memoria();
 void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria);
 
 void enviar_posicion_de_codigo(int socket, uint32_t posicionDeCogido);
+
+uint32_t recibir_posicin_de_codigo(int socket, t_log* logger);
+
+void enviar_instruccion(*socket, char* instruccion, t_log* logger);
+
+void leer_archivo(uint32_t posicionDeCodigo, char* instruccion);
+
+
 #endif

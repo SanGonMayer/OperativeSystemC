@@ -13,6 +13,8 @@ int tam_pagina;
 char* path_instrucciones;
 int retardo_respuesta;
 
+uint32_t* posicionFinalEscrita = 0;
+
 void procesar_cliente(int* socket){
 
     handshake_server(*socket, logger);
@@ -31,8 +33,18 @@ void procesar_cliente(int* socket){
             t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
             recibir_contexto_de_kernel(*socket, paqueteMemoria);
             //logica para conseguir la posicionDeCodigo
-            enviar_posicion_de_codigo(*socket, posicionDeCodigo);
+            posicionDeCodigo = abrir_archivo(paqueteMemoria->path);
+            //enviar la posicionDeCodigo
+            enviar_posicion_de_codigo(*socket, posicionDeCodigo); 
             free(paqueteMemoria);
+            break;
+        case 3: //Recibir posicion de codigo de CPU
+            uint32_t posicionDeCodigo = 0;
+            char* instruccion; 
+            posicionDeCodigo = recibir_posicin_de_codigo(*socket, logger);
+            leer_archivo(posicionDeCodigo, instruccion); //TODO
+            enviar_instruccion(*socket, instruccion, logger);
+            free(instruccion);
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");

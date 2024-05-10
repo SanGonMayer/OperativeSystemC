@@ -75,3 +75,22 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length){
     string[*length] = '\0';
     return string;
 }
+
+
+void enviar_buffer(int socket, t_buffer* buffer, t_log* logger){
+    void* a_enviar = malloc(buffer->size + sizeof(uint32_t));
+    int offset = 0;
+
+    memcpy(a_enviar + offset, &buffer->size, sizeof(uint32_t));
+    offset += sizeof(int);
+
+    memcpy(a_enviar + offset, buffer->stream, buffer->size);
+    offset += buffer->size;
+
+    int result = send(socket, a_enviar, buffer->size + sizeof(uint32_t), 0);
+    if(result == -1){
+        log_error(logger, "Error al enviar buffer");
+    }
+
+    free(a_enviar);
+}

@@ -64,4 +64,8 @@ int enviar_pcb(int socket, const t_PCB *pcb);
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
 
+void* crear_a_enviar(t_paquete* paquete);
+
+t_PCB* recibir_pcb(int socket);
+
 #endif

@@ -70,9 +70,8 @@ void servidor_dispatch(){
             recibir_mensaje_logger(cliente_dispatch_fd, logger);
             break;
         case 2: // recibir PCB de Kernel
-            t_buffer* buffer = recibir_buffer(cliente_dispatch_fd);
-            //Logica de Ciclos de instruccion
-            t_PCB* pcb = deserializar_pcb(buffer);
+            t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
+            etapa_fetch(cliente_dispatch_fd, pcb, logger);
             //Enviar pcb a kernel TODO
             break;
         default:

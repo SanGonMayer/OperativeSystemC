@@ -5,6 +5,17 @@ t_PCB* crear_PCB(){
     return pcb;
 }
 
+void* crear_a_enviar(t_paquete* paquete){
+    void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
+    int offset = 0;
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
+    offset += sizeof(int);
+    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+    return a_enviar;
+}
+
 int enviar_pcb(int socket, const t_PCB *pcb) {
 
     t_buffer* buffer = serializar_pcb(pcb);
@@ -14,14 +25,7 @@ int enviar_pcb(int socket, const t_PCB *pcb) {
     paquete->codigo_operacion = 2;
     paquete->buffer = buffer; 
 
-    void* a_enviar = malloc(buffer->size + sizeof(int) + sizeof(uint32_t));
-    int offset = 0;
-
-    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
-    offset += sizeof(int);
-    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+    void* a_enviar = crear_a_enviar(paquete);
 
     // Por último enviamos
     int result = send(socket, a_enviar, buffer->size + sizeof(int) + sizeof(uint32_t), 0);
@@ -43,22 +47,8 @@ void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo) {
     pcb_viejo->estado = pcb_nuevo->estado;
     pcb_viejo->quantum = pcb_nuevo->quantum;
 
-    // Actualizar el path
-    /*if (pcb_viejo->path != NULL) {
-        free(*(pcb_viejo->path)); // Liberar el path antiguo
-    
-    }
-    */
     strcpy(pcb_nuevo->path, pcb_viejo->path);
-    /*
-    uint32_t path_len = strlen(pcb_nuevo->path) + 1;
-    pcb_viejo->path = (char *)malloc(path_len); // Asignar nueva memoria para el path
-    if (pcb_viejo->path != NULL) {
-        memcpy(pcb_viejo->path, pcb_nuevo->path, path_len); // Copiar el nuevo path
-    }
-    */
 }
-
 
 t_buffer* serializar_pcb(t_PCB* pcb){
 
@@ -81,6 +71,13 @@ t_buffer* serializar_pcb(t_PCB* pcb){
     return buffer;
 }
 
+
+t_PCB* recibir_pcb(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+    t_PCB* pcb = deserializar_pcb(buffer);
+    free(buffer);
+    return pcb;
+}
 
 t_PCB* deserializar_pcb(t_buffer* buffer){
     t_PCB* pcb = malloc(sizeof(t_PCB));

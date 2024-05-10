@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <commons/config.h>
 #include <netdb.h>
+#include <string.h>
+#include <commons/log.h>
 
 typedef struct{
     uint32_t size;
@@ -44,5 +46,7 @@ void buffer_add_string(t_buffer *buffer, uint32_t length, char *string);
 
 // Lee un string y su longitud del buffer y avanza el offset
 char *buffer_read_string(t_buffer *buffer, uint32_t *length);
+
+void enviar_buffer(int socket, t_buffer* buffer, t_log* logger);
 
 #endif /* BUFFER_H_ */      
