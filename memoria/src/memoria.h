@@ -6,11 +6,13 @@
 
 typedef struct{
     uint32_t PID;
-    char* path;
     uint32_t path_length;
-    t_registrosMem registrosMemoria;
+    char* path;
 }t_paqueteMemoria
 
-void iterator(char* value, t_log* logger);
+void inicializar_paquete_memoria();
 
+void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria);
+
+void enviar_posicion_de_codigo(int socket, int posicionDeCogido);
 #endif

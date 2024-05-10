@@ -4,14 +4,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-
-
+#include <utils/procesos.h>
 
 typedef struct{
     uint32_t size;
     uint32_t offset;
     void* stream;
 } t_buffer;
+
+t_buffer *recibir_buffer(int socket);
 
 // Crea un buffer vacío de tamaño size y offset 0
 t_buffer *buffer_create(uint32_t size);

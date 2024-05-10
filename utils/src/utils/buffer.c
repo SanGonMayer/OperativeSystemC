@@ -10,6 +10,15 @@ t_buffer *buffer_create(uint32_t size){
     return buffer;
 }
 
+t_buffer* recibir_buffer(int socket){
+    t_buffer* buffer = malloc(sizeof(t_buffer));
+    recv(socket, &buffer->size, sizeof(uint32_t), MSG_WAITALL);
+    buffer->stream = malloc(buffer->size);
+    recv(socket, buffer->stream, buffer->size, MSG_WAITALL);
+    buffer->offset = 0;
+    return buffer;
+}
+
 // Libera la memoria asociada al buffer
 void buffer_destroy(t_buffer *buffer){
     free(buffer->stream);

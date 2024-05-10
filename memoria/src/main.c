@@ -1,6 +1,6 @@
-#include <memoria.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "memoria.h"
 #include <commons/config.h>
 #include <utils/server.h>
 
@@ -26,13 +26,13 @@ void procesar_cliente(int* socket){
         case 1:
             recibir_mensaje(*socket);
             break;
-        case 2:
+        case 2: //Recibir contexto de kernel
             uint32_t posicionDeCodigo = 0;
             t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
             recibir_contexto_de_kernel(*socket, paqueteMemoria);
             //logica para conseguir la posicionDeCodigo
             enviar_posicion_de_codigo(*socket, posicionDeCodigo);
-            free(*paqueteMemoria);
+            free(paqueteMemoria);
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");
@@ -45,12 +45,9 @@ void procesar_cliente(int* socket){
     }  
 }
 
-
 int main(int argc, char* argv[]) {
-    decir_hola("Memoria");
 
     logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
-
 
     config = config_create("../memoria/memoria.config");
 
@@ -64,11 +61,10 @@ int main(int argc, char* argv[]) {
     tam_pagina = config_get_int_value(config, "TAM_PAGINA");
     path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
     retardo_respuesta = config_get_int_value(config, "RETARDO_RESPUESTA");
-    
 
-    int socket = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
+    int socket_escucha = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
     
-    atender_clientes(socket, logger, &procesar_cliente);
+    atender_clientes(socket_escucha, logger, &procesar_cliente);
 
     log_destroy(logger);
     config_destroy(config);
