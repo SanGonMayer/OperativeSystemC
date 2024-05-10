@@ -10,64 +10,8 @@ char* puerto_escucha_interrupt;
 uint32_t cantidad_entradas_tlb;
 char* algoritmo_tlb;
 
-void servidor_dispatch(){
-    int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
-    int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
-    handshake_server(cliente_dispatch_fd, logger);
-
-    int conectado = 1;
-    
-    while(conectado){
-        // agrego logs para ver si se conecta
-        int cod_op = recibir_operacion(cliente_dispatch_fd);
-        
-        log_info(logger, "Recibí la operación %d", cod_op);
-
-        switch (cod_op)
-        {
-        case 1:
-            recibir_mensaje_logger(cliente_dispatch_fd, logger);
-            break;
-        case 2:
-            t_buffer* buffer = malloc(sizeof(t_buffer));
-            buffer->stream = recibir_buffer(&buffer->size, cliente_dispatch_fd);
-            buffer->offset = 0;
-            t_PCB* pcb = deserializar_pcb(buffer);
-            break;
-        default:
-            log_info(logger, "No entiendo el mensaje");
-            break;
-        }
-    }
-    close(cliente_dispatch_fd);
-}
-
-void servidor_interrupt(){
-    int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, logger, "CPU INTERRUPT");
-    int cliente_interrupt_fd = esperar_cliente(socket_servidor, logger);
-    handshake_server(cliente_interrupt_fd, logger);
-
-    int conectado = 1;
-    while(conectado){
-
-        int cod_op = recibir_operacion(cliente_interrupt_fd);
-        
-        switch (cod_op)
-        {
-        case 1:
-            recibir_mensaje_logger(cliente_interrupt_fd, logger);
-            break;
-        case -1:
-            error_show("cliente desconectado de CPU interrupt");
-            close(cliente_interrupt_fd);
-            conectado = 0;
-            break;
-        default:
-            log_info(logger, "No entiendo el mensaje");
-            break;
-        }
-    }
-}
+void servidor_dispatch();
+void servidor_interrupt();
 
 int main(int argc, char* argv[]) {
     
@@ -107,4 +51,62 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+void servidor_dispatch(){
+    int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
+    int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
+    handshake_server(cliente_dispatch_fd, logger);
+
+    int conectado = 1;
+    
+    while(conectado){
+        // agrego logs para ver si se conecta
+        int cod_op = recibir_operacion(cliente_dispatch_fd);
+        
+        log_info(logger, "Recibí la operación %d", cod_op);
+
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje_logger(cliente_dispatch_fd, logger);
+            break;
+        case 2: // recibir PCB de Kernel
+            t_buffer* buffer = recibir_buffer(cliente_dispatch_fd);
+            //Logica de Ciclos de instruccion
+            t_PCB* pcb = deserializar_pcb(buffer);
+            //Enviar pcb a kernel TODO
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            break;
+        }
+    }
+    close(cliente_dispatch_fd);
+}
+
+void servidor_interrupt(){
+    int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, logger, "CPU INTERRUPT");
+    int cliente_interrupt_fd = esperar_cliente(socket_servidor, logger);
+    handshake_server(cliente_interrupt_fd, logger);
+
+    int conectado = 1;
+    while(conectado){
+
+        int cod_op = recibir_operacion(cliente_interrupt_fd);
+        
+        switch (cod_op)
+        {
+        case 1:
+            recibir_mensaje_logger(cliente_interrupt_fd, logger);
+            break;
+        case -1:
+            error_show("cliente desconectado de CPU interrupt");
+            close(cliente_interrupt_fd);
+            conectado = 0;
+            break;
+        default:
+            log_info(logger, "No entiendo el mensaje");
+            break;
+        }
+    }
+}
 
