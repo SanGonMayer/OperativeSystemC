@@ -70,7 +70,7 @@ void buffer_add_string(t_buffer *buffer, uint32_t length, char *string){
 // Lee un string y su longitud del buffer y avanza el offset
 char *buffer_read_string(t_buffer *buffer, uint32_t *length){
     *length = buffer_read_uint32(buffer);
-    char *string = malloc(*length + 1);
+    char *string = malloc(*length);
     buffer_read(buffer, string, *length);
     string[*length] = '\0';
     return string;

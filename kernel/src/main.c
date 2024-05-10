@@ -48,7 +48,7 @@ int main(void){
         log_error(logger, "Mal el path");
         exit(EXIT_FAILURE);
     }
-
+    //Pid procesos
     int contadorPID = 1;
 
     //colas de planificacion
@@ -68,22 +68,11 @@ int main(void){
 
     algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
     
-    int algoritmo_planificacion_enum;
-    
-    if(strcmp(algoritmo_planificacion, "FIFO") == 0){
-        algoritmo_planificacion_enum == FIFO;
-    } else if(strcmp(algoritmo_planificacion, "RR") == 0){
-        algoritmo_planificacion_enum == RR;
-    } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
-        algoritmo_planificacion_enum == VRR;
-    }
-    
     quantum = config_get_int_value(config, "QUANTUM");
 
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", logger);
     handshake_cliente(conexion_cpu_dispatch, logger);
     enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", conexion_cpu_dispatch);
-    
 
     int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", logger);
     handshake_cliente(conexion_cpu_interrupt, logger);
@@ -97,28 +86,23 @@ int main(void){
 
     //Consola interactiva
     pthread_t hilo_consola_interactiva;
-    // consola_interactiva(logger);
-    
-    if (pthread_create(&hilo_consola_interactiva, NULL, consola_interactiva, (void*)logger) != 0)
-        log_error(logger, "error al crear el hilo de la cosola interactiva");
-    
-    pthread_detach(hilo_consola_interactiva);
-    iniciar_proceso("path", cola_new, lista_paths, &contadorPID);
-    /*
-    //Pedido por consola
-    iniciar_proceso("path", cola_new, lista_paths, &contadorPID);
 
-    //Si hay lugar lo mete en cola ready
-    if(grado_multiprogramacion>0){
-        enviar_proceso_a_ready(cola_new, cola_ready, NULL);
-        grado_multiprogramacion --;
+    if (pthread_create(&hilo_consola_interactiva, NULL, consola_interactiva, (void*)logger) != 0){
+        log_error(logger, "error al crear el hilo de la cosola interactiva");
     }
-    log_info(logger, "grado multiprogramacion = %d", grado_multiprogramacion);
-    t_PCB* pcb = queue_pop(cola_ready);
-    ejecutar_cpu_FIFO(pcb, conexion_cpu_dispatch, logger);
-    */
-    
+    pthread_detach(hilo_consola_interactiva);
+
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta.
+    int algoritmo_planificacion_enum;
+    
+    if(strcmp(algoritmo_planificacion, "FIFO") == 0){
+        algoritmo_planificacion_enum == FIFO;
+    } else if(strcmp(algoritmo_planificacion, "RR") == 0){
+        algoritmo_planificacion_enum == RR;
+    } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+        algoritmo_planificacion_enum == VRR;
+    }
+    
     while(!queue_is_empty(cola_ready)){
         t_PCB* pcb = queue_pop(cola_ready);
         if(queue_is_empty(cola_exec)){
@@ -146,16 +130,12 @@ int main(void){
         }
     }
 
-    free(pcb);
-
-    /*
-    for(int i = 0; i <= queue_size(cola_new); i++){
-        t_PCB* pcb = queue_pop(cola_new);
-        log_info(logger, "%d", pcb->PID);
-    }
-    */
     atender_clientes(socket_servidor, logger, &procesar_cliente);
 
+    
+    free(cola_new);
+    free(cola_ready);
+    free(cola_exec);
     close(conexion_cpu_dispatch);
     close(conexion_cpu_interrupt);
     close(conexion_memoria_fd);

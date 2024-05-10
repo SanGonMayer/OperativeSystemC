@@ -3,7 +3,20 @@
 #include <readline/readline.h>
 #include <stdio.h>
 
+t_paquete* crear_contexto_memoria(t_PCB* pcb){
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    t_buffer* buffer = buffer_create(
+        sizeof(uint32_t)+
+        sizeof(uint32_t)+
+        pcb->path_length
+    )
+    paquete->codigo_operacion = 2;
+    paquete->buffer = buffer;
+    buffer_add_uint32(paquete->buffer, &(pcb->PID));
+    buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
 
+    return paquete;
+}
 //aca recibe manda mensaje a memoria y recibe direccion
 int enviar_contexto_memoria(t_paquete* paquete, int socket){
 
@@ -34,20 +47,6 @@ uint32_t recibir_contexto_memoria(int socket){
     return registrosMemoria;
 }
 
-t_paquete* crear_contexto_memoria(t_PCB* pcb){
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-    t_buffer* buffer = buffer_create(
-        sizeof(uint32_t)+
-        sizeof(uint32_t)+
-        pcb->path_length
-    )
-    paquete->codigo_operacion = 2;
-    paquete->buffer = buffer;
-    buffer_add_uint32(paquete->buffer, &(pcb->PID));
-    buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
-
-    return paquete;
-}
 
 void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
     t_paquete* paquete = crear_contexto_memoria(pcb);
@@ -69,6 +68,9 @@ void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
     t_PCB* pcb = crear_PCB();
     pcb->PID = *contadorPID;
     pcb->estado = NEW;
+    pcb->path_length = strlen(path)+1;
+    pcb->path = malloc(pcb->path_length);
+    strcpy(pcb->path, path);
     queue_push(cola_new, pcb);
 }
 
