@@ -1,6 +1,8 @@
+#include <commons/collections/dictionary.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "memoria.h"
+#include "utils/instrucciones.h"
 #include <commons/config.h>
 #include <utils/server.h>
 
@@ -19,7 +21,7 @@ void procesar_cliente(int* socket){
 
     handshake_server(*socket, logger);
     int iterador = 1;
-
+    uint32_t posicionDeCodigo;
     while (iterador) {
         int cod_op = recibir_operacion(*socket);
 
@@ -29,7 +31,7 @@ void procesar_cliente(int* socket){
             recibir_mensaje(*socket);
             break;
         case 2: //Recibir contexto de kernel
-            uint32_t posicionDeCodigo = 0;
+            posicionDeCodigo = 0;
             t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
             recibir_contexto_de_kernel(*socket, paqueteMemoria);
             //logica para conseguir la posicionDeCodigo
@@ -39,7 +41,7 @@ void procesar_cliente(int* socket){
             free(paqueteMemoria);
             break;
         case 3: //Recibir posicion de codigo de CPU
-            uint32_t posicionDeCodigo = 0;
+            posicionDeCodigo = 0;
             char* instruccion; 
             posicionDeCodigo = recibir_posicin_de_codigo(*socket, logger);
             leer_archivo(posicionDeCodigo, instruccion); //TODO
@@ -59,7 +61,24 @@ void procesar_cliente(int* socket){
 
 int main(int argc, char* argv[]) {
 
+
     logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+
+    t_dictionary* memoria_instrucciones = dictionary_create();
+
+    cargar_instrucciones(memoria_instrucciones, 1, "../memoria/instrucciones.dummy");
+    int* pc = malloc(sizeof(int));
+    *pc = 1;
+    char* instruccion1 = leer_instruccion(memoria_instrucciones, 1, pc);
+
+    log_info(logger, "Linea %d - Instruccion: %s", *pc - 1, instruccion1);
+
+    *pc = 4;
+
+    char* instruccion4 = leer_instruccion(memoria_instrucciones, 1, pc);
+
+    log_info(logger, "Linea %d - Instruccion: %s", *pc - 1, instruccion4);
+
 
     config = config_create("../memoria/memoria.config");
 
@@ -76,7 +95,7 @@ int main(int argc, char* argv[]) {
 
     int socket_escucha = iniciar_servidor(puerto_escucha, logger, "CLIENTE");
     
-    atender_clientes(socket_escucha, logger, &procesar_cliente);
+    atender_clientes(socket_escucha, logger, (void*)&procesar_cliente);
 
     log_destroy(logger);
     config_destroy(config);

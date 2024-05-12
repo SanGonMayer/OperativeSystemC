@@ -113,7 +113,7 @@ void handshake_server(int fd, t_log* logger){
 void recibir_mensaje(int fd)
 {
 	int size;
-	char* buffer = recibir_buffer(&size, fd);
+	char* buffer = recibir_buffer_piton(&size, fd);
 
 	t_log *logger = log_create("cpu.log", "messagge", 1, LOG_LEVEL_INFO);
 	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
@@ -124,7 +124,7 @@ void recibir_mensaje(int fd)
 
 void recibir_mensaje_logger(int fd, t_log* logger){
 	int size;
-	char* buffer = recibir_buffer(&size, fd);
+	char* buffer = recibir_buffer_piton(&size, fd);
 
 	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
 
@@ -139,7 +139,7 @@ t_list* recibir_paquete(int socket_cliente)
     t_list* valores = list_create();
     int tamanio;
 
-    buffer = recibir_buffer(&size, socket_cliente);
+    buffer = recibir_buffer_piton(&size, socket_cliente);
     while(desplazamiento < size)
     {
         memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
