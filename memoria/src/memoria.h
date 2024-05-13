@@ -18,9 +18,10 @@ void enviar_posicion_de_codigo(int socket, uint32_t posicionDeCogido);
 
 uint32_t recibir_posicin_de_codigo(int socket, t_log* logger);
 
-void enviar_instruccion(*socket, char* instruccion, t_log* logger);
-
 void leer_archivo(uint32_t posicionDeCodigo, char* instruccion);
 
+void enviar_instruccion(int socket, char* instruccion, t_log* logger);
+
+uint32_t abrir_archivo(char* path);
 
 #endif

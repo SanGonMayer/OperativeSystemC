@@ -1,7 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <utils/hello.h>
 #include "io.h"
+#include <commons/log.h>
 
 ConfiguracionIO* config;
 t_log* logger;

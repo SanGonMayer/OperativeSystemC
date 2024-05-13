@@ -9,10 +9,10 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb){
         sizeof(uint32_t)+
         sizeof(uint32_t)+
         pcb->path_length
-    )
+    );
     paquete->codigo_operacion = 2;
     paquete->buffer = buffer;
-    buffer_add_uint32(paquete->buffer, &(pcb->PID));
+    buffer_add_uint32(paquete->buffer, pcb->PID);
     buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
 
     return paquete;
@@ -41,7 +41,7 @@ int enviar_contexto_memoria(t_paquete* paquete, int socket){
     return result;
 }
 
-uint32_t recibir_contexto_memoria(int socket){
+t_registrosMem recibir_contexto_memoria(int socket){
     t_registrosMem registrosMemoria;
     recv(socket, &registrosMemoria, sizeof(t_registrosMem), MSG_WAITALL);
     return registrosMemoria;
@@ -53,7 +53,7 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
     int result = enviar_contexto_memoria(paquete, socketMemoria);
     //verificar
     if (result == -1){
-        return result; 
+        // return result; 
     }
     uint32_t posicionDeCodigo;
     uint32_t finalDeCodigo;
@@ -164,5 +164,4 @@ void consola_interactiva(t_log *logger){
 
 	free(linea_leida);
     
-    return 0;
 }
