@@ -24,7 +24,7 @@ void responder_ok(int socket){
     send(socket, &ok, sizeof(uint32_t), 0);
 }
 
-t_paquete_instruccion* recibir_posicion_de_codigo(int socket, t_log* logger){
+t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger){
     t_buffer* buffer = recibir_buffer(socket);
     return deserializar_paquete_instruccion(buffer);
 }
@@ -34,12 +34,4 @@ void enviar_instruccion(int socket, char* instruccion, t_log* logger){
     t_buffer* buffer = buffer_create(sizeof(uint32_t) + instruccion_length);
     buffer_add_string(buffer, instruccion_length,instruccion);
     enviar_buffer(socket, buffer, logger);
-}
-
-uint32_t abrir_archivo(char* path){
-    return 1;
-}
-
-void leer_archivo(uint32_t posicionDeCodigo, char* instruccion){
-  
 }

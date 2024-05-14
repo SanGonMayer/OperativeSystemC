@@ -43,7 +43,7 @@ void procesar_cliente(int* socket){
             break;
         case ENVIO_PID_PC: //Recibir posicion de codigo de CPU
             
-            t_paquete_instruccion* pedido_instruccion = recibir_posicion_de_codigo(*socket, logger);
+            t_paquete_instruccion* pedido_instruccion = recibir_instruccion(*socket, logger);
 
             char* instruccion = leer_instruccion(memoria_instrucciones, pedido_instruccion->pid, &pedido_instruccion->pc);
 
