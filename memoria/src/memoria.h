@@ -1,5 +1,6 @@
 #ifndef MEMORIA_H_
 #define MEMORIA_H_
+#include "utils/instrucciones.h"
 #include <utils/procesos.h>
 #include <utils/buffer.h>
 #include <commons/log.h>
@@ -14,14 +15,16 @@ t_paqueteMemoria* inicializar_paquete_memoria();
 
 void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria);
 
-void enviar_posicion_de_codigo(int socket, uint32_t posicionDeCogido);
+// void enviar_posicion_de_codigo(int socket, uint32_t posicionDeCogido);
 
-uint32_t recibir_posicin_de_codigo(int socket, t_log* logger);
+t_paquete_instruccion* recibir_posicion_de_codigo(int socket, t_log* logger);
 
 void leer_archivo(uint32_t posicionDeCodigo, char* instruccion);
 
 void enviar_instruccion(int socket, char* instruccion, t_log* logger);
 
 uint32_t abrir_archivo(char* path);
+
+void responder_ok(int socket);
 
 #endif

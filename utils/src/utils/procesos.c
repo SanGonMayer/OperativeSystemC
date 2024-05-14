@@ -1,4 +1,5 @@
 #include "procesos.h"
+#include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
     t_PCB* pcb = malloc(sizeof(t_PCB));
@@ -22,7 +23,7 @@ int enviar_pcb(int socket, const t_PCB *pcb) {
 
     t_paquete* paquete = malloc(sizeof(t_paquete));
 
-    paquete->codigo_operacion = 2;
+    paquete->codigo_operacion = ENVIO_PCB;
     paquete->buffer = buffer; 
 
     void* a_enviar = crear_a_enviar(paquete);

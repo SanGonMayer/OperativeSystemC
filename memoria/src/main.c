@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "memoria.h"
+#include "utils/codigo_operacion.h"
 #include "utils/instrucciones.h"
 #include <commons/config.h>
 #include <utils/server.h>
@@ -14,6 +15,7 @@ int tam_memoria;
 int tam_pagina;
 char* path_instrucciones;
 int retardo_respuesta;
+t_dictionary* memoria_instrucciones;
 
 uint32_t* posicionFinalEscrita = 0;
 
@@ -21,7 +23,7 @@ void procesar_cliente(int* socket){
 
     handshake_server(*socket, logger);
     int iterador = 1;
-    uint32_t posicionDeCodigo;
+
     while (iterador) {
         int cod_op = recibir_operacion(*socket);
 
@@ -30,21 +32,21 @@ void procesar_cliente(int* socket){
         case 1:
             recibir_mensaje(*socket);
             break;
-        case 2: //Recibir contexto de kernel
-            posicionDeCodigo = 0;
+        case ENVIO_PATH_INSTRUCCIONES: //Recibir contexto de kernel
             t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
             recibir_contexto_de_kernel(*socket, paqueteMemoria);
-            //logica para conseguir la posicionDeCodigo
-            posicionDeCodigo = abrir_archivo(paqueteMemoria->path);
-            //enviar la posicionDeCodigo
-            enviar_posicion_de_codigo(*socket, posicionDeCodigo); 
+
+            cargar_instrucciones(memoria_instrucciones, paqueteMemoria->PID, paqueteMemoria->path);
+
+            responder_ok(*socket); 
             free(paqueteMemoria);
             break;
-        case 3: //Recibir posicion de codigo de CPU
-            posicionDeCodigo = 0;
-            char* instruccion; 
-            posicionDeCodigo = recibir_posicin_de_codigo(*socket, logger);
-            leer_archivo(posicionDeCodigo, instruccion); //TODO
+        case ENVIO_PID_PC: //Recibir posicion de codigo de CPU
+            
+            t_paquete_instruccion* pedido_instruccion = recibir_posicion_de_codigo(*socket, logger);
+
+            char* instruccion = leer_instruccion(memoria_instrucciones, pedido_instruccion->pid, &pedido_instruccion->pc);
+
             enviar_instruccion(*socket, instruccion, logger);
             free(instruccion);
             break;
@@ -64,7 +66,7 @@ int main(int argc, char* argv[]) {
 
     logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
 
-    t_dictionary* memoria_instrucciones = dictionary_create();
+    memoria_instrucciones = dictionary_create();
 
     cargar_instrucciones(memoria_instrucciones, 1, "../memoria/instrucciones.dummy");
     int* pc = malloc(sizeof(int));

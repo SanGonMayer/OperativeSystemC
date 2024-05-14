@@ -130,7 +130,7 @@ int main(void){
         }
     }
 
-    atender_clientes(socket_servidor, logger, &procesar_cliente);
+    atender_clientes(socket_servidor, logger, (void*) &procesar_cliente);
 
     
     free(cola_new);

@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "utils/codigo_operacion.h"
 #include <string.h>
 #include <readline/readline.h>
 #include <stdio.h>
@@ -10,13 +11,14 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb){
         sizeof(uint32_t)+
         pcb->path_length
     );
-    paquete->codigo_operacion = 2;
+    paquete->codigo_operacion = ENVIO_PATH_INSTRUCCIONES;
     paquete->buffer = buffer;
     buffer_add_uint32(paquete->buffer, pcb->PID);
     buffer_add_string(paquete->buffer, pcb->path_length, pcb->path);
 
     return paquete;
 }
+
 //aca recibe manda mensaje a memoria y recibe direccion
 int enviar_contexto_memoria(t_paquete* paquete, int socket){
 
@@ -57,6 +59,7 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
     }
     uint32_t posicionDeCodigo;
     uint32_t finalDeCodigo;
+    // Recibir OK
     recv(socketMemoria, &posicionDeCodigo, sizeof(uint32_t), MSG_WAITALL);
     recv(socketMemoria, &finalDeCodigo, sizeof(uint32_t), MSG_WAITALL);
     pcb->registrosMem.codigo = posicionDeCodigo;
