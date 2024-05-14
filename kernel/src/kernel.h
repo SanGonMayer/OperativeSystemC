@@ -27,16 +27,22 @@ typedef enum {
     PROCESO_ESTADO= 7,
 } t_funciones_consola;
 
+t_paquete* crear_contexto_memoria(t_PCB* pcb);
+
+int enviar_contexto_memoria(t_paquete* paquete, int socket);
+
+t_registrosMem recibir_contexto_memoria(int socket);
+
+void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger);
+
 void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID);
 
-uint32_t enviar_path_a_memoria(char* path);
-
-void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria);
-
-void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID);
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria, t_log* logger);
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
 
 void consola_interactiva(t_log *logger);
+
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria, t_log* logger);    
 
 #endif

@@ -50,21 +50,18 @@ t_registrosMem recibir_contexto_memoria(int socket){
 }
 
 
-void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria){
+void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
     t_paquete* paquete = crear_contexto_memoria(pcb);
     int result = enviar_contexto_memoria(paquete, socketMemoria);
-    //verificar
-    if (result == -1){
-        // return result; 
+    //verificar que se envio correctamente
+    if(result == -1){
+        log_error(logger, "Error al enviar el contexto de memoria");
     }
-    uint32_t posicionDeCodigo;
-    uint32_t finalDeCodigo;
     // Recibir OK
-    recv(socketMemoria, &posicionDeCodigo, sizeof(uint32_t), MSG_WAITALL);
-    recv(socketMemoria, &finalDeCodigo, sizeof(uint32_t), MSG_WAITALL);
-    pcb->registrosMem.codigo = posicionDeCodigo;
-    pcb->registrosMem.posicionFinal = finalDeCodigo;
-    return;
+    recv(socketMemoria, &result, sizeof(int), MSG_WAITALL);
+    if(result != 1){
+        log_error(logger, "Error al recibir el OK de memoria");
+    }
 }
 
 void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
@@ -77,10 +74,10 @@ void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
     queue_push(cola_new, pcb);
 }
 
-void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria){
+void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria, t_log* logger){
         t_PCB* pcb = queue_pop(cola_new);
         queue_push(cola_ready, pcb);
-        enviar_proceso_a_memoria(pcb, socketMemoria);
+        enviar_proceso_a_memoria(pcb, socketMemoria, logger);
         pcb-> estado = READY;
 }
 
@@ -96,12 +93,10 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     free(pcb_auxiliar);
 }
 
-
-
 void consola_interactiva(t_log *logger){
     
     char* linea_leida;
-
+    
 	linea_leida = readline(">");
 
 	while (strcmp(linea_leida, "q")){
