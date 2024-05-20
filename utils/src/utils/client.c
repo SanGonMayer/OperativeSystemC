@@ -71,25 +71,23 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
 
-	int bytes = paquete->buffer->size + 2*sizeof(int);
+	void* a_enviar = serializar_paquete(paquete);
 
-	void* a_enviar = serializar_paquete(paquete, bytes);
-
-	send(socket_cliente, a_enviar, bytes, 0);
+	send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
 
 	free(a_enviar);
 	eliminar_paquete(paquete);
 }
 
-void* serializar_paquete(t_paquete* paquete, int bytes)
+void* serializar_paquete(t_paquete* paquete)
 {
-	void * magic = malloc(bytes);
+	void * magic = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
 	int desplazamiento = 0;
 
 	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
 	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
+	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(uint32_t));
+	desplazamiento+= sizeof(uint32_t);
 	memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
 	desplazamiento+= paquete->buffer->size;
 
@@ -101,35 +99,6 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
-}
-
-
-void paquete(int conexion)
-{
-	char* leido;
-	t_paquete* paquete;
-
-	paquete = crear_paquete();
-
-	while (1){
-		
-		leido = readline(">");
-
-		if (!strcmp(leido, "")){
-			break;
-		}
-
-		agregar_a_paquete(paquete, leido, sizeof(leido) +1 );
-
-	}
-
-	free(leido);
-
-	enviar_paquete(paquete,conexion);
-
-	eliminar_paquete(paquete);
-
-	return;
 }
 
 void crear_buffer(t_paquete* paquete)
@@ -157,14 +126,19 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 	paquete->buffer->size += tamanio + sizeof(int);
 }
 
-void enviar_paquete(t_paquete* paquete, int socket_cliente)
+int serializar_y_enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
-	int bytes = paquete->buffer->size + 2*sizeof(int);
-	void* a_enviar = serializar_paquete(paquete, bytes);
+	void* a_enviar = serializar_paquete(paquete);
 
-	send(socket_cliente, a_enviar, bytes, 0);
+	int result = send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
 	
+	if (result ==-1){
+		perror("Error en la funcion al enviar Paquete \n");
+	}
+
 	free(a_enviar);
+
+	return result;
 }
 
 

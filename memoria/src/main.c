@@ -32,18 +32,21 @@ void procesar_cliente(int* socket){
         case 1:
             recibir_mensaje(*socket);
             break;
+            
         case ENVIO_PATH_INSTRUCCIONES: //Recibir contexto de kernel
+            
             t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();
-            recibir_contexto_de_kernel(*socket, paqueteMemoria);
-
+            
+            recibir_contexto_de_kernel(*socket, paqueteMemoria, logger);
+            
             cargar_instrucciones(memoria_instrucciones, paqueteMemoria->PID, paqueteMemoria->path);
-
-            responder_ok(*socket); 
+            
             free(paqueteMemoria);
             break;
+
         case ENVIO_PID_PC: //Recibir posicion de codigo de CPU
             
-            t_paquete_instruccion* pedido_instruccion = recibir_posicion_de_codigo(*socket, logger);
+            t_paquete_instruccion* pedido_instruccion = recibir_instruccion(*socket, logger);
 
             char* instruccion = leer_instruccion(memoria_instrucciones, pedido_instruccion->pid, &pedido_instruccion->pc);
 

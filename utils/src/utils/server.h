@@ -48,4 +48,6 @@ void recibir_mensaje_logger(int socket_cliente, t_log* logger);
 
 t_list* recibir_paquete(int);
 
+void confirmar_recepcion(int socket);
+
 #endif

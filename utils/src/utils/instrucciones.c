@@ -40,11 +40,11 @@ char* leer_instruccion(t_dictionary* memoria_archivo, uint32_t pid, uint32_t* pc
     char* instruccion = NULL;
     char* pid_string = string_itoa(pid);
     char** instrucciones = dictionary_get(memoria_archivo, pid_string);
+    
     if(instrucciones != NULL){
         instruccion = instrucciones[*pc];
-        *pc = *pc + 1;
     }
-
+    
     return instruccion;
 }
 

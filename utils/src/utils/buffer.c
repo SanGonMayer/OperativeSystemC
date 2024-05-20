@@ -12,10 +12,16 @@ t_buffer *buffer_create(uint32_t size){
 
 t_buffer* recibir_buffer(int socket){
     t_buffer* buffer = malloc(sizeof(t_buffer));
-    recv(socket, &buffer->size, sizeof(uint32_t), MSG_WAITALL);
+    int result1 = recv(socket, &buffer->size, sizeof(uint32_t), MSG_WAITALL);
     buffer->stream = malloc(buffer->size);
-    recv(socket, buffer->stream, buffer->size, MSG_WAITALL);
+    int result2 = recv(socket, buffer->stream, buffer->size, MSG_WAITALL);
     buffer->offset = 0;
+
+    if (result1 == -1 || result2 == -1){
+        perror("Error al recibir buffer");
+        buffer->stream = (void *)-1;
+    }
+
     return buffer;
 }
 

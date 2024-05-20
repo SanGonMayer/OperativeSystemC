@@ -17,7 +17,7 @@
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger);
 
-int enviar_posicion_de_codigo(int socket, uint32_t posicionDeCodigo);
+int responder_ok(int socket, uint32_t posicionDeCodigo);
 
 char* recibir_instruccion(int socket);
 
