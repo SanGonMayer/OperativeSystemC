@@ -152,3 +152,8 @@ t_list* recibir_paquete(int socket_cliente)
     free(buffer);
     return valores;
 }
+
+void confirmar_recepcion(int socket){
+    uint32_t ok = 1;
+    send(socket, &ok, sizeof(uint32_t), 0);
+}

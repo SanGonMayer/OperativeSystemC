@@ -8,20 +8,22 @@ t_paqueteMemoria* inicializar_paquete_memoria(){
     return paqueteMemoria;
 }
 
-void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria){
+void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_log*logger){
     t_buffer* buffer = recibir_buffer(socket);
-    
+
+    if (buffer->stream == -1){
+        log_error(logger, "Error al recibir contexto de kernel");
+        return;
+    }
+
+    confirmar_recepcion(socket);
+
     paqueteMemoria->PID = buffer_read_uint32(buffer);
     paqueteMemoria->path_length = buffer_read_uint32(buffer);
     paqueteMemoria->path = buffer_read_string(buffer, &paqueteMemoria->path_length);
 
     free(buffer->stream);
     free(buffer);
-}
-
-void responder_ok(int socket){
-    uint32_t ok = 1;
-    send(socket, &ok, sizeof(uint32_t), 0);
 }
 
 t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger){

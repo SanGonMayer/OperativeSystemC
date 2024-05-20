@@ -13,9 +13,9 @@ typedef struct{
 
 t_paqueteMemoria* inicializar_paquete_memoria();
 
-void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria);
+void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_log*logger);
 
-void responder_ok(int socket);
+void confirmar_recepcion(int socket);
 
 t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger);
 

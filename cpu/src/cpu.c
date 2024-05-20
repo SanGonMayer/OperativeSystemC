@@ -23,8 +23,7 @@ int responder_ok(int socket, uint32_t posicionDeCodigo){
     paquete->codigo_operacion = ENVIO_PID_PC;
     paquete->buffer = buffer;
 
-    void* a_enviar = crear_a_enviar(paquete);
-    int result = send(socket, a_enviar, buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+    int result = serializar_y_enviar_paquete(paquete, socket);
     return result;
 }
 

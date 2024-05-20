@@ -29,7 +29,7 @@ typedef enum {
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);
 
-int enviar_contexto_memoria(t_paquete* paquete, int socket);
+void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger);
 
 t_registrosMem recibir_contexto_memoria(int socket);
 

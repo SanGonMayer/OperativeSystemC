@@ -20,27 +20,18 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb){
 }
 
 //aca recibe manda mensaje a memoria y recibe direccion
-int enviar_contexto_memoria(t_paquete* paquete, int socket){
+void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger){
 
-    void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
-    int offset = 0;
-
-    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
-    offset += sizeof(int);
-    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
-
-    // Por último enviamos
-    int result = send(socket, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+    int result = serializar_y_enviar_paquete(paquete, socket);
+    
+    if (result == -1)
+        log_error(logger, "Error al enviar contexto a memoria");
 
     // No nos olvidamos de liberar la memoria que ya no usaremos
-    free(a_enviar);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
 
-    return result;
 }
 
 t_registrosMem recibir_contexto_memoria(int socket){
@@ -49,17 +40,14 @@ t_registrosMem recibir_contexto_memoria(int socket){
     return registrosMemoria;
 }
 
-
 void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
     t_paquete* paquete = crear_contexto_memoria(pcb);
-    int result = enviar_contexto_memoria(paquete, socketMemoria);
-    //verificar que se envio correctamente
-    if(result == -1){
-        log_error(logger, "Error al enviar el contexto de memoria");
-    }
+    enviar_contexto_memoria(paquete, socketMemoria, logger);
+    
     // Recibir OK
+    int result;
     recv(socketMemoria, &result, sizeof(int), MSG_WAITALL);
-    if(result != 1){
+    if(result == -1){
         log_error(logger, "Error al recibir el OK de memoria");
     }
 }
