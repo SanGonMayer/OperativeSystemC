@@ -1,6 +1,8 @@
 #include "client.h"
-#include<sys/socket.h>
-#include<netdb.h>
+#include "utils/codigo_operacion.h"
+#include <sys/socket.h>
+#include <netdb.h>
+
 
 int crear_conexion(char *ip, char* puerto, char* nombreServer, t_log* logger)
 {
@@ -63,7 +65,7 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = 1;
+	paquete->codigo_operacion = HANDSHAKE;
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);

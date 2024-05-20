@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "utils/codigo_operacion.h"
 
 t_log* logger;
 t_config* config;
@@ -69,7 +70,7 @@ void servidor_dispatch(){
         case 1:
             recibir_mensaje_logger(cliente_dispatch_fd, logger);
             break;
-        case 2: // recibir PCB de Kernel
+        case ENVIO_PCB: // recibir PCB de Kernel
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
             etapa_fetch(cliente_dispatch_fd, pcb, logger);
             //Enviar pcb a kernel TODO
