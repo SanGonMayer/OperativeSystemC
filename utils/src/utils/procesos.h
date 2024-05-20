@@ -54,6 +54,21 @@ typedef struct{
     char* path;
 } t_PCB;
 
+typedef struct{
+    uint32_t PID;
+    t_motivoInterrupcion motivo;
+} t_Interrupcion;
+
+typedef enum{
+    FIN_QUANTUM = 1,
+    FIN_EJECUCION = 2,
+    FIN_IO = 3,
+    FIN_WAIT = 4,
+    FIN_BLOQUEO = 5,
+    FIN_ERROR = 6
+} t_motivoInterrupcion;
+
+
 t_PCB* crear_PCB();
 
 t_buffer* serializar_pcb(t_PCB* pcb);

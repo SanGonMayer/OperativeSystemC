@@ -48,3 +48,86 @@ char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger){
 
     return recibir_instruccion(socket);
 }
+
+void ciclo_de_ejecucion (int socket, t_PCB* pcb, t_log* logger){
+    char* instruccion;
+
+    instruccion = etapa_fetch(socket, pcb, logger);
+
+    while (instruccion != NULL) {
+        //etapa decode
+        char** instruccion_separada = string_split(instruccion, " ");
+        switch (instruccion_separada[0])
+        {
+        case "SET":
+            char* registro = instruccion_separada[1];
+            int valor = atoi(instruccion_separada[2]);
+            //etapa execute
+            ejecutar_set(registro, valor, pcb);
+            break;
+        case "SUM":
+            char* registroDestino = instruccion_separada[1];
+            char* registroValor = instruccion_separada[2];
+            //etapa execute
+            ejecutar_sum(registroDestino, registroValor, pcb);
+            break;
+        case "SUB":
+            char* registroDestino = instruccion_separada[1];
+            char* registroValor = instruccion_separada[2];
+            //etapa execute
+            ejecutar_sub(registroDestino, registroValor, pcb);
+            break;
+        case "JNZ":
+            char* registro = instruccion_separada[1];
+            int valorPC = atoi(instruccion_separada[2]);
+            //etapa execute
+            ejecutar_jnz(registro, valorPC, pcb);
+            break;
+        case "IO_GEN_SLEEP":
+            char* dispositivo = instruccion_separada[1];
+            int unidadesDeTrabajo = atoi(instruccion_separada[2]);
+            //TODO
+            break;
+        case "EXIT":
+            //TODO
+            break;
+        default:
+            break;
+        }
+        check_interrupt();
+        instruccion = etapa_fetch(socket, pcb, logger);
+    }
+}
+
+void ejecutar_set(char* registro, int valor, t_PCB* pcb){
+    dictionary_put(pcb->registrosCPU, registro, valor);
+}
+
+void ejecutar_sum(char* registroDestino, char* registroValor, t_PCB* pcb){
+    //Chequear tipos de dato
+    uint32_t* valorASumar = dictionary_get(pcb->registrosCPU, registroValor);
+    uint32_t* valorDestino = dictionary_get(pcb->registrosCPU, registroDestino);
+    uint32_t suma = *valorASumar + *valorDestino;
+    dictionary_put(pcb->registrosCPU, registroDestino, &suma);
+
+    free(valorASumar);
+    free(valorDestino);
+}
+
+void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb){
+    //Chequear tipos de dato
+    uint32_t* valorARestar = dictionary_get(pcb->registrosCPU, registroValor);
+    uint32_t* valorDestino = dictionary_get(pcb->registrosCPU, registroDestino);
+    uint32_t resta = *valorDestino - *valorARestar;
+    dictionary_put(pcb->registrosCPU, registroDestino, &resta);
+
+    free(valorARestar);
+    free(valorDestino);
+}
+
+void ejecutar_jnz(char* registro, int valorPC, t_PCB* pcb){
+    uint32_t* valor = dictionary_get(pcb->registrosCPU, registro);
+    if (*valor != 0){
+        dictionary_put(pcb->registrosCPU, "PC", valorPC);
+    }
+}

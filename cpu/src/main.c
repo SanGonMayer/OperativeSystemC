@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
 
-    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, NULL);
+    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, conexion_memoria_fd);
     pthread_create(&hilo_interrupt, NULL, (void*)servidor_interrupt, NULL);
 
     pthread_join(hilo_dispatch, NULL);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void servidor_dispatch(){
+void servidor_dispatch(int socket_memoria){
     int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
     int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
     handshake_server(cliente_dispatch_fd, logger);
@@ -69,9 +69,10 @@ void servidor_dispatch(){
         case 1:
             recibir_mensaje_logger(cliente_dispatch_fd, logger);
             break;
-        case 2: // recibir PCB de Kernel
+        case 2: // recibir PCB de Kernel para ejecutar
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
-            etapa_fetch(cliente_dispatch_fd, pcb, logger);
+            ciclo_de_ejecucion(socket_memoria, pcb, logger);
+            char* instruccion = etapa_fetch(socket_memoria, pcb, logger);
             //Enviar pcb a kernel TODO
             break;
         default:
@@ -96,6 +97,10 @@ void servidor_interrupt(){
         {
         case 1:
             recibir_mensaje_logger(cliente_interrupt_fd, logger);
+            break;
+        case 2:
+            //Recibir interrupcion de kernel
+            //Cola de interrupciones
             break;
         case -1:
             error_show("cliente desconectado de CPU interrupt");
