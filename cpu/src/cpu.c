@@ -49,85 +49,91 @@ char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger){
     return recibir_instruccion(socket);
 }
 
-void ciclo_de_ejecucion (int socket, t_PCB* pcb, t_log* logger){
-    char* instruccion;
-
-    instruccion = etapa_fetch(socket, pcb, logger);
-
-    while (instruccion != NULL) {
-        //etapa decode
-        char** instruccion_separada = string_split(instruccion, " ");
-        switch (instruccion_separada[0])
-        {
-        case "SET":
-            char* registro = instruccion_separada[1];
-            int valor = atoi(instruccion_separada[2]);
-            //etapa execute
-            ejecutar_set(registro, valor, pcb);
-            break;
-        case "SUM":
-            char* registroDestino = instruccion_separada[1];
-            char* registroValor = instruccion_separada[2];
-            //etapa execute
-            ejecutar_sum(registroDestino, registroValor, pcb);
-            break;
-        case "SUB":
-            char* registroDestino = instruccion_separada[1];
-            char* registroValor = instruccion_separada[2];
-            //etapa execute
-            ejecutar_sub(registroDestino, registroValor, pcb);
-            break;
-        case "JNZ":
-            char* registro = instruccion_separada[1];
-            int valorPC = atoi(instruccion_separada[2]);
-            //etapa execute
-            ejecutar_jnz(registro, valorPC, pcb);
-            break;
-        case "IO_GEN_SLEEP":
-            char* dispositivo = instruccion_separada[1];
-            int unidadesDeTrabajo = atoi(instruccion_separada[2]);
-            //TODO
-            break;
-        case "EXIT":
-            //TODO
-            break;
-        default:
-            break;
-        }
-        check_interrupt();
-        instruccion = etapa_fetch(socket, pcb, logger);
-    }
+void ejecutar_set(char* registro, int valor, t_PCB* pcb, t_dictionary* diccionario){
+    dictionary_put(diccionario, registro, valor);
 }
 
-void ejecutar_set(char* registro, int valor, t_PCB* pcb){
-    dictionary_put(pcb->registrosCPU, registro, valor);
-}
-
-void ejecutar_sum(char* registroDestino, char* registroValor, t_PCB* pcb){
+void ejecutar_sum(char* registroDestino, char* registroValor, t_PCB* pcb, t_dictionary* diccionario){
     //Chequear tipos de dato
-    uint32_t* valorASumar = dictionary_get(pcb->registrosCPU, registroValor);
-    uint32_t* valorDestino = dictionary_get(pcb->registrosCPU, registroDestino);
+    uint32_t* valorASumar = dictionary_get(diccionario, registroValor);
+    uint32_t* valorDestino = dictionary_get(diccionario, registroDestino);
     uint32_t suma = *valorASumar + *valorDestino;
-    dictionary_put(pcb->registrosCPU, registroDestino, &suma);
+    dictionary_put(diccionario, registroDestino, &suma);
 
     free(valorASumar);
     free(valorDestino);
 }
 
-void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb){
+void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb, t_dictionary* diccionario){
     //Chequear tipos de dato
-    uint32_t* valorARestar = dictionary_get(pcb->registrosCPU, registroValor);
-    uint32_t* valorDestino = dictionary_get(pcb->registrosCPU, registroDestino);
+    uint32_t* valorARestar = dictionary_get(diccionario, registroValor);
+    uint32_t* valorDestino = dictionary_get(diccionario, registroDestino);
     uint32_t resta = *valorDestino - *valorARestar;
-    dictionary_put(pcb->registrosCPU, registroDestino, &resta);
+    dictionary_put(diccionario, registroDestino, &resta);
 
     free(valorARestar);
     free(valorDestino);
 }
 
-void ejecutar_jnz(char* registro, int valorPC, t_PCB* pcb){
-    uint32_t* valor = dictionary_get(pcb->registrosCPU, registro);
+void ejecutar_jnz(char* registro, int valorPC, t_PCB* pcb, t_dictionary* diccionario){
+    uint32_t* valor = dictionary_get(diccionario, registro);
     if (*valor != 0){
-        dictionary_put(pcb->registrosCPU, "PC", valorPC);
+        dictionary_put(diccionario, "PC", valorPC);
     }
+}
+
+t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
+    uint32_t length = strlen(dispositivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(uint32_t) + length);
+    buffer_add_int(buffer, unidadesDeTrabajo);
+    buffer_add_string(buffer, length, dispositivo);
+    return buffer;
+}
+
+void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){
+    pcb->registrosCPU = registros_cpu_from_dictionary(diccionario);
+    enviar_pcb(socket_dispatch, pcb);
+    send(socket_dispatch, &motivo, sizeof(int), 0);
+}
+
+int check_interrupt(t_PCB* pcb, t_log* logger){
+    int hay_interrupcion = 0;
+    while(queue_size(cola_interrupciones) > 0 && hay_interrupcion == 0){
+        //Hacer mutex
+        uint32_t pid = queue_pop(cola_interrupciones);
+        if(pid == pcb->PID){
+            hay_interrupcion = 1;
+        }
+    }
+    return hay_interrupcion;
+}
+
+void registros_cpu_dictionary(t_registrosCPU* registros, t_dictionary* dictionary){
+    dictionary_put(dictionary, "AX", &registros->ax);
+    dictionary_put(dictionary, "BX", &registros->bx);
+    dictionary_put(dictionary, "CX", &registros->cx);
+    dictionary_put(dictionary, "DI", &registros->di);
+    dictionary_put(dictionary, "SI", &registros->si);
+    dictionary_put(dictionary, "PC", &registros->pc);
+    dictionary_put(dictionary, "EAX", &registros->eax);
+    dictionary_put(dictionary, "EBX", &registros->ebx);
+    dictionary_put(dictionary, "ECX", &registros->ecx);
+    dictionary_put(dictionary, "EDX", &registros->edx);
+}
+
+t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
+    t_registrosCPU registros;
+
+    registros.ax = (uint8_t)dictionary_get(dictionary, "AX");
+    registros.bx = (uint8_t)dictionary_get(dictionary, "BX");
+    registros.cx = (uint8_t)dictionary_get(dictionary, "CX");
+    registros.di = (uint32_t)dictionary_get(dictionary, "DI");
+    registros.si = (uint32_t)dictionary_get(dictionary, "SI");
+    registros.pc = (uint32_t)dictionary_get(dictionary, "PC");
+    registros.eax = (uint32_t)dictionary_get(dictionary, "EAX");
+    registros.ebx = (uint32_t)dictionary_get(dictionary, "EBX");
+    registros.ecx = (uint32_t)dictionary_get(dictionary, "ECX");
+    registros.edx = (uint32_t)dictionary_get(dictionary, "EDX");
+
+    return registros;
 }

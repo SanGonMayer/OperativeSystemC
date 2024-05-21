@@ -9,6 +9,7 @@
 #include <utils/client.h>
 #include <utils/procesos.h>
 #include <pthread.h>
+#include <utils/codigo_operacion.h>
 
 /**
 * @fn    etapa_fetch
