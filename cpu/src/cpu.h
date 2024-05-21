@@ -10,6 +10,8 @@
 #include <utils/procesos.h>
 #include <pthread.h>
 #include <utils/codigo_operacion.h>
+#include <commons/string.h>
+#include <semaphore.h>
 
 /**
 * @fn    etapa_fetch
@@ -23,5 +25,23 @@ int responder_ok(int socket, uint32_t posicionDeCodigo);
 char* recibir_instruccion(int socket);
 
 char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger);
+
+uint32_t recibir_interrupcion(int socket);
+
+void ejecutar_set(char* registro, int valor, t_PCB* pcb, t_dictionary* diccionario);
+
+void ejecutar_sum(char* registroDestino, char* registroValor, t_PCB* pcb, t_dictionary* diccionario);
+
+void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb, t_dictionary* diccionario);
+
+void ejecutar_jnz(char* registro, int valorPC, t_PCB* pcb, t_dictionary* diccionario);
+
+t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo);
+
+void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario);
+
+void registros_cpu_dictionary(t_registrosCPU* registros, t_dictionary* dictionary);
+
+t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary);
 
 #endif
