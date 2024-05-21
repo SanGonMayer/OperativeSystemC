@@ -103,8 +103,8 @@ void servidor_interrupt(){
         case 1:
             recibir_mensaje_logger(cliente_interrupt_fd, logger);
             break;
-        case 2:
-            uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd); //TODO
+        case ENVIO_INTERRUPCION:
+            uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd); 
             queue_push(cola_interrupciones, pidInterrupcion);
             break;
         case -1:

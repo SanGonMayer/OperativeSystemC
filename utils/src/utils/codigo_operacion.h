@@ -9,7 +9,8 @@ typedef enum
     ENVIO_PATH_INSTRUCCIONES = 4,
     INTERRUPCION = 5,
     FINALIZACION = 6,
-    IO_GEN_SLEEP = 7
+    IO_GEN_SLEEP = 7,
+    ENVIO_INTERRUPCION = 8
 } t_codigo_operacion;
 
 #endif

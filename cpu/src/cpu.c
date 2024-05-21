@@ -35,6 +35,13 @@ char* recibir_instruccion(int socket){
     return instruccion;
 }
 
+uint32_t recibir_interrupcion(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+
+    uint32_t interrupcion = buffer_read_uint32(buffer);
+    return interrupcion;
+}
+
 char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger){
     t_paquete_instruccion* paquete_instruccion = crear_paquete_instruccion(pcb->PID, pcb->registrosCPU.pc);
 
