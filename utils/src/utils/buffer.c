@@ -100,3 +100,13 @@ void enviar_buffer(int socket, t_buffer* buffer, t_log* logger){
 
     free(a_enviar);
 }
+
+int buffer_read_int(t_buffer* buffer){
+    int data;
+    buffer_read(buffer, &data, sizeof(int));
+    return data;
+}
+
+void buffer_add_int(t_buffer* buffer, int data){
+    buffer_add(buffer, &data, sizeof(int));
+}

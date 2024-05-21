@@ -14,6 +14,11 @@ char* algoritmo_tlb;
 void servidor_dispatch();
 void servidor_interrupt();
 
+t_queue* cola_interrupciones;
+
+sem_t mutex_cola_interrupciones;
+
+
 int main(int argc, char* argv[]) {
     
     logger = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
@@ -36,10 +41,14 @@ int main(int argc, char* argv[]) {
     handshake_cliente(conexion_memoria_fd, logger);
     enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
 
+    cola_interrupciones = queue_create();
+
+    sem_init(&mutex_cola_interrupciones, 0, 1);
+
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
 
-    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, NULL);
+    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, &conexion_memoria_fd);
     pthread_create(&hilo_interrupt, NULL, (void*)servidor_interrupt, NULL);
 
     pthread_join(hilo_dispatch, NULL);
@@ -52,7 +61,74 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void servidor_dispatch(){
+int check_interrupt(t_PCB* pcb, t_log* logger){
+    int hay_interrupcion = 0;
+
+    while(queue_size(cola_interrupciones) > 0 && hay_interrupcion == 0){
+        //Hacer mutex
+        sem_wait(&mutex_cola_interrupciones);
+        uint32_t *pid = queue_pop(cola_interrupciones);
+        sem_post(&mutex_cola_interrupciones);
+        if(*pid == pcb->PID){
+            hay_interrupcion = 1;
+        }
+    }
+    return hay_interrupcion;
+}
+
+void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
+    char* instruccion;
+
+    instruccion = etapa_fetch(socket_memoria, pcb, logger);
+
+    while (instruccion != NULL) {
+        //etapa decode
+        char** instruccion_separada = string_split(instruccion, " ");
+
+        if (strcmp(instruccion_separada[0], "SET") == 0) {
+            char* registro = instruccion_separada[1];
+            int valor = atoi(instruccion_separada[2]);
+            //etapa execute
+            ejecutar_set(registro, valor, pcb, diccionario);
+
+        }else if(strcmp(instruccion_separada[0], "SUM") == 0){
+            char* registroDestino = instruccion_separada[1];
+            char* registroValor = instruccion_separada[2];
+            //etapa execute
+            ejecutar_sum(registroDestino, registroValor, pcb, diccionario);
+
+        }else if(strcmp(instruccion_separada[0], "SUB") == 0){
+            char* registroDestino = instruccion_separada[1];
+            char* registroValor = instruccion_separada[2];
+            //etapa execute
+            ejecutar_sub(registroDestino, registroValor, pcb, diccionario);
+
+        }else if(strcmp(instruccion_separada[0], "JNZ") == 0){
+            char* registro = instruccion_separada[1];
+            int valorPC = atoi(instruccion_separada[2]);
+            //etapa execute
+            ejecutar_jnz(registro, valorPC, pcb, diccionario);
+
+        }else if(strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0){
+            char* dispositivo = instruccion_separada[1];
+            int unidadesDeTrabajo = atoi(instruccion_separada[2]);
+            desalojar_pcb(socket_dispatch,pcb, (int)IO_GEN_SLEEP, logger, diccionario);
+            t_buffer* buffer = ejecutar_io_gen_sleep(dispositivo, unidadesDeTrabajo);
+            enviar_buffer(socket_dispatch,buffer, logger);
+
+        }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
+            desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
+        }
+
+        if(check_interrupt(pcb, logger) == 1){
+            desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
+            return;
+        }
+        instruccion = etapa_fetch(socket_memoria, pcb, logger);
+    }
+}
+
+void servidor_dispatch(int* socket_memoria){
     int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
     int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
     handshake_server(cliente_dispatch_fd, logger);
@@ -70,10 +146,11 @@ void servidor_dispatch(){
         case 1:
             recibir_mensaje_logger(cliente_dispatch_fd, logger);
             break;
-        case ENVIO_PCB: // recibir PCB de Kernel
+        case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
-            etapa_fetch(cliente_dispatch_fd, pcb, logger);
-            //Enviar pcb a kernel TODO
+            t_dictionary* diccionario = dictionary_create();
+            registros_cpu_dictionary(&(pcb->registrosCPU) ,diccionario);
+            ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
             break;
         default:
             log_info(logger, "No entiendo el mensaje");
@@ -98,6 +175,12 @@ void servidor_interrupt(){
         case 1:
             recibir_mensaje_logger(cliente_interrupt_fd, logger);
             break;
+        case ENVIO_INTERRUPCION:
+            uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd);
+            sem_wait(&mutex_cola_interrupciones);
+            queue_push(cola_interrupciones, &pidInterrupcion);
+            sem_post(&mutex_cola_interrupciones);
+            break;
         case -1:
             error_show("cliente desconectado de CPU interrupt");
             close(cliente_interrupt_fd);
@@ -109,4 +192,3 @@ void servidor_interrupt(){
         }
     }
 }
-

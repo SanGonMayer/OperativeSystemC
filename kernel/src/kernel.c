@@ -81,6 +81,21 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     free(pcb_auxiliar);
 }
 
+void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+
+    paquete->codigo_operacion = ENVIO_INTERRUPCION;
+    paquete->buffer = buffer_create(sizeof(uint32_t));
+    buffer_add_uint32(paquete->buffer, *PID);
+
+    void* a_enviar = crear_a_enviar(paquete);
+    send(socket_interrupt, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+
+	free(a_enviar);
+    eliminar_paquete(paquete);
+}
+
+
 void consola_interactiva(t_log *logger){
     
     char* linea_leida;

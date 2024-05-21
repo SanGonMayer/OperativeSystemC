@@ -49,4 +49,8 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length);
 
 void enviar_buffer(int socket, t_buffer* buffer, t_log* logger);
 
+void buffer_add_int(t_buffer* buffer, int data);
+
+int buffer_read_int(t_buffer* buffer);
+
 #endif /* BUFFER_H_ */      

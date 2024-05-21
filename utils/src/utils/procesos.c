@@ -40,6 +40,8 @@ int enviar_pcb(int socket, const t_PCB *pcb) {
     return result;
 }
 
+
+
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo) {
     // Copiar datos básicos
     memcpy(&pcb_viejo->registrosCPU, &pcb_nuevo->registrosCPU, sizeof(t_registrosCPU));
