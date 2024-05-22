@@ -9,5 +9,6 @@ t_log* g_logger;
 int g_grado_multiprogramacion;
 sem_t g_mutex_multiprogramacion;
 int g_socket_memoria;
+sem_t g_actualizacion_pcb;
 
 

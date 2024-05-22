@@ -65,9 +65,12 @@ int main(void){
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
     sem_init(&g_mutex_multiprogramacion, 0, 1);
 
+
     algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
     
     quantum = config_get_int_value(config, "QUANTUM");
+
+    sem_init(&g_actualizacion_pcb, 1, 0);
 
 
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
@@ -125,7 +128,19 @@ int main(void){
     // }
     //PLANIFICACION
 
+    //HILOS?
+    /*if(strcmp(algoritmo_planificacion, "FIFO") == 0){
+        pthread_create(&hilo_planificador, NULL, (void*)planificar_FIFO, NULL);
 
+    }else if(strcmp(algoritmo_planificacion, "RR") == 0){
+        pthread_create(&hilo_planificador, NULL, (void*)planificar_RR, NULL);
+
+    }else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+        pthread_create(&hilo_planificador, NULL, (void*)planificar_VRR, NULL);
+    }*/
+    
+    
+    
     //CONSOLA INTERACTIVA
 
     consola_interactiva(g_logger);

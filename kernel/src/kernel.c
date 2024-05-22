@@ -107,17 +107,27 @@ void enviar_proceso_a_ready(){
         log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
 }
 
-
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
-    t_PCB* pcb_auxiliar = crear_PCB();
-    int err;
+    int error;
     
-    err = enviar_pcb(conexion_cpu_dispatch, pcb);
-    //log_info(logger, "PCB ENVIADA: %d", pcb->PID);
-    
-    // actualizar_pcb(pcb, pcb_auxiliar);
-    //log_info(logger, "PCB RECIBIDA: %d", pcb->PID);
-    free(pcb_auxiliar);
+    error = enviar_pcb(conexion_cpu_dispatch, pcb);
+    if (error == -1){
+        log_error(logger, "Error al enviar PCB a CPU");
+    }else{
+        log_info(logger, "PCB enviado a CPU");
+    }
+
+    sem_wait(&g_actualizacion_pcb);
+    // Recibir PCB
+    t_PCB* pcb_recibido = recibir_pcb(conexion_cpu_dispatch);
+    if (pcb_recibido == NULL){
+        log_error(logger, "Error al recibir PCB de CPU");
+        free(pcb_recibido);
+    }else{
+        log_info(logger, "PCB recibido de CPU");
+        actualizar_pcb(pcb, pcb_recibido);
+        free(pcb_recibido);
+    }
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID){

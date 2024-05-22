@@ -18,6 +18,8 @@ t_queue* cola_interrupciones;
 
 sem_t mutex_cola_interrupciones;
 
+sem_t g_actualizacion_pcb;
+
 
 int main(int argc, char* argv[]) {
     
@@ -44,6 +46,8 @@ int main(int argc, char* argv[]) {
     cola_interrupciones = queue_create();
 
     sem_init(&mutex_cola_interrupciones, 0, 1);
+
+    sem_init(&g_actualizacion_pcb, 1, 1);
 
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
@@ -118,10 +122,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
             desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
+            sem_post(&g_actualizacion_pcb);
         }
 
         if(check_interrupt(pcb, logger) == 1){
             desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
+            sem_post(&g_actualizacion_pcb);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger);
