@@ -70,8 +70,6 @@ int main(void){
     
     quantum = config_get_int_value(config, "QUANTUM");
 
-    sem_init(&g_actualizacion_pcb, 1, 0);
-
 
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
     int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);

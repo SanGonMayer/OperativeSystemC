@@ -47,8 +47,6 @@ int main(int argc, char* argv[]) {
 
     sem_init(&mutex_cola_interrupciones, 0, 1);
 
-    sem_init(&g_actualizacion_pcb, 1, 1);
-
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
 
