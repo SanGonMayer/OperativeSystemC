@@ -13,5 +13,4 @@ extern int g_socket_memoria;
 
 
 extern sem_t g_mutex_multiprogramacion;
-extern sem_t g_actualizacion_pcb;
 #endif

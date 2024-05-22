@@ -117,7 +117,6 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
         log_info(logger, "PCB enviado a CPU");
     }
 
-    sem_wait(&g_actualizacion_pcb);
     // Recibir PCB
     t_PCB* pcb_recibido = recibir_pcb(conexion_cpu_dispatch);
     if (pcb_recibido == NULL){

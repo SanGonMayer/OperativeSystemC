@@ -122,12 +122,10 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
             desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
-            sem_post(&g_actualizacion_pcb);
         }
 
         if(check_interrupt(pcb, logger) == 1){
             desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
-            sem_post(&g_actualizacion_pcb);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger);
