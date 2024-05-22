@@ -16,10 +16,7 @@ void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_
         return;
     }
 
-    confirmar_recepcion(socket);
-
     paqueteMemoria->PID = buffer_read_uint32(buffer);
-    paqueteMemoria->path_length = buffer_read_uint32(buffer);
     paqueteMemoria->path = buffer_read_string(buffer, &paqueteMemoria->path_length);
 
     free(buffer->stream);

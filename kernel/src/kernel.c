@@ -1,8 +1,29 @@
 #include "kernel.h"
 #include "utils/codigo_operacion.h"
+#include <commons/log.h>
+#include <commons/string.h>
+#include <semaphore.h>
 #include <string.h>
 #include <readline/readline.h>
 #include <stdio.h>
+#include "global_kernel.h"
+
+bool es_parametro_valido(char* parametro){
+
+    if(parametro == NULL){
+        return false;
+    }
+
+    char* cadena_auxiliar = string_duplicate(parametro);
+
+    string_trim(&cadena_auxiliar);
+    if(string_is_empty(cadena_auxiliar)){
+        return false;
+    }
+
+    free(cadena_auxiliar);
+    return true;
+}
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb){
     t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -53,21 +74,39 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 }
 
 void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
+    (*contadorPID)++;
     t_PCB* pcb = crear_PCB();
     pcb->PID = *contadorPID;
     pcb->estado = NEW;
-    pcb->path_length = strlen(path)+1;
+    pcb->path_length = strlen(path);
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
     queue_push(cola_new, pcb);
+
+    log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(cola_new));
+    log_info(g_logger, "Proceso %d encolado en NEW", pcb->PID);
+
+    sem_wait(&g_mutex_multiprogramacion);
+
+    if(g_grado_multiprogramacion > 0){
+        enviar_proceso_a_ready();
+    }
+    sem_post(&g_mutex_multiprogramacion);
+
 }
 
-void enviar_proceso_a_ready(t_queue* cola_new, t_queue* cola_ready, int socketMemoria, t_log* logger){
-        t_PCB* pcb = queue_pop(cola_new);
-        queue_push(cola_ready, pcb);
-        enviar_proceso_a_memoria(pcb, socketMemoria, logger);
+void enviar_proceso_a_ready(){
+        t_PCB* pcb = queue_pop(g_cola_new);
+        queue_push(g_cola_ready, pcb);
+        enviar_proceso_a_memoria(pcb, g_socket_memoria, g_logger);
         pcb-> estado = READY;
+
+        g_grado_multiprogramacion--;
+
+        log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
+        log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
 }
+
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     t_PCB* pcb_auxiliar = crear_PCB();
@@ -97,44 +136,57 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
 
 
 void consola_interactiva(t_log *logger){
-    
+
     char* linea_leida;
     
 	linea_leida = readline(">");
 
+    
+
 	while (strcmp(linea_leida, "q")){
 
-    //falta cortar el string para sacar el path
-    char *funcion = strtok(linea_leida," ");
+    char ** linea_leida_separada = string_split(linea_leida, " ");
 
-    char * parametro = strtok(NULL," "); //tendrá el valor del pid o el path en caso que corresponda, en caso de que lafuncion sea si parametro va a tener el valor null
+    char *funcion = linea_leida_separada[0];
+    string_to_upper(funcion);
 
     int opcion_funciones_consola;
 
-    if (strcmp(linea_leida, "EJECUTAR_STRIPT") == 0) {
-        opcion_funciones_consola = EJECUTAR_STRIPT;
-    } else if (strcmp(linea_leida, "INICIAR_PROCESO") == 0) {
+    if (strcmp(funcion, "EJECUTAR_SCRIPT") == 0) {
+        opcion_funciones_consola = EJECUTAR_SCRIPT;
+    } else if (strcmp(funcion, "INICIAR_PROCESO") == 0) {
         opcion_funciones_consola = INICIAR_PROCESO;
-    } else if (strcmp(linea_leida, "FINALIZAR_PROCESO") == 0) {
+    } else if (strcmp(funcion, "FINALIZAR_PROCESO") == 0) {
         opcion_funciones_consola = FINALIZAR_PROCESO;
-    } else if (strcmp(linea_leida, "DETENER_PLANIFICACION") == 0) {
+    } else if (strcmp(funcion, "DETENER_PLANIFICACION") == 0) {
         opcion_funciones_consola = DETENER_PLANIFICACION;
-    } else if (strcmp(linea_leida, "INICIAR_PLANIFICACION") == 0) {
+    } else if (strcmp(funcion, "INICIAR_PLANIFICACION") == 0) {
         opcion_funciones_consola = INICIAR_PLANIFIACION;
-    } else if (strcmp(linea_leida, "MULTIPROGRAMACION") == 0) {
+    } else if (strcmp(funcion, "MULTIPROGRAMACION") == 0) {
         opcion_funciones_consola = MULTIPROGRAMACION;
-    } else if (strcmp(linea_leida, "PROCESO_ESTADO") == 0) {
+    } else if (strcmp(funcion, "PROCESO_ESTADO") == 0) {
         opcion_funciones_consola = PROCESO_ESTADO;
-    }else 
+    }else
         log_error(logger, "ingresaste una funcion no valida");
 
     switch (opcion_funciones_consola) {
 
-        case EJECUTAR_STRIPT:
+        case EJECUTAR_SCRIPT:
             printf("e\n");
+            
             break;
         case INICIAR_PROCESO:
             printf("Se seleccionó la opción 2\n");
+            char* path = linea_leida_separada[1];
+            
+            string_trim(&path);
+
+            if(!es_parametro_valido(path)){
+                log_error(logger, "El path ingresado no es válido");
+                break;
+            }
+
+            iniciar_proceso(path, g_cola_new, &g_contador_pid);
             break;
         case FINALIZAR_PROCESO:
             printf("Se seleccionó la opción 3\n");
@@ -160,7 +212,6 @@ void consola_interactiva(t_log *logger){
 		linea_leida = readline(">");
 
         free(funcion);
-        free(parametro);
 	}
 
 	free(linea_leida);

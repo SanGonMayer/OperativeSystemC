@@ -41,6 +41,8 @@ void procesar_cliente(int* socket){
             
             cargar_instrucciones(memoria_instrucciones, paqueteMemoria->PID, paqueteMemoria->path);
             
+            confirmar_recepcion(*socket);
+
             free(paqueteMemoria);
             break;
 
