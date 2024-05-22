@@ -45,4 +45,6 @@ void consola_interactiva(t_log *logger);
    
 bool es_parametro_valido(char* parametro);
 
+void planificador_fifo();
+
 #endif

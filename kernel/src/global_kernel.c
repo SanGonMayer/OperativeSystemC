@@ -9,5 +9,9 @@ t_log* g_logger;
 int g_grado_multiprogramacion;
 sem_t g_mutex_multiprogramacion;
 int g_socket_memoria;
+int g_conexion_cpu_dispatch;
 
+sem_t g_hay_elementos_en_ready;
+sem_t g_mutex_cola_ready;
+sem_t g_disponible_exec;
 

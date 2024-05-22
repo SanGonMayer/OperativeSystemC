@@ -109,7 +109,7 @@ void enviar_proceso_a_ready(){
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
-    
+    sem_wait(g_disponible_exec);
     error = enviar_pcb(conexion_cpu_dispatch, pcb);
     if (error == -1){
         log_error(logger, "Error al enviar PCB a CPU");
@@ -119,6 +119,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
 
     // Recibir PCB
     t_PCB* pcb_recibido = recibir_pcb(conexion_cpu_dispatch);
+    int motivo;
     if (pcb_recibido == NULL){
         log_error(logger, "Error al recibir PCB de CPU");
         free(pcb_recibido);
@@ -127,6 +128,20 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
         actualizar_pcb(pcb, pcb_recibido);
         free(pcb_recibido);
     }
+    recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
+    log_info(logger, "Motivo de finalizacion: %d", motivo);
+    //atender motivo
+    sem_post(g_disponible_exec);
+}
+
+
+void planificador_fifo(){
+    log_info(g_logger, "Planificador FIFO");
+    sem_wait(&g_hay_elementos_en_ready);
+    sem_wait(&g_mutex_cola_ready);
+    t_PCB* pcb = queue_pop(g_cola_ready);
+    sem_post(&g_mutex_cola_ready);
+    ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
@@ -149,8 +164,6 @@ void consola_interactiva(t_log *logger){
     char* linea_leida;
     
 	linea_leida = readline(">");
-
-    
 
 	while (strcmp(linea_leida, "q")){
 

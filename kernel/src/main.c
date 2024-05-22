@@ -72,9 +72,9 @@ int main(void){
 
 
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
-    int conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
-    handshake_cliente(conexion_cpu_dispatch, g_logger);
-    enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", conexion_cpu_dispatch);
+    int g_conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
+    handshake_cliente(g_conexion_cpu_dispatch, g_logger);
+    enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", g_conexion_cpu_dispatch);
 
     int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", g_logger);
     handshake_cliente(conexion_cpu_interrupt, g_logger);
@@ -87,57 +87,17 @@ int main(void){
 
 
     //PLANIFICACION
-    //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta.
-    // int algoritmo_planificacion_enum;
-    
-    // if(strcmp(algoritmo_planificacion, "FIFO") == 0){
-    //     algoritmo_planificacion_enum == FIFO;
-    // } else if(strcmp(algoritmo_planificacion, "RR") == 0){
-    //     algoritmo_planificacion_enum == RR;
-    // } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
-    //     algoritmo_planificacion_enum == VRR;
-    // }
-    
-    // while(!queue_is_empty(cola_ready)){
-    //     t_PCB* pcb = queue_pop(cola_ready);
-    //     if(queue_is_empty(cola_exec)){
-    //         queue_push(cola_exec, pcb);
-    //         switch (algoritmo_planificacion_enum)
-    //         {
-    //         case FIFO:
-    //             //va a tener conexion cliente servidor, es bloqueante, espera recibir el PCB
-    //             ejecutar_cpu_FIFO(pcb, conexion_cpu_dispatch, g_logger);
-    //             //pcb ya esta actualizado
+    //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
+    pthread_t hilo_planificador;
 
-    //             //Crea Hilo para manejar el desalojo, mientras tanto sigue ejecutando para liberar cola_exec y usar la CPU.
-    //             //manejar_desalojo(pcb);
-                
-    //             //libera cola_exec para volver a entrar al switch.
-    //             //queue_pop(cola_exec);
-    //             break;
-    //         case RR:
-    //             break;
-    //         case VRR:
-    //             break;
-    //         default:
-    //             break;
-    //         }
-    //     }
-    // }
-    //PLANIFICACION
-
-    //HILOS?
-    /*if(strcmp(algoritmo_planificacion, "FIFO") == 0){
-        pthread_create(&hilo_planificador, NULL, (void*)planificar_FIFO, NULL);
-
-    }else if(strcmp(algoritmo_planificacion, "RR") == 0){
-        pthread_create(&hilo_planificador, NULL, (void*)planificar_RR, NULL);
-
-    }else if(strcmp(algoritmo_planificacion, "VRR") == 0){
-        pthread_create(&hilo_planificador, NULL, (void*)planificar_VRR, NULL);
-    }*/
-    
-    
+    if(strcmp(algoritmo_planificacion, "FIFO") == 0){
+        hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)planificador_fifo, NULL);
+        pthread_detach(hilo_planificador);
+    } else if(strcmp(algoritmo_planificacion, "RR") == 0){
+        //planificador_rr();
+    } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+        //planificador_vrr()
+    }
     
     //CONSOLA INTERACTIVA
 
@@ -161,7 +121,7 @@ int main(void){
     free(g_cola_new);
     free(g_cola_ready);
     free(cola_exec);
-    close(conexion_cpu_dispatch);
+    close(g_conexion_cpu_dispatch);
     close(conexion_cpu_interrupt);
     close(g_socket_memoria);
     config_destroy(config);
