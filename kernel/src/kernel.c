@@ -73,43 +73,52 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
     }
 }
 
-void iniciar_proceso(char* path, t_queue* cola_new, int* contadorPID){
-    (*contadorPID)++;
+void iniciar_proceso(char* path){
     t_PCB* pcb = crear_PCB();
-    pcb->PID = *contadorPID;
+    sem_wait(&mutex_contador_pid);
+    g_contador_pid++;
+    pcb->PID = g_contador_pid;
+    sem_post(&mutex_contador_pid);
     pcb->estado = NEW;
     pcb->path_length = strlen(path);
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
-    queue_push(cola_new, pcb);
-
-    log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(cola_new));
+    sem_wait(&g_mutex_cola_new);
+    queue_push(g_cola_new, pcb);
+    sem_post(&g_mutex_cola_new);
+    log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(g_cola_new));
     log_info(g_logger, "Proceso %d encolado en NEW", pcb->PID);
 
-    sem_wait(&g_mutex_multiprogramacion);
+    sem_wait(&g_tope_multiprogramacion);
+    enviar_proceso_a_ready();
+    sem_post(&g_hay_elementos_en_ready);
+}
 
-    if(g_grado_multiprogramacion > 0){
-        enviar_proceso_a_ready();
-    }
-    sem_post(&g_mutex_multiprogramacion);
-
+void finalizar_proceso(){
+    sem_post(&g_tope_multiprogramacion);
 }
 
 void enviar_proceso_a_ready(){
+        sem_wait(&g_mutex_cola_new);
         t_PCB* pcb = queue_pop(g_cola_new);
-        queue_push(g_cola_ready, pcb);
+        sem_post(&g_mutex_cola_new);
+        
+        sem_wait(&g_mutex_socket_memoria);
         enviar_proceso_a_memoria(pcb, g_socket_memoria, g_logger);
+        sem_post(&g_mutex_socket_memoria);
+        
+        sem_wait(&g_mutex_cola_ready);
+        queue_push(g_cola_ready, pcb);
+        sem_post(&g_mutex_cola_ready);
+        
         pcb-> estado = READY;
-
-        g_grado_multiprogramacion--;
-
         log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
         log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
 }
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
-    sem_wait(g_disponible_exec);
+    sem_wait(&g_disponible_exec);
     error = enviar_pcb(conexion_cpu_dispatch, pcb);
     if (error == -1){
         log_error(logger, "Error al enviar PCB a CPU");
@@ -128,20 +137,23 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
         actualizar_pcb(pcb, pcb_recibido);
         free(pcb_recibido);
     }
+    //recibir motivo de desalojo
     recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     log_info(logger, "Motivo de finalizacion: %d", motivo);
     //atender motivo
-    sem_post(g_disponible_exec);
+    sem_post(&g_disponible_exec);
 }
 
 
 void planificador_fifo(){
-    log_info(g_logger, "Planificador FIFO");
-    sem_wait(&g_hay_elementos_en_ready);
-    sem_wait(&g_mutex_cola_ready);
-    t_PCB* pcb = queue_pop(g_cola_ready);
-    sem_post(&g_mutex_cola_ready);
-    ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+    while(1){
+        sem_wait(&g_hay_elementos_en_ready);
+        log_info(g_logger, "Planificador FIFO");
+        sem_wait(&g_mutex_cola_ready);
+        t_PCB* pcb = queue_pop(g_cola_ready);
+        sem_post(&g_mutex_cola_ready);
+        ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+    }
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
@@ -208,7 +220,9 @@ void consola_interactiva(t_log *logger){
                 break;
             }
 
-            iniciar_proceso(path, g_cola_new, &g_contador_pid);
+            pthread_t hilo_iniciar_proceso;
+            pthread_create(&hilo_iniciar_proceso, NULL, &iniciar_proceso, path);
+            pthread_detach(hilo_iniciar_proceso);
             break;
         case FINALIZAR_PROCESO:
             printf("Se seleccionó la opción 3\n");

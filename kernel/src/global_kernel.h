@@ -17,5 +17,9 @@ extern int g_conexion_cpu_dispatch;
 extern sem_t g_hay_elementos_en_ready;
 extern sem_t g_mutex_cola_ready;
 extern sem_t g_disponible_exec;
-
+//Semaforos largo plazo
+extern sem_t g_tope_multiprogramacion;
+extern sem_t mutex_contador_pid;
+extern sem_t g_mutex_cola_new;
+extern sem_t g_mutex_socket_memoria;
 #endif

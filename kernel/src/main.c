@@ -51,8 +51,11 @@ int main(void){
 
     //colas de planificacion
     g_cola_new = queue_create();
+    sem_init(&g_mutex_cola_new, 0, 1);
     g_cola_ready = queue_create();
+    sem_init(&g_mutex_cola_ready, 0,1);
     cola_exec = queue_create();
+    sem_init(&g_disponible_exec, 0, 1);
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -63,7 +66,7 @@ int main(void){
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
 
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
-    sem_init(&g_mutex_multiprogramacion, 0, 1);
+    sem_init(&g_tope_multiprogramacion, 0, g_grado_multiprogramacion);
 
 
     algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
@@ -81,17 +84,18 @@ int main(void){
     enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", conexion_cpu_interrupt);
 
     g_socket_memoria = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", g_logger);
+    sem_init(&g_mutex_socket_memoria,0,1);
     handshake_cliente(g_socket_memoria, g_logger);
     enviar_mensaje("Mensaje KERNEL a MEMORIA", g_socket_memoria);
-    // CONEXIONES DE PRUEBA -- BORRAR LUEGO
-
-
     //PLANIFICACION
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
-    pthread_t hilo_planificador;
+    
 
+    pthread_t hilo_planificador;
+    sem_init(&g_hay_elementos_en_ready, 0, 0);
+    
     if(strcmp(algoritmo_planificacion, "FIFO") == 0){
-        hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)planificador_fifo, NULL);
+        hilo_planificador = pthread_create(&hilo_planificador, NULL, &planificador_fifo, NULL);
         pthread_detach(hilo_planificador);
     } else if(strcmp(algoritmo_planificacion, "RR") == 0){
         //planificador_rr();
@@ -100,17 +104,7 @@ int main(void){
     }
     
     //CONSOLA INTERACTIVA
-
     consola_interactiva(g_logger);
-
-    // pthread_t hilo_consola_interactiva;
-
-    // if (pthread_create(&hilo_consola_interactiva, NULL, (void*)consola_interactiva, (void*)g_logger) != 0){
-    //     log_error(g_logger, "error al crear el hilo de la cosola interactiva");
-    // }
-    // pthread_detach(hilo_consola_interactiva);
-    //CONSOLA INTERACTIVA
-
     // IO
     int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
     atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);

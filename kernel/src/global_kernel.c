@@ -14,4 +14,7 @@ int g_conexion_cpu_dispatch;
 sem_t g_hay_elementos_en_ready;
 sem_t g_mutex_cola_ready;
 sem_t g_disponible_exec;
-
+sem_t g_tope_multiprogramacion;
+sem_t mutex_contador_pid;
+sem_t g_mutex_cola_new;
+sem_t g_mutex_socket_memoria;
