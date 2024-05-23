@@ -27,6 +27,12 @@ typedef enum {
     PROCESO_ESTADO= 7,
 } t_funciones_consola;
 
+typedef struct {
+    int motivo;
+    t_PCB* pcb;
+} t_desalojo;
+
+
 t_paquete* crear_contexto_memoria(t_PCB* pcb);
 
 void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger);
@@ -46,5 +52,11 @@ void consola_interactiva(t_log *logger);
 bool es_parametro_valido(char* parametro);
 
 void planificador_fifo();
+
+void finalizar_proceso(t_PCB* pcb);
+
+void atender_desalojo(t_desalojo* desalojo);
+
+void planificador_exit();
 
 #endif

@@ -54,8 +54,11 @@ int main(void){
     sem_init(&g_mutex_cola_new, 0, 1);
     g_cola_ready = queue_create();
     sem_init(&g_mutex_cola_ready, 0,1);
-    cola_exec = queue_create();
+    cola_exec = queue_create(); // No se usa
     sem_init(&g_disponible_exec, 0, 1);
+    g_cola_exit = queue_create();
+    sem_init(&g_mutex_cola_exit, 0, 1);
+    
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -89,11 +92,13 @@ int main(void){
     enviar_mensaje("Mensaje KERNEL a MEMORIA", g_socket_memoria);
     //PLANIFICACION
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
+    pthread_t hilo_exit;
+    sem_init(&g_hay_elementos_en_exit, 0, 0);
+    hilo_exit = pthread_create(&hilo_exit, NULL, &planificador_exit, NULL);
     
-
     pthread_t hilo_planificador;
     sem_init(&g_hay_elementos_en_ready, 0, 0);
-    
+
     if(strcmp(algoritmo_planificacion, "FIFO") == 0){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, &planificador_fifo, NULL);
         pthread_detach(hilo_planificador);

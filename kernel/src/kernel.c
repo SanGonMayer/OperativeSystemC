@@ -94,9 +94,6 @@ void iniciar_proceso(char* path){
     sem_post(&g_hay_elementos_en_ready);
 }
 
-void finalizar_proceso(){
-    sem_post(&g_tope_multiprogramacion);
-}
 
 void enviar_proceso_a_ready(){
         sem_wait(&g_mutex_cola_new);
@@ -140,10 +137,55 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     //recibir motivo de desalojo
     recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     log_info(logger, "Motivo de finalizacion: %d", motivo);
+
+    t_desalojo* desalojo = malloc(sizeof(t_desalojo));
+    desalojo->pcb = pcb;
+    desalojo->motivo = motivo;
+
+    pthread_t hilo_desalojo;
+    pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
+    pthread_detach(hilo_desalojo);
     //atender motivo
     sem_post(&g_disponible_exec);
 }
 
+void planificador_exit(){
+    while(1){
+        sem_wait(&g_hay_elementos_en_exit);
+        sem_wait(&g_mutex_cola_exit);
+        t_PCB* pcb = queue_pop(g_cola_exit);
+        sem_post(&g_mutex_cola_exit);
+        log_info(g_logger, "Proceso %d finalizado", pcb->PID);
+        //Liberarlo de memoria (entrega 3)
+        free(pcb);
+    }
+}
+
+void finalizar_proceso(t_PCB* pcb){
+    pcb->estado = EXIT;
+    log_info(g_logger, "Proceso %d finalizado", pcb->PID);
+
+    sem_wait(&g_mutex_cola_exit);
+    queue_push(g_cola_exit, pcb);
+    sem_post(&g_mutex_cola_exit);
+    sem_post(&g_hay_elementos_en_exit);
+    sem_post(&g_tope_multiprogramacion);
+}
+
+void atender_desalojo(t_desalojo* desalojo){
+    switch(desalojo->motivo){
+        case FINALIZACION:
+            finalizar_proceso(desalojo->pcb);
+            break;
+        case INTERRUPCION:
+            log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+            break;
+        case IO_GEN_SLEEP:
+            log_info(g_logger, "Proceso finalizado por error");
+            break;
+    }
+    free(desalojo);
+}
 
 void planificador_fifo(){
     while(1){
