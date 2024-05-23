@@ -90,28 +90,33 @@ void iniciar_proceso(char* path){
     log_info(g_logger, "Proceso %d encolado en NEW", pcb->PID);
 
     sem_wait(&g_tope_multiprogramacion);
-    enviar_proceso_a_ready();
+    preparar_proceso_a_ready();
     sem_post(&g_hay_elementos_en_ready);
 }
 
 
-void enviar_proceso_a_ready(){
-        sem_wait(&g_mutex_cola_new);
-        t_PCB* pcb = queue_pop(g_cola_new);
-        sem_post(&g_mutex_cola_new);
-        
-        sem_wait(&g_mutex_socket_memoria);
-        enviar_proceso_a_memoria(pcb, g_socket_memoria, g_logger);
-        sem_post(&g_mutex_socket_memoria);
-        
-        sem_wait(&g_mutex_cola_ready);
-        queue_push(g_cola_ready, pcb);
-        sem_post(&g_mutex_cola_ready);
-        
-        pcb-> estado = READY;
-        log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
-        log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
+void preparar_proceso_a_ready(){
+    sem_wait(&g_mutex_cola_new);
+    t_PCB* pcb = queue_pop(g_cola_new);
+    sem_post(&g_mutex_cola_new);
+
+    sem_wait(&g_mutex_socket_memoria);
+    enviar_proceso_a_memoria(pcb, g_socket_memoria, g_logger);
+    sem_post(&g_mutex_socket_memoria);
+
+    enviar_proceso_a_ready(pcb);  
 }
+
+void enviar_proceso_a_ready(t_PCB* pcb){
+    sem_wait(&g_mutex_cola_ready);
+    queue_push(g_cola_ready, pcb);
+    sem_post(&g_mutex_cola_ready);
+        
+    pcb-> estado = READY;
+    log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
+    log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
+}
+
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
@@ -178,10 +183,10 @@ void atender_desalojo(t_desalojo* desalojo){
             finalizar_proceso(desalojo->pcb);
             break;
         case INTERRUPCION:
-            log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+            enviar_proceso_a_ready(desalojo->pcb);
             break;
         case IO_GEN_SLEEP:
-            log_info(g_logger, "Proceso finalizado por error");
+            log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
             break;
     }
     free(desalojo);

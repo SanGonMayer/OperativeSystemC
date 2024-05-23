@@ -43,7 +43,9 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger);
 
 void iniciar_proceso(char* path);
 
-void enviar_proceso_a_ready();
+void preparar_proceso_a_ready();
+
+void enviar_proceso_a_ready(t_PCB* pcb);
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
 
