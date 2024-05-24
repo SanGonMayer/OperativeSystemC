@@ -116,7 +116,7 @@ void registros_cpu_dictionary(t_registrosCPU registros, t_dictionary* dictionary
 }
 
 t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
-    t_registrosCPU registros;
+    t_registrosCPU registros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     registros.ax = dictionary_get(dictionary, "AX");
     registros.bx = dictionary_get(dictionary, "BX");

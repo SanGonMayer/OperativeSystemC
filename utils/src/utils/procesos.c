@@ -3,7 +3,35 @@
 #include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
-    t_PCB* pcb = malloc(sizeof(t_PCB)); 
+    t_PCB* pcb = malloc(sizeof(t_PCB));
+
+    *pcb = (t_PCB) {
+        .PID = 0,
+        .estado = NEW,
+        .quantum = 0,
+        .registrosCPU = {
+            .pc = 0,
+            .ax = 0,
+            .bx = 0,
+            .cx = 0,
+            .dx = 0,
+            .eax = 0,
+            .ebx = 0,
+            .ecx = 0,
+            .edx = 0,
+            .si = 0,
+            .di = 0,
+        },
+        .registrosMem = {
+            .codigo = 0,
+            .datos = 0,
+            .heap = 0,
+            .posicionFinal = 0,
+        },
+        .path_length = 0,
+        .path = NULL,
+    };
+
     return pcb;
 }
 
