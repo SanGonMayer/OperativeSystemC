@@ -3,8 +3,11 @@
 
 t_instruccion_io* crear_instruccion_io(uint32_t unidades_trabajo, char* instruccion){
     t_instruccion_io* instruccion_io = malloc(sizeof(t_instruccion_io));
-    instruccion_io->unidades_trabajo = unidades_trabajo;
-    instruccion_io->instruccion = instruccion;
+    *instruccion_io = (t_instruccion_io) {
+        .unidades_trabajo = unidades_trabajo,
+        .instruccion = instruccion
+    };
+
     return instruccion_io;
 }
 
@@ -23,3 +26,35 @@ t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
     buffer_destroy(buffer);
     return crear_instruccion_io(unidades_trabajo, instruccion);
 }
+
+t_buffer* serializar_interfaz(t_interfaz* interfaz){
+    t_buffer* buffer = buffer_create(
+        sizeof(uint32_t) + 
+        strlen(interfaz->tipo) + 
+        strlen(interfaz->nombre));
+    
+    buffer_add_string(buffer, strlen(interfaz->tipo), interfaz->tipo);
+    buffer_add_string(buffer, strlen(interfaz->nombre), interfaz->nombre);
+
+    return buffer;
+}
+
+t_interfaz* deserializar_interfaz(t_buffer* buffer){
+
+    uint32_t length;
+    char* tipo = buffer_read_string(buffer, &length);
+    char* nombre = buffer_read_string(buffer, &length);
+
+    buffer_destroy(buffer);
+    
+    t_interfaz* interfaz = malloc(sizeof(t_interfaz));
+    *interfaz = (t_interfaz) {
+        .tipo = tipo,
+        .nombre = nombre
+    };
+
+    return interfaz;
+}
+
+
+

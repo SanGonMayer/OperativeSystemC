@@ -2,6 +2,7 @@
 #include "global_io.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
+#include "utils/codigo_operacion.h"
 #include "utils/instrucciones_io.h"
 
 t_instruccion_io* recibir_instruccion_io(int conexion_kernel){
@@ -19,13 +20,33 @@ void atender_instrucciones(int conexion_kernel, ProcesarInstruccion procesar_ins
     }
 }
 
-int iniciar_conexion_kernel(){
+int iniciar_conexion_kernel(char* tipo_interfaz){
 
-    return crear_conexion(
+    int conexion = crear_conexion(
     g_config_io->ip_kernel, 
     g_config_io->puerto_kernel, 
     "KERNEL", 
     g_logger);
+
+    if(conexion == -1){
+        log_error(g_logger, "No se pudo conectar con el kernel");
+        exit(EXIT_FAILURE);
+    }
+
+    t_interfaz interfaz = {
+        .tipo = tipo_interfaz,
+        .nombre = tipo_interfaz
+    };
+
+    t_buffer* buffer = serializar_interfaz(&interfaz);
+    t_paquete* paquete = crear_paquete();
+    paquete->codigo_operacion = ENVIO_INTERFAZ_CONECTADA;
+    agregar_a_paquete(paquete, buffer->stream, buffer->size);
+    serializar_y_enviar_paquete(paquete, conexion);
+
+    buffer_destroy(buffer);
+
+    return conexion;
 }
 
 int iniciar_conexion_memoria(){

@@ -10,7 +10,8 @@ typedef enum
     INTERRUPCION = 5,
     FINALIZACION = 6,
     IO_GEN_SLEEP = 7,
-    ENVIO_INTERRUPCION = 8
+    ENVIO_INTERRUPCION = 8,
+    ENVIO_INTERFAZ_CONECTADA = 9
 } t_codigo_operacion;
 
 #endif

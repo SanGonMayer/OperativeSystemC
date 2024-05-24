@@ -28,9 +28,9 @@ int main(int argc, char* argv[]){
 
     char* tipo = g_config_io->tipo_interfaz;
 
-    int conexion_kernel = iniciar_conexion_kernel();
+    int conexion_kernel = iniciar_conexion_kernel(tipo);
 
-    void* estrategia_procesar_instruccion;
+    void* estrategia_procesar_instruccion = NULL;
 
     if(string_equals_ignore_case(tipo, "GEN")){
         estrategia_procesar_instruccion = &procesar_instruccion_generica;
