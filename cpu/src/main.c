@@ -80,36 +80,40 @@ int check_interrupt(t_PCB* pcb, t_log* logger){
 
 void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
     char* instruccion;
-
+    log_info(logger, "Se inicia el ciclo de ejecucion");
     instruccion = etapa_fetch(socket_memoria, pcb, logger);
-
+    log_info(logger, "Se obtuvo la instruccion %s", instruccion);
     while (instruccion != NULL) {
         //etapa decode
         char** instruccion_separada = string_split(instruccion, " ");
-
+        log_info(logger, "Se ejecuta la instruccion %s", instruccion_separada[0]);
         if (strcmp(instruccion_separada[0], "SET") == 0) {
             char* registro = instruccion_separada[1];
             int valor = atoi(instruccion_separada[2]);
             //etapa execute
             ejecutar_set(registro, valor, pcb, diccionario);
+            log_info(logger, "Se ejecuto SET %s %d", registro, valor);
 
         }else if(strcmp(instruccion_separada[0], "SUM") == 0){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sum(registroDestino, registroValor, pcb, diccionario);
+            log_info(logger, "Se ejecuto SUM %s %s", registroDestino, registroValor);
 
         }else if(strcmp(instruccion_separada[0], "SUB") == 0){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sub(registroDestino, registroValor, pcb, diccionario);
+            log_info(logger, "Se ejecuto SUB %s %s", registroDestino, registroValor);
 
         }else if(strcmp(instruccion_separada[0], "JNZ") == 0){
             char* registro = instruccion_separada[1];
             int valorPC = atoi(instruccion_separada[2]);
             //etapa execute
             ejecutar_jnz(registro, valorPC, pcb, diccionario);
+            log_info(logger, "Se ejecuto JNZ %s %d", registro, valorPC);
 
         }else if(strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0){
             char* dispositivo = instruccion_separada[1];
@@ -117,9 +121,11 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             desalojar_pcb(socket_dispatch,pcb, (int)IO_GEN_SLEEP, logger, diccionario);
             t_buffer* buffer = ejecutar_io_gen_sleep(dispositivo, unidadesDeTrabajo);
             enviar_buffer(socket_dispatch,buffer, logger);
+            log_info(logger, "Se ejecuto IO_GEN_SLEEP %s %d", dispositivo, unidadesDeTrabajo);
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
             desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
+            log_info(logger, "Se ejecuto EXIT");
         }
 
         if(check_interrupt(pcb, logger) == 1){
@@ -149,7 +155,9 @@ void servidor_dispatch(int* socket_memoria){
             recibir_mensaje_logger(cliente_dispatch_fd, logger);
             break;
         case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
+            log_info(logger, "Listo para recibir un PCB de Kernel");
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
+            log_info(logger, "Recibí el PCB con PID %d", pcb->PID);
             t_dictionary* diccionario = dictionary_create();
             registros_cpu_dictionary(&(pcb->registrosCPU) ,diccionario);
             ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);

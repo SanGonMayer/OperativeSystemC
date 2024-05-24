@@ -10,7 +10,7 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger){
     //Envio posicion de memoria + program counter
 
     instruccion = pedir_instruccion(socket, pcb, logger);
-
+    
     //Sumar program counter
     pcb->registrosCPU.pc++;
     return instruccion;
@@ -43,6 +43,7 @@ uint32_t recibir_interrupcion(int socket){
 }
 
 char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger){
+    log_info(logger, "Pidiendo instruccion a memoria");
     t_paquete_instruccion* paquete_instruccion = crear_paquete_instruccion(pcb->PID, pcb->registrosCPU.pc);
 
     t_paquete* paquete = malloc(sizeof(t_paquete));

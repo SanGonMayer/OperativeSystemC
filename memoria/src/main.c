@@ -26,7 +26,7 @@ void procesar_cliente(int* socket){
 
     while (iterador) {
         int cod_op = recibir_operacion(*socket);
-
+        log_info(logger, "Operacion recibida: %d", cod_op);
         switch (cod_op) 
         {
         case 1:
@@ -42,16 +42,16 @@ void procesar_cliente(int* socket){
             cargar_instrucciones(memoria_instrucciones, paqueteMemoria->PID, paqueteMemoria->path);
             
             confirmar_recepcion(*socket);
-
+            log_info(logger, "Instrucciones cargadas correctamente para el PID %d", paqueteMemoria->PID);
             free(paqueteMemoria);
             break;
 
         case ENVIO_PID_PC: //Recibir posicion de codigo de CPU
-            
+            log_info(logger, "Recibiendo pedido de instruccion PID PC");
             t_paquete_instruccion* pedido_instruccion = recibir_instruccion(*socket, logger);
 
             char* instruccion = leer_instruccion(memoria_instrucciones, pedido_instruccion->pid, &pedido_instruccion->pc);
-
+            log_info(logger, "Instruccion leida: %s", instruccion);
             enviar_instruccion(*socket, instruccion, logger);
             free(instruccion);
             break;

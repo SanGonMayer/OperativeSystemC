@@ -54,7 +54,7 @@ void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger){
     free(paquete);
 
 }
-
+//piton
 t_registrosMem recibir_contexto_memoria(int socket){
     t_registrosMem registrosMemoria;
     recv(socket, &registrosMemoria, sizeof(t_registrosMem), MSG_WAITALL);
@@ -75,15 +75,19 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 
 void iniciar_proceso(char* path){
     t_PCB* pcb = crear_PCB();
+    log_info(g_logger,"Creando PCB para el proceso %d", g_contador_pid);
     sem_wait(&mutex_contador_pid);
+    log_info(g_logger,"dentro de mutex_contador_pid");
     g_contador_pid++;
     pcb->PID = g_contador_pid;
     sem_post(&mutex_contador_pid);
+    log_info(g_logger,"Proceso %d creado", pcb->PID);
     pcb->estado = NEW;
     pcb->path_length = strlen(path);
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
     sem_wait(&g_mutex_cola_new);
+    log_info(g_logger, "Encolando proceso %d en NEW, dentro de mutex", pcb->PID);
     queue_push(g_cola_new, pcb);
     sem_post(&g_mutex_cola_new);
     log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(g_cola_new));
@@ -121,15 +125,16 @@ void enviar_proceso_a_ready(t_PCB* pcb){
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
     sem_wait(&g_disponible_exec);
-    error = enviar_pcb(conexion_cpu_dispatch, pcb);
+    log_info(g_logger, "enviando PCB a CPU");
+    error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     if (error == -1){
-        log_error(logger, "Error al enviar PCB a CPU");
+        log_error(g_logger, "Error al enviar PCB a CPU");
     }else{
-        log_info(logger, "PCB enviado a CPU");
+        log_info(g_logger, "PCB enviado a CPU");
     }
 
     // Recibir PCB
-    t_PCB* pcb_recibido = recibir_pcb(conexion_cpu_dispatch);
+    t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
     int motivo;
     if (pcb_recibido == NULL){
         log_error(logger, "Error al recibir PCB de CPU");
