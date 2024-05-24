@@ -4,6 +4,7 @@
         "list.h": "c"
     },
     "clangd.fallbackFlags": [
-        "-I${workspaceFolder}/../utils/src",
+        "-I${workspaceFolder}/../utils/src"
+        
     ]
 }

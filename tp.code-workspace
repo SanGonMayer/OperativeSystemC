@@ -10,6 +10,7 @@
 		"C_Cpp.errorSquiggles": "disabled",
 		"clangd.fallbackFlags": [
 			"-I${workspaceFolder}/../utils/src"
+			
 		]
 	},
 	"folders": [

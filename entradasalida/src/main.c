@@ -1,28 +1,46 @@
+#include "config_io.h"
+#include "global_io.h"
 #include "io.h"
+#include "io_generica.h"
+#include <commons/config.h>
 #include <commons/log.h>
+#include <commons/string.h>
+#include <stdlib.h>
 
-ConfiguracionIO* config;
-t_log* logger;
+
+t_config* config;
 
 int main(int argc, char* argv[]){
 
-	logger = log_create("io.log", "server_connection", 1, LOG_LEVEL_INFO);
-    t_config* config_file = config_create("../entradasalida/io.config");
-    config = leer_configuracion(logger, config_file);
+	g_logger = log_create(
+        "io.log", 
+        "server_connection",
+        1,
+        LOG_LEVEL_INFO);
+    
+    config = config_create("../entradasalida/io.config");
 
-    int conexion_kernel = crear_conexion(config->ip_kernel, config->puerto_kernel, "KERNEL", logger);
-    handshake_cliente(conexion_kernel, logger);
-    enviar_mensaje("primer mensaje enviado de cliente io a kernel", conexion_kernel);
-    close(conexion_kernel);
+    if(config == NULL){
+        log_error(g_logger, "Mal el path");
+        exit(EXIT_FAILURE);
+    }
+    g_config_io = leer_configuracion(config);
 
-    int conexion_memoria = crear_conexion(config->ip_memoria, config->puerto_memoria, "MEMORIA", logger);
-    handshake_cliente(conexion_memoria, logger);
-    enviar_mensaje("primer mensaje enviado de cliente io a memoria", conexion_memoria);
+    char* tipo = g_config_io->tipo_interfaz;
 
-    close(conexion_memoria);
-    log_destroy(logger);
-    config_destroy(config_file);
-    configuracionIO_destroy(config);
+    int conexion_kernel = iniciar_conexion_kernel();
+
+    void* estrategia_procesar_instruccion;
+
+    if(string_equals_ignore_case(tipo, "GEN")){
+        estrategia_procesar_instruccion = &procesar_instruccion_generica;
+    }
+
+    atender_instrucciones(conexion_kernel, estrategia_procesar_instruccion);
+
+    log_destroy(g_logger);
+    configuracionIO_destroy(g_config_io);
+    config_destroy(config);
     return 0;
 }
 

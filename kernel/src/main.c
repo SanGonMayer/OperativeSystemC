@@ -1,5 +1,6 @@
 #include "global_kernel.h"
 #include "kernel.h"
+#include <pthread.h>
 #include <semaphore.h>
 
 char * puerto_escucha;
@@ -35,6 +36,11 @@ void procesar_cliente(int* fd){
             break;
         }
     }  
+}
+
+void proceso_io(){
+    int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
+    atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
 }
 
 int main(void){
@@ -107,13 +113,18 @@ int main(void){
     } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
         //planificador_vrr()
     }
+
+    // IO
+    
+    pthread_t hilo_io;
+    pthread_create(&hilo_io, NULL, (void*)proceso_io, NULL);
+    pthread_detach(hilo_io);
+
+    // IO
     
     //CONSOLA INTERACTIVA
     consola_interactiva(g_logger);
-    // IO
-    int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
-    atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
-    // IO
+    
 
 
     

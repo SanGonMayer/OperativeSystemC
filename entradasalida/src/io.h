@@ -1,25 +1,14 @@
 #ifndef IO_H_
 #define IO_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <commons/config.h>
-#include <utils/client.h>
-#include <unistd.h>
+#include "utils/instrucciones_io.h"
 
-typedef struct {
-    int tiempo_unidad_trabajo;
-    char* puerto_kernel;
-    char* puerto_memoria;
-    int block_size;
-    int block_count;
-    char* tipo_interfaz;
-    char* ip_kernel;
-    char* ip_memoria;
-    char* path_base_dialfs;
-} ConfiguracionIO;
 
-ConfiguracionIO* leer_configuracion(t_log* logger, t_config* config);
-void configuracionIO_destroy(ConfiguracionIO* config);
+typedef void* (*ProcesarInstruccion)(int fd, t_instruccion_io* instruccion);
+
+int iniciar_conexion_kernel();
+int iniciar_conexion_memoria();
+t_instruccion_io* recibir_instruccion_io(int conexion_kernel);
+void atender_instrucciones(int conexion_kernel, ProcesarInstruccion procesar_instruccion);
 
 #endif
