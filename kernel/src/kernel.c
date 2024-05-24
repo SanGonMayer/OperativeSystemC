@@ -83,7 +83,7 @@ void iniciar_proceso(char* path){
     sem_post(&mutex_contador_pid);
     log_info(g_logger,"Proceso %d creado", pcb->PID);
     pcb->estado = NEW;
-    pcb->path_length = strlen(path);
+    pcb->path_length = strlen(path) + 1;
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
     sem_wait(&g_mutex_cola_new);
@@ -175,7 +175,6 @@ void planificador_exit(){
 void finalizar_proceso(t_PCB* pcb){
     pcb->estado = EXIT;
     log_info(g_logger, "Proceso %d finalizado", pcb->PID);
-
     sem_wait(&g_mutex_cola_exit);
     queue_push(g_cola_exit, pcb);
     sem_post(&g_mutex_cola_exit);

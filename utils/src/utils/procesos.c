@@ -3,7 +3,7 @@
 #include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
-    t_PCB* pcb = malloc(sizeof(t_PCB));
+    t_PCB* pcb = malloc(sizeof(t_PCB)); 
     return pcb;
 }
 
@@ -68,7 +68,8 @@ t_buffer* serializar_pcb(t_PCB* pcb){
         sizeof(pcb->quantum) + 
         sizeof(pcb->registrosCPU) + 
         sizeof(pcb->registrosMem) + 
-        sizeof(pcb->path_length)
+        sizeof(pcb->path_length) +
+        pcb->path_length
     );
 
     buffer_add_uint32(buffer, pcb->PID);
