@@ -53,7 +53,7 @@ void procesar_cliente(int* socket){
             char* instruccion = leer_instruccion(memoria_instrucciones, pedido_instruccion->pid, &pedido_instruccion->pc);
             log_info(logger, "Instruccion leida: %s", instruccion);
             enviar_instruccion(*socket, instruccion, logger);
-            free(instruccion);
+            //free(instruccion);
             break;
         case -1:
             log_error(logger, "el cliente se desconectó.");

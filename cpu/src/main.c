@@ -81,7 +81,7 @@ int check_interrupt(t_PCB* pcb, t_log* logger){
 void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
     char* instruccion;
     log_info(logger, "Se inicia el ciclo de ejecucion");
-    instruccion = etapa_fetch(socket_memoria, pcb, logger);
+    instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
     log_info(logger, "Se obtuvo la instruccion %s", instruccion);
     while (instruccion != NULL) {
         //etapa decode
@@ -92,29 +92,30 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int valor = atoi(instruccion_separada[2]);
             //etapa execute
             ejecutar_set(registro, valor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SET %s %d", registro, valor);
+            log_info(logger, "Se ejecuto SET en el registro %s y queda con valor %d", registro, dictionary_get(diccionario,registro));
 
         }else if(strcmp(instruccion_separada[0], "SUM") == 0){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sum(registroDestino, registroValor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SUM %s %s", registroDestino, registroValor);
+            log_info(logger, "Se ejecuto SUM quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
 
         }else if(strcmp(instruccion_separada[0], "SUB") == 0){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sub(registroDestino, registroValor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SUB %s %s", registroDestino, registroValor);
+            log_info(logger, "Se ejecuto SUB quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
 
         }else if(strcmp(instruccion_separada[0], "JNZ") == 0){
             char* registro = instruccion_separada[1];
             int valorPC = atoi(instruccion_separada[2]);
             //etapa execute
-            ejecutar_jnz(registro, valorPC, pcb, diccionario);
+            log_info(logger, "valor del PC antes de jnz %d", dictionary_get(diccionario,"PC"));
+            ejecutar_jnz(registro, valorPC-1, pcb, diccionario);
             log_info(logger, "Se ejecuto JNZ %s %d", registro, valorPC);
-
+            log_info(logger, "PC queda con valor %d", dictionary_get(diccionario,"PC"));
         }else if(strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0){
             char* dispositivo = instruccion_separada[1];
             int unidadesDeTrabajo = atoi(instruccion_separada[2]);
@@ -125,7 +126,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
-            desalojar_pcb(socket_dispatch,pcb, 6, logger, diccionario);
+            desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
             log_info(logger, "Se ejecuto EXIT");
             return;
         }
@@ -134,7 +135,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
             return;
         }
-        instruccion = etapa_fetch(socket_memoria, pcb, logger);
+        instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
     }
 }
 
@@ -160,8 +161,10 @@ void servidor_dispatch(int* socket_memoria){
             log_info(logger, "Listo para recibir un PCB de Kernel");
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
             log_info(logger, "Recibí el PCB con PID %d", pcb->PID);
+            log_info(logger, "Con un ax = %d", pcb->registrosCPU.ax);
             t_dictionary* diccionario = dictionary_create();
-            registros_cpu_dictionary(&(pcb->registrosCPU) ,diccionario);
+            registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
+            log_info(logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
             ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
             
             break;
