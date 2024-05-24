@@ -124,8 +124,10 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             log_info(logger, "Se ejecuto IO_GEN_SLEEP %s %d", dispositivo, unidadesDeTrabajo);
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
-            desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
+            // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
+            desalojar_pcb(socket_dispatch,pcb, 6, logger, diccionario);
             log_info(logger, "Se ejecuto EXIT");
+            return;
         }
 
         if(check_interrupt(pcb, logger) == 1){
@@ -161,6 +163,7 @@ void servidor_dispatch(int* socket_memoria){
             t_dictionary* diccionario = dictionary_create();
             registros_cpu_dictionary(&(pcb->registrosCPU) ,diccionario);
             ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
+            
             break;
         default:
             log_info(logger, "No entiendo el mensaje");

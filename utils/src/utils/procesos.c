@@ -1,4 +1,5 @@
 #include "procesos.h"
+#include "utils/buffer.h"
 #include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
@@ -15,6 +16,12 @@ void* crear_a_enviar(t_paquete* paquete){
     offset += sizeof(uint32_t);
     memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
     return a_enviar;
+}
+
+void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
+    t_buffer* buffer = serializar_pcb(pcb);
+
+    enviar_buffer(socket, buffer, logger);
 }
 
 int enviar_pcb(int socket, const t_PCB *pcb) {

@@ -127,11 +127,12 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "enviando PCB a CPU");
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
-    if (error == -1){
-        log_error(g_logger, "Error al enviar PCB a CPU");
-    }else{
-        log_info(g_logger, "PCB enviado a CPU");
-    }
+
+    // if (error == -1){
+    //     log_error(g_logger, "Error al enviar PCB a CPU");
+    // }else{
+    //     log_info(g_logger, "PCB enviado a CPU");
+    // }
 
     // Recibir PCB
     t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
@@ -273,7 +274,7 @@ void consola_interactiva(t_log *logger){
             }
 
             pthread_t hilo_iniciar_proceso;
-            pthread_create(&hilo_iniciar_proceso, NULL, &iniciar_proceso, path);
+            pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);
             pthread_detach(hilo_iniciar_proceso);
             break;
         case FINALIZAR_PROCESO:

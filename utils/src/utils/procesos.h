@@ -50,7 +50,7 @@ typedef struct{
     t_registrosCPU registrosCPU;
     t_registrosMem registrosMem;
     int quantum;
-    int path_length;
+    uint32_t path_length;
     char* path;
 } t_PCB;
 
@@ -61,6 +61,8 @@ t_buffer* serializar_pcb(t_PCB* pcb);
 t_PCB* deserializar_pcb(t_buffer* buffer);
 
 int enviar_pcb(int socket, const t_PCB *pcb);
+
+void responder_pcb(int socket, t_PCB *pcb, t_log* logger);
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
 

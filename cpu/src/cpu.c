@@ -30,7 +30,7 @@ int responder_ok(int socket, uint32_t posicionDeCodigo){
 char* recibir_instruccion(int socket){
     t_buffer* buffer = recibir_buffer(socket);
 
-    uint32_t* size_instruccion;
+    uint32_t* size_instruccion = malloc(sizeof(uint32_t));
     char* instruccion = buffer_read_string(buffer, size_instruccion);
     return instruccion;
 }
@@ -67,9 +67,6 @@ void ejecutar_sum(char* registroDestino, char* registroValor, t_PCB* pcb, t_dict
     uint32_t* valorDestino = dictionary_get(diccionario, registroDestino);
     uint32_t suma = *valorASumar + *valorDestino;
     dictionary_put(diccionario, registroDestino, &suma);
-
-    free(valorASumar);
-    free(valorDestino);
 }
 
 void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb, t_dictionary* diccionario){
@@ -79,8 +76,8 @@ void ejecutar_sub(char* registroDestino, char* registroValor, t_PCB* pcb, t_dict
     uint32_t resta = *valorDestino - *valorARestar;
     dictionary_put(diccionario, registroDestino, &resta);
 
-    free(valorARestar);
-    free(valorDestino);
+    // free(valorARestar);
+    // free(valorDestino);
 }
 
 void ejecutar_jnz(char* registro, int valorPC, t_PCB* pcb, t_dictionary* diccionario){
@@ -100,7 +97,8 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
 
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){
     pcb->registrosCPU = registros_cpu_from_dictionary(diccionario);
-    enviar_pcb(socket_dispatch, pcb);
+    pcb->registrosCPU.ax = 40;
+    responder_pcb(socket_dispatch, pcb, logger);
     send(socket_dispatch, &motivo, sizeof(int), 0);
 }
 
