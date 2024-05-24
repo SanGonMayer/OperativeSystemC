@@ -113,7 +113,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int valorPC = atoi(instruccion_separada[2]);
             //etapa execute
             log_info(logger, "valor del PC antes de jnz %d", dictionary_get(diccionario,"PC"));
-            ejecutar_jnz(registro, valorPC, pcb, diccionario);
+            ejecutar_jnz(registro, valorPC-1, pcb, diccionario);
             log_info(logger, "Se ejecuto JNZ %s %d", registro, valorPC);
             log_info(logger, "PC queda con valor %d", dictionary_get(diccionario,"PC"));
         }else if(strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0){
