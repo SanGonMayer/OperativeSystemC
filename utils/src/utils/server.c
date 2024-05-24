@@ -1,4 +1,5 @@
 #include "server.h"
+#include "utils/client.h"
 
 int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
     int socket_servidor, err;
@@ -129,6 +130,25 @@ void recibir_mensaje_logger(int fd, t_log* logger){
 	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
 
 	free(buffer);
+}
+
+t_paquete* esperar_paquete(int socket_cliente)
+{
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	int size;
+	int desplazamiento = 0;
+	void * buffer;
+
+	buffer = recibir_buffer(socket_cliente);
+	memcpy(&(paquete->codigo_operacion), buffer + desplazamiento, sizeof(int));
+	desplazamiento+=sizeof(int);
+	memcpy(&(paquete->buffer->size), buffer + desplazamiento, sizeof(uint32_t));
+	desplazamiento+=sizeof(uint32_t);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	memcpy(paquete->buffer->stream, buffer + desplazamiento, paquete->buffer->size);
+
+	free(buffer);
+	return paquete;
 }
 
 t_list* recibir_paquete(int socket_cliente)

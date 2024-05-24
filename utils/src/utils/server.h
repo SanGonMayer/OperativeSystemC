@@ -1,6 +1,7 @@
 #ifndef SERVER_H_
 #define SERVER_H_
 
+#include "utils/client.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -50,4 +51,5 @@ t_list* recibir_paquete(int);
 
 void confirmar_recepcion(int socket);
 
+t_paquete* esperar_paquete(int socket_cliente);
 #endif
