@@ -1,8 +1,9 @@
 #include "procesos.h"
+#include "utils/buffer.h"
 #include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
-    t_PCB* pcb = malloc(sizeof(t_PCB));
+    t_PCB* pcb = malloc(sizeof(t_PCB)); 
     return pcb;
 }
 
@@ -17,7 +18,13 @@ void* crear_a_enviar(t_paquete* paquete){
     return a_enviar;
 }
 
-int enviar_pcb(int socket, const t_PCB *pcb) {
+void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
+    t_buffer* buffer = serializar_pcb(pcb);
+
+    enviar_buffer(socket, buffer, logger);
+}
+
+int enviar_pcb(int socket, t_PCB *pcb) {
 
     t_buffer* buffer = serializar_pcb(pcb);
 
@@ -61,7 +68,8 @@ t_buffer* serializar_pcb(t_PCB* pcb){
         sizeof(pcb->quantum) + 
         sizeof(pcb->registrosCPU) + 
         sizeof(pcb->registrosMem) + 
-        sizeof(pcb->path_length)
+        sizeof(pcb->path_length) +
+        pcb->path_length
     );
 
     buffer_add_uint32(buffer, pcb->PID);

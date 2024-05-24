@@ -63,8 +63,7 @@ int main(void){
     cola_exec = queue_create(); // No se usa
     sem_init(&g_disponible_exec, 0, 1);
     g_cola_exit = queue_create();
-    sem_init(&g_mutex_cola_exit, 0, 1);
-    
+    sem_init(&g_mutex_cola_exit, 0, 1); 
 
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
@@ -82,9 +81,9 @@ int main(void){
     
     quantum = config_get_int_value(config, "QUANTUM");
 
-
+    //INICIAR_PROCESO ../memoria/instrucciones.dummy
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
-    int g_conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
+    g_conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
     handshake_cliente(g_conexion_cpu_dispatch, g_logger);
     enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", g_conexion_cpu_dispatch);
 
@@ -123,6 +122,8 @@ int main(void){
     // IO
     
     //CONSOLA INTERACTIVA
+    sem_init(&mutex_contador_pid, 0, 1);
+
     consola_interactiva(g_logger);
     
 

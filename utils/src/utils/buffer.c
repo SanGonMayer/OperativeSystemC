@@ -78,7 +78,7 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length){
     *length = buffer_read_uint32(buffer);
     char *string = malloc(*length);
     buffer_read(buffer, string, *length);
-    string[*length] = '\0';
+    // string[*length] = '\0';
     return string;
 }
 
@@ -88,7 +88,7 @@ void enviar_buffer(int socket, t_buffer* buffer, t_log* logger){
     int offset = 0;
 
     memcpy(a_enviar + offset, &buffer->size, sizeof(uint32_t));
-    offset += sizeof(int);
+    offset += sizeof(uint32_t);
 
     memcpy(a_enviar + offset, buffer->stream, buffer->size);
     offset += buffer->size;

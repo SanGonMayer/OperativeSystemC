@@ -18,13 +18,13 @@
 * @brief pide la instruccion a partir de una posicion de memoria, devuelve instruccion
 */
 
-char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger);
+char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
 
 int responder_ok(int socket, uint32_t posicionDeCodigo);
 
 char* recibir_instruccion(int socket);
 
-char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger);
+char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
 
 uint32_t recibir_interrupcion(int socket);
 
@@ -40,7 +40,7 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo);
 
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario);
 
-void registros_cpu_dictionary(t_registrosCPU* registros, t_dictionary* dictionary);
+void registros_cpu_dictionary(t_registrosCPU registros, t_dictionary* dictionary);
 
 t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary);
 
