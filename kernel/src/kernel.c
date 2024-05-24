@@ -77,7 +77,6 @@ void iniciar_proceso(char* path){
     t_PCB* pcb = crear_PCB();
     log_info(g_logger,"Creando PCB para el proceso %d", g_contador_pid);
     sem_wait(&mutex_contador_pid);
-    log_info(g_logger,"dentro de mutex_contador_pid");
     g_contador_pid++;
     pcb->PID = g_contador_pid;
     sem_post(&mutex_contador_pid);
@@ -126,6 +125,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "enviando PCB a CPU");
+    pcb->registrosCPU.ax = 5;
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
 
     // if (error == -1){
@@ -145,6 +145,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
         actualizar_pcb(pcb, pcb_recibido);
         free(pcb_recibido);
     }
+
     //recibir motivo de desalojo
     recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     log_info(logger, "Motivo de finalizacion: %d", motivo);
