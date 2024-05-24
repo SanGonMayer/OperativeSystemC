@@ -60,7 +60,7 @@ t_buffer* serializar_pcb(t_PCB* pcb);
 
 t_PCB* deserializar_pcb(t_buffer* buffer);
 
-int enviar_pcb(int socket, const t_PCB *pcb);
+int enviar_pcb(int socket, t_PCB *pcb);
 
 void responder_pcb(int socket, t_PCB *pcb, t_log* logger);
 

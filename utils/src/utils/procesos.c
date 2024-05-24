@@ -24,7 +24,7 @@ void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
     enviar_buffer(socket, buffer, logger);
 }
 
-int enviar_pcb(int socket, const t_PCB *pcb) {
+int enviar_pcb(int socket, t_PCB *pcb) {
 
     t_buffer* buffer = serializar_pcb(pcb);
 
