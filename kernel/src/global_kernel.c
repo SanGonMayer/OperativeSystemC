@@ -16,6 +16,8 @@ int g_quantum;
 t_PCB* g_exec;
 int g_conexion_cpu_interrupt;
 
+t_dictionary* g_interfaces;
+
 sem_t g_hay_elementos_en_ready;
 sem_t g_mutex_cola_ready;
 sem_t g_disponible_exec;

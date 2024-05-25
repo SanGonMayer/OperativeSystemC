@@ -10,6 +10,7 @@
 #include <commons/collections/queue.h>
 #include <commons/collections/list.h>
 #include <utils/procesos.h>
+#include <utils/codigo_operacion.h>
 
 typedef enum {
     FIFO= 1,
@@ -66,5 +67,7 @@ void planificador_RR();
 void ejecutar_cpu_RR(t_PCB* pcb);
 
 void esperar_quantum(uint32_t PID);
+
+void recibir_pcb_desalojado(t_PCB* pcb);
 
 #endif

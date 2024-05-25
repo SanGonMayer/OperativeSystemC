@@ -23,11 +23,12 @@ void procesar_cliente(int* fd){
         int cod_op = recibir_operacion(*fd);
         switch (cod_op) 
         {
-        case 1:
-            recibir_mensaje(*fd);
+        case ENVIO_INTERFAZ_CONECTADA:
+            //Recibir interfaz
+            //Agregar a diccionario
             break;
         case -1:
-            log_error(g_logger, "el cliente se desconectó.");
+            log_error(g_logger, "la interfaz se desconectó.");
             iterador = 0;
             break;
         default:
@@ -35,6 +36,11 @@ void procesar_cliente(int* fd){
             break;
         }
     }  
+}
+
+void proceso_io(){
+    int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
+    atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
 }
 
 int main(void){
@@ -111,13 +117,17 @@ int main(void){
     //CONSOLA INTERACTIVA
     sem_init(&mutex_contador_pid, 0, 1);
 
+    // IO
+    // int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
+    // atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
+
+    g_interfaces = dictionary_create();
+
+    pthread_t hilo_io;
+    pthread_create(&hilo_io, NULL, (void*)proceso_io, NULL);
+    pthread_detach(hilo_io);
+
     consola_interactiva(g_logger);
-    // IO
-    int socket_servidor = iniciar_servidor(puerto_escucha, g_logger, "CLIENTE KERNEL");
-    atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
-    // IO
-
-
     
     free(g_cola_new);
     free(g_cola_ready);
