@@ -135,30 +135,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     // }
 
     // Recibir PCB
-    t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
-    int motivo;
-    if (pcb_recibido == NULL){
-        log_error(logger, "Error al recibir PCB de CPU");
-        free(pcb_recibido);
-    }else{
-        log_info(logger, "PCB recibido de CPU");
-        actualizar_pcb(pcb, pcb_recibido);
-        free(pcb_recibido);
-    }
-
-    //recibir motivo de desalojo
-    recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
-    log_info(logger, "Motivo de finalizacion: %d", motivo);
-
-    t_desalojo* desalojo = malloc(sizeof(t_desalojo));
-    desalojo->pcb = pcb;
-    desalojo->motivo = motivo;
-
-    pthread_t hilo_desalojo;
-    pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
-    pthread_detach(hilo_desalojo);
-    //atender motivo
-    sem_post(&g_disponible_exec);
+    recibir_pcb_desalojado(pcb);
 }
 
 void esperar_quantum(uint32_t PID){
@@ -179,6 +156,13 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
     pthread_detach(hilo_quantum);
 
+    recibir_pcb_desalojado(pcb);
+    pthread_cancel(hilo_quantum);
+
+}
+
+void recibir_pcb_desalojado(t_PCB* pcb){
+
     t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
     int motivo;
     if (pcb_recibido == NULL){
@@ -191,7 +175,6 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     }
 
     recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
-    pthread_cancel(hilo_quantum);
     log_info(g_logger, "Motivo de finalizacion: %d", motivo);
 
     t_desalojo* desalojo = malloc(sizeof(t_desalojo));
@@ -236,6 +219,19 @@ void atender_desalojo(t_desalojo* desalojo){
             enviar_proceso_a_ready(desalojo->pcb);
             break;
         case IO_GEN_SLEEP:
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            //Parametro
+            int unidadesDeTrabajo = buffer_read_int(buffer);
+            uint32_t* length = malloc(sizeof(uint32_t));
+            //Nombre
+            char* nombreInterfaz = buffer_read_string(buffer, length);
+            char* instruccion = string_new();
+            //instruccion que deba entender
+            instruccion = "IO_GEN_SLEEP";
+
+            //Buscar en diccionario interfaz
+            //Enviarle lo necesario para que haga la operacion
+
             log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
             break;
     }
