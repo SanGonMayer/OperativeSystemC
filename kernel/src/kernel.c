@@ -125,8 +125,8 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     int error;
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "enviando PCB a CPU");
-    pcb->registrosCPU.ax = 5;
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+    g_exec = pcb;
 
     // if (error == -1){
     //     log_error(g_logger, "Error al enviar PCB a CPU");
@@ -158,6 +158,50 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
     pthread_detach(hilo_desalojo);
     //atender motivo
+    sem_post(&g_disponible_exec);
+}
+
+void esperar_quantum(uint32_t PID){
+    sleep(g_quantum);
+    if(g_exec->PID == PID){
+    enviar_interrupcion(g_conexion_cpu_interrupt, PID);
+    }
+}
+
+void ejecutar_cpu_RR(t_PCB* pcb){
+
+    int error;
+    sem_wait(&g_disponible_exec);
+    error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+    g_exec = pcb;
+
+    pthread_t hilo_quantum;
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
+    pthread_detach(hilo_quantum);
+
+    t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
+    int motivo;
+    if (pcb_recibido == NULL){
+        log_error(g_logger, "Error al recibir PCB de CPU");
+        free(pcb_recibido);
+    }else{
+        log_info(g_logger, "PCB recibido de CPU");
+        actualizar_pcb(pcb, pcb_recibido);
+        free(pcb_recibido);
+    }
+
+    recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
+    pthread_cancel(hilo_quantum);
+    log_info(g_logger, "Motivo de finalizacion: %d", motivo);
+
+    t_desalojo* desalojo = malloc(sizeof(t_desalojo));
+    desalojo->pcb = pcb;
+    desalojo->motivo = motivo;
+
+    pthread_t hilo_desalojo;
+    pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
+    pthread_detach(hilo_desalojo);
+ 
     sem_post(&g_disponible_exec);
 }
 
@@ -206,6 +250,17 @@ void planificador_fifo(){
         t_PCB* pcb = queue_pop(g_cola_ready);
         sem_post(&g_mutex_cola_ready);
         ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+    }
+}
+
+void planificador_RR(){
+    while(1){
+    sem_wait(&g_hay_elementos_en_ready);
+    log_info(g_logger, "Planificador RR");
+    sem_wait(&g_mutex_cola_ready);
+    t_PCB* pcb = queue_pop(g_cola_ready);
+    sem_post(&g_mutex_cola_ready);
+    ejecutar_cpu_RR(pcb);
     }
 }
 

@@ -61,4 +61,10 @@ void atender_desalojo(t_desalojo* desalojo);
 
 void planificador_exit();
 
+void planificador_RR();
+
+void ejecutar_cpu_RR(t_PCB* pcb);
+
+void esperar_quantum(uint32_t PID);
+
 #endif
