@@ -168,7 +168,7 @@ void esperar_quantum(uint32_t PID){
     }
 }
 
-void ejecutar_cpu_RR(t_PCB* pcb, int conexion_cpu_dispatch){
+void ejecutar_cpu_RR(t_PCB* pcb){
 
     int error;
     sem_wait(&g_disponible_exec);
@@ -180,7 +180,7 @@ void ejecutar_cpu_RR(t_PCB* pcb, int conexion_cpu_dispatch){
     pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
     pthread_detach(hilo_quantum);
 
-    recv(conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
+    recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     pthread_cancel(hilo_quantum);
     log_info(g_logger, "Motivo de finalizacion: %d", motivo);
 
@@ -250,8 +250,8 @@ void planificador_RR(){
     sem_wait(&g_mutex_cola_ready);
     t_PCB* pcb = queue_pop(g_cola_ready);
     sem_post(&g_mutex_cola_ready);
-    ejecutar_cpu_RR(pcb, g_conexion_cpu_dispatch, g_logger);
-}
+    ejecutar_cpu_RR(pcb);
+    }
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID){

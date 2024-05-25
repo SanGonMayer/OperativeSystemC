@@ -2,7 +2,7 @@
 #include <commons/collections/queue.h>
 #include <commons/log.h>
 #include <semaphore.h>
-#include <utils/procesos.c>
+#include <utils/procesos.h>
 int g_contador_pid = 0;
 t_queue* g_cola_new;
 t_queue* g_cola_ready;
