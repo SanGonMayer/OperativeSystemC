@@ -1,5 +1,8 @@
 #include "global_kernel.h"
 #include "kernel.h"
+#include "utils/buffer.h"
+#include "utils/instrucciones_io.h"
+#include <commons/collections/dictionary.h>
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -25,8 +28,12 @@ void procesar_cliente(int* fd){
         switch (cod_op) 
         {
         case ENVIO_INTERFAZ_CONECTADA:
-            //Recibir interfaz
-            //Agregar a diccionario
+        
+            t_buffer* buffer = recibir_buffer(*fd);
+            t_interfaz* interfaz = deserializar_interfaz(buffer);
+            interfaz->fd = *fd;
+            dictionary_put(g_interfaces, interfaz->nombre, interfaz);
+
             break;
         case -1:
             log_error(g_logger, "la interfaz se desconectó.");

@@ -10,7 +10,9 @@
 char instruccion_soportada[13] = "IO_GEN_SLEEP";
 
 void procesar_instruccion_generica(int fd, t_instruccion_io* instruccion){
+    // semaforo para bloquear el uso de la io
 
+    
     if(!string_equals_ignore_case(instruccion->instruccion, instruccion_soportada)){
         
         log_error(g_logger, "Instruccion no soportada: %s", instruccion->instruccion);

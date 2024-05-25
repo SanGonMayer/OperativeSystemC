@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "utils/codigo_operacion.h"
+#include <commons/collections/dictionary.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <semaphore.h>
@@ -7,6 +8,7 @@
 #include <readline/readline.h>
 #include <stdio.h>
 #include "global_kernel.h"
+#include "utils/instrucciones_io.h"
 
 bool es_parametro_valido(char* parametro){
 
@@ -228,6 +230,22 @@ void atender_desalojo(t_desalojo* desalojo){
             char* instruccion = string_new();
             //instruccion que deba entender
             instruccion = "IO_GEN_SLEEP";
+
+            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
+                t_interfaz* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
+
+                // checkear que pueda hacer la operacion
+
+                t_instruccion_io* instruccion_io = crear_instruccion_io(unidadesDeTrabajo, instruccion);
+                t_buffer* buffer = serializar_instruccion_io(instruccion_io);
+                enviar_buffer(interfaz->fd, buffer, g_logger);
+
+                // recibir respuesta
+
+                //Enviarle lo necesario para que haga la operacion
+            }else{
+                // ENVIAR PCB A EXIT
+            }
 
             //Buscar en diccionario interfaz
             //Enviarle lo necesario para que haga la operacion

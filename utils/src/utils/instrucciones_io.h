@@ -5,16 +5,17 @@
 
 
 typedef struct {
-    uint32_t unidades_trabajo;
+    int unidades_trabajo;
     char* instruccion;
 } t_instruccion_io;
 
 typedef struct {
     char* tipo;
     char* nombre;
+    int fd;
 } t_interfaz;
 
-t_instruccion_io* crear_instruccion_io(uint32_t unidades_trabajo, char* instruccion);
+t_instruccion_io* crear_instruccion_io(int unidades_trabajo, char* instruccion);
 
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io);
 
