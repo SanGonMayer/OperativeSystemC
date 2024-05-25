@@ -174,11 +174,21 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     sem_wait(&g_disponible_exec);
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     g_exec = pcb;
-    int motivo;
 
     pthread_t hilo_quantum;
     pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
     pthread_detach(hilo_quantum);
+
+    t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
+    int motivo;
+    if (pcb_recibido == NULL){
+        log_error(g_logger, "Error al recibir PCB de CPU");
+        free(pcb_recibido);
+    }else{
+        log_info(g_logger, "PCB recibido de CPU");
+        actualizar_pcb(pcb, pcb_recibido);
+        free(pcb_recibido);
+    }
 
     recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     pthread_cancel(hilo_quantum);
