@@ -4,6 +4,8 @@
 #include <commons/collections/queue.h>
 #include <commons/log.h>
 #include <semaphore.h>
+#include <utils/procesos.c>
+
 extern int g_contador_pid;
 extern t_queue* g_cola_new;
 extern t_queue* g_cola_ready;
@@ -13,6 +15,9 @@ extern int g_grado_multiprogramacion;
 extern int g_socket_memoria;
 extern sem_t g_mutex_multiprogramacion;
 extern int g_conexion_cpu_dispatch;
+extern int g_quantum;
+extern t_PCB* g_exec;
+extern int g_conexion_cpu_interrupt;
 
 //Semaforos para corto plazo
 extern sem_t g_hay_elementos_en_ready;

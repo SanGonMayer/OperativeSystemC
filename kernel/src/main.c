@@ -73,17 +73,17 @@ int main(void){
 
     algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
     
-    quantum = config_get_int_value(config, "QUANTUM");
-
+    g_quantum = config_get_int_value(config, "QUANTUM");
+    
     //INICIAR_PROCESO ../memoria/instrucciones.dummy
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
     g_conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
     handshake_cliente(g_conexion_cpu_dispatch, g_logger);
     enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", g_conexion_cpu_dispatch);
 
-    int conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", g_logger);
-    handshake_cliente(conexion_cpu_interrupt, g_logger);
-    enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", conexion_cpu_interrupt);
+    g_conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", g_logger);
+    handshake_cliente(g_conexion_cpu_interrupt, g_logger);
+    enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", g_conexion_cpu_interrupt);
 
     g_socket_memoria = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", g_logger);
     sem_init(&g_mutex_socket_memoria,0,1);
@@ -122,7 +122,7 @@ int main(void){
     free(g_cola_ready);
     free(cola_exec);
     close(g_conexion_cpu_dispatch);
-    close(conexion_cpu_interrupt);
+    close(g_conexion_cpu_interrupt);
     close(g_socket_memoria);
     config_destroy(config);
     log_destroy(g_logger);
