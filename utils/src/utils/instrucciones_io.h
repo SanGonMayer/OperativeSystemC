@@ -2,6 +2,7 @@
 #define INSTRUCCIONES_IO_H_
 
 #include "utils/buffer.h"
+#include <commons/collections/queue.h>
 
 
 typedef struct {
@@ -12,8 +13,13 @@ typedef struct {
 typedef struct {
     char* tipo;
     char* nombre;
-    int fd;
 } t_interfaz;
+
+typedef struct {
+    int fd;
+    t_queue *cola;
+    t_interfaz* interfaz;
+} t_interfaz_conectada;
 
 t_instruccion_io* crear_instruccion_io(int unidades_trabajo, char* instruccion);
 

@@ -27,3 +27,5 @@ sem_t g_mutex_cola_new;
 sem_t g_mutex_socket_memoria;
 sem_t g_mutex_cola_exit;
 sem_t g_hay_elementos_en_exit;
+
+sem_t g_mutex_acceso_interfaces;

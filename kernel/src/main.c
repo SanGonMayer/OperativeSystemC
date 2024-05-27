@@ -31,9 +31,16 @@ void procesar_cliente(int* fd){
         
             t_buffer* buffer = recibir_buffer(*fd);
             t_interfaz* interfaz = deserializar_interfaz(buffer);
-            interfaz->fd = *fd;
-            dictionary_put(g_interfaces, interfaz->nombre, interfaz);
+            t_interfaz_conectada* interfaz_conectada = malloc(sizeof(t_interfaz_conectada));
 
+            *interfaz_conectada = (t_interfaz_conectada) {
+                .fd = *fd,
+                .cola = queue_create(),
+                .interfaz = interfaz
+            };
+            
+
+            dictionary_put(g_interfaces, interfaz->nombre, interfaz);
             break;
         case -1:
             log_error(g_logger, "la interfaz se desconectó.");
@@ -138,10 +145,6 @@ int main(void){
     // atender_clientes(socket_servidor, g_logger, (void*) &procesar_cliente);
 
     g_interfaces = dictionary_create();
-
-    pthread_t hilo_io;
-    pthread_create(&hilo_io, NULL, (void*)proceso_io, NULL);
-    pthread_detach(hilo_io);
 
     consola_interactiva(g_logger);
     

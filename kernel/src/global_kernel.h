@@ -31,5 +31,8 @@ extern sem_t g_mutex_socket_memoria;
 extern sem_t g_mutex_cola_exit;
 extern sem_t g_hay_elementos_en_exit;
 
+// Semaforos para interfaces
+extern sem_t g_mutex_acceso_interfaces;
+
 extern t_dictionary* g_interfaces;
 #endif

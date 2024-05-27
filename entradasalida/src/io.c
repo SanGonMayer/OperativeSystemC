@@ -20,13 +20,15 @@ void atender_instrucciones(int conexion_kernel, ProcesarInstruccion procesar_ins
     }
 }
 
-int iniciar_conexion_kernel(char* tipo_interfaz){
+int iniciar_conexion_kernel(char* tipo_interfaz, char* nombre_interfaz){
 
     int conexion = crear_conexion(
     g_config_io->ip_kernel, 
     g_config_io->puerto_kernel, 
     "KERNEL", 
     g_logger);
+
+    handshake_cliente(conexion, g_logger);
 
     if(conexion == -1){
         log_error(g_logger, "No se pudo conectar con el kernel");
@@ -35,7 +37,7 @@ int iniciar_conexion_kernel(char* tipo_interfaz){
 
     t_interfaz interfaz = {
         .tipo = tipo_interfaz,
-        .nombre = tipo_interfaz
+        .nombre = nombre_interfaz
     };
 
     t_buffer* buffer = serializar_interfaz(&interfaz);

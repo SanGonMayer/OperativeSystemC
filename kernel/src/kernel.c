@@ -231,10 +231,15 @@ void atender_desalojo(t_desalojo* desalojo){
             //instruccion que deba entender
             instruccion = "IO_GEN_SLEEP";
 
-            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
-                t_interfaz* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
+            sem_wait(&g_mutex_acceso_interfaces);
 
-                // checkear que pueda hacer la operacion
+            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
+
+                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
+
+                sem_post(&g_mutex_acceso_interfaces);
+
+                // TODO: checkear que pueda hacer la operacion
 
                 t_instruccion_io* instruccion_io = crear_instruccion_io(unidadesDeTrabajo, instruccion);
                 t_buffer* buffer = serializar_instruccion_io(instruccion_io);
@@ -244,8 +249,11 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 //Enviarle lo necesario para que haga la operacion
             }else{
+                sem_post(&g_mutex_acceso_interfaces);
                 // ENVIAR PCB A EXIT
             }
+
+            
 
             //Buscar en diccionario interfaz
             //Enviarle lo necesario para que haga la operacion

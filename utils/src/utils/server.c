@@ -1,5 +1,8 @@
 #include "server.h"
 #include "utils/client.h"
+#include <asm-generic/socket.h>
+#include <commons/error.h>
+#include <sys/socket.h>
 
 int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
     int socket_servidor, err;
@@ -18,6 +21,17 @@ int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
 	socket_servidor = socket(servinfo->ai_family,
 							 servinfo->ai_socktype,
 							 servinfo->ai_protocol);
+
+
+	if(setsockopt(
+		socket_servidor, 
+		SOL_SOCKET, 
+		SO_REUSEADDR,
+		&(int){1}, 
+		sizeof(int)) < 0){
+		error_show("Error al setear opciones del socket");
+		exit(EXIT_FAILURE);
+	}
 
 	// Asociamos el socket a un puerto
 	err = bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
