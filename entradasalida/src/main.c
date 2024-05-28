@@ -71,11 +71,11 @@ int main(int argc, char* argv[]){
 
     char* tipo = g_config_io->tipo_interfaz;
 
-    int conexion_kernel = iniciar_conexion_kernel(config_path, nombre);
+    int conexion_kernel = iniciar_conexion_kernel(g_config_io->tipo_interfaz, nombre);
 
     void* estrategia_procesar_instruccion = NULL;
 
-    if(string_equals_ignore_case(config_path, "GEN")){
+    if(string_equals_ignore_case(tipo, "GEN")){
         estrategia_procesar_instruccion = &procesar_instruccion_generica;
     }
 

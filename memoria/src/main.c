@@ -72,21 +72,7 @@ int main(int argc, char* argv[]) {
     logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
 
     memoria_instrucciones = dictionary_create();
-
-    cargar_instrucciones(memoria_instrucciones, 1, "../memoria/instrucciones.dummy");
-    int* pc = malloc(sizeof(int));
-    *pc = 1;
-    char* instruccion1 = leer_instruccion(memoria_instrucciones, 1, pc);
-
-    log_info(logger, "Linea %d - Instruccion: %s", *pc - 1, instruccion1);
-
-    *pc = 4;
-
-    char* instruccion4 = leer_instruccion(memoria_instrucciones, 1, pc);
-
-    log_info(logger, "Linea %d - Instruccion: %s", *pc - 1, instruccion4);
-
-
+    
     config = config_create("../memoria/memoria.config");
 
     if(config == NULL){

@@ -1,6 +1,8 @@
 
 #include "global_io.h"
+#include "utils/client.h"
 #include "utils/instrucciones_io.h"
+#include <commons/log.h>
 #include <commons/string.h>
 #include <unistd.h>
 
@@ -24,6 +26,9 @@ void procesar_instruccion_generica(int fd, t_instruccion_io* instruccion){
 
     log_info(g_logger, "Durmiendo %d segundos", tiempo_sleep);
     sleep(tiempo_sleep);
+
+    log_info(g_logger, "Interfaz termino de procesar instruccion generica");
+    responder_ok(fd);
 
     // responder al kernel
 }

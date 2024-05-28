@@ -34,4 +34,6 @@ int serializar_y_enviar_paquete(t_paquete* paquete, int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 
 void* serializar_paquete(t_paquete* paquete);
+
+void responder_ok(int socket);
 #endif

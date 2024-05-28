@@ -1,5 +1,6 @@
 #include "client.h"
 #include "utils/codigo_operacion.h"
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -141,5 +142,10 @@ int serializar_y_enviar_paquete(t_paquete* paquete, int socket_cliente)
 	return result;
 }
 
+void responder_ok(int socket){
+	uint32_t ok = 1;
+
+	send(socket, &ok, sizeof(uint32_t), 0);
+}
 
 

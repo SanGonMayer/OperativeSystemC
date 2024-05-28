@@ -241,9 +241,18 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 // TODO: checkear que pueda hacer la operacion
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(unidadesDeTrabajo, instruccion);
-                t_buffer* buffer = serializar_instruccion_io(instruccion_io);
-                enviar_buffer(interfaz->fd, buffer, g_logger);
+                t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+
+                item->pcb = desalojo->pcb;
+
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, unidadesDeTrabajo, NULL, NULL, NULL, NULL);
+
+                item->instruccion = malloc(sizeof(t_instruccion_io));
+                item->instruccion = instruccion_io;
+                queue_push(interfaz->cola, item);
+                sem_post(&interfaz->semaforo);
+                // enviar instruccion
+
 
                 // recibir respuesta
 

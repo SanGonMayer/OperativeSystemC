@@ -52,4 +52,6 @@ t_list* recibir_paquete(int);
 void confirmar_recepcion(int socket);
 
 t_paquete* esperar_paquete(int socket_cliente);
+
+bool recibir_ok(int socket);
 #endif

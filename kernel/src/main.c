@@ -2,9 +2,11 @@
 #include "kernel.h"
 #include "utils/buffer.h"
 #include "utils/instrucciones_io.h"
+#include "utils/server.h"
 #include <commons/collections/dictionary.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <threads.h>
 
 char * puerto_escucha;
 char * ip_memoria;
@@ -17,6 +19,18 @@ int quantum;
 
 t_config* config;
 t_queue* cola_exec;
+
+void procesar_cola_interfaz(t_interfaz_conectada* interfaz){
+    while(1){
+        sem_wait(&interfaz->semaforo);
+        t_parametro_cola_interfaz* instruccion = queue_pop(interfaz->cola);
+        t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
+        enviar_buffer(interfaz->fd, buffer, g_logger);
+
+        recibir_ok(interfaz->fd);
+        // enviar proceso a ready
+    }
+}
 
 void procesar_cliente(int* fd){
 
@@ -39,8 +53,13 @@ void procesar_cliente(int* fd){
                 .interfaz = interfaz
             };
             
+            sem_init(&interfaz_conectada->semaforo, 0, 0);
 
-            dictionary_put(g_interfaces, interfaz->nombre, interfaz);
+            dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
+
+            pthread_t hilo;
+            pthread_create(&hilo, NULL, (void*) &procesar_cola_interfaz, interfaz_conectada);
+            pthread_detach(hilo);
             break;
         case -1:
             log_error(g_logger, "la interfaz se desconectó.");
@@ -80,6 +99,9 @@ int main(void){
     g_cola_exit = queue_create();
     sem_init(&g_mutex_cola_exit, 0, 1); 
 
+    //Semaforos para io
+    sem_init(&g_mutex_acceso_interfaces, 0, 1);
+
     //Inicializacion de config
     ip_cpu = config_get_string_value(config, "IP_CPU");
     puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_CPU_DISPATCH" );
@@ -114,16 +136,16 @@ int main(void){
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
     pthread_t hilo_exit;
     sem_init(&g_hay_elementos_en_exit, 0, 0);
-    hilo_exit = pthread_create(&hilo_exit, NULL, &planificador_exit, NULL);
+    hilo_exit = pthread_create(&hilo_exit, NULL, (void*)&planificador_exit, NULL);
     
     pthread_t hilo_planificador;
     sem_init(&g_hay_elementos_en_ready, 0, 0);
 
     if(strcmp(algoritmo_planificacion, "FIFO") == 0){
-        hilo_planificador = pthread_create(&hilo_planificador, NULL, &planificador_fifo, NULL);
+        hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_fifo, NULL);
         pthread_detach(hilo_planificador);
     } else if(strcmp(algoritmo_planificacion, "RR") == 0){
-        hilo_planificador = pthread_create(&hilo_planificador, NULL, &planificador_RR, NULL);
+        hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_RR, NULL);
         pthread_detach(hilo_planificador);
     } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
         //planificador_vrr()

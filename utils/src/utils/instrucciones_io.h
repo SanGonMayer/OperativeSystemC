@@ -3,11 +3,15 @@
 
 #include "utils/buffer.h"
 #include <commons/collections/queue.h>
-
+#include <semaphore.h>
 
 typedef struct {
     int unidades_trabajo;
     char* instruccion;
+    char* direccion;
+    int tamanio;
+    char* nombre_archivo;
+    int puntero_archivo;
 } t_instruccion_io;
 
 typedef struct {
@@ -19,9 +23,16 @@ typedef struct {
     int fd;
     t_queue *cola;
     t_interfaz* interfaz;
+    sem_t semaforo;
 } t_interfaz_conectada;
 
-t_instruccion_io* crear_instruccion_io(int unidades_trabajo, char* instruccion);
+t_instruccion_io* crear_instruccion_io(
+    char* instruccion,
+    int unidades_trabajo,
+    char* direccion,
+    int tamanio,
+    char* nombre_archivo,
+    int puntero_archivo);
 
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io);
 

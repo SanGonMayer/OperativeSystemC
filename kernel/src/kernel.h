@@ -1,6 +1,7 @@
 #ifndef KERNEL_H_
 #define KERNEL_H_
 
+#include "utils/instrucciones_io.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <commons/config.h>
@@ -32,6 +33,11 @@ typedef struct {
     int motivo;
     t_PCB* pcb;
 } t_desalojo;
+
+typedef struct {
+    t_PCB* pcb;
+    t_instruccion_io* instruccion;
+} t_parametro_cola_interfaz;
 
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);
@@ -69,5 +75,7 @@ void ejecutar_cpu_RR(t_PCB* pcb);
 void esperar_quantum(uint32_t PID);
 
 void recibir_pcb_desalojado(t_PCB* pcb);
+
+void enviar_interrupcion(int socket_interrupt, uint32_t* PID);
 
 #endif

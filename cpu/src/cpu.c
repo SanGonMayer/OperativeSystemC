@@ -17,16 +17,7 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
     return instruccion;
 }
 
-int responder_ok(int socket, uint32_t posicionDeCodigo){
-    t_buffer * buffer = buffer_create(sizeof(uint32_t)); 
-    buffer_add_uint32(buffer, posicionDeCodigo);
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = ENVIO_PID_PC;
-    paquete->buffer = buffer;
 
-    int result = serializar_y_enviar_paquete(paquete, socket);
-    return result;
-}
 
 char* recibir_instruccion(int socket){
     t_buffer* buffer = recibir_buffer(socket);

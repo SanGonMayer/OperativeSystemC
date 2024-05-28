@@ -20,8 +20,6 @@
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
 
-int responder_ok(int socket, uint32_t posicionDeCodigo);
-
 char* recibir_instruccion(int socket);
 
 char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);

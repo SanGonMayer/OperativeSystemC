@@ -123,6 +123,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             t_buffer* buffer = ejecutar_io_gen_sleep(dispositivo, unidadesDeTrabajo);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "Se ejecuto IO_GEN_SLEEP %s %d", dispositivo, unidadesDeTrabajo);
+            return;
 
         }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
