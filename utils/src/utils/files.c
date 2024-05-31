@@ -14,6 +14,7 @@ char* leer_archivo_txt(char* path){
         return NULL;
     }
 
+
     fseek(archivo, 0, SEEK_END);
     long int tamanio = ftell(archivo);
     rewind(archivo);

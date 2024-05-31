@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "utils/buffer.h"
+#include "utils/client.h"
 #include "utils/codigo_operacion.h"
 #include <commons/collections/dictionary.h>
 #include <commons/log.h>
@@ -251,22 +253,10 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
                 sem_post(&interfaz->semaforo);
-                // enviar instruccion
-
-
-                // recibir respuesta
-
-                //Enviarle lo necesario para que haga la operacion
             }else{
                 sem_post(&g_mutex_acceso_interfaces);
                 // ENVIAR PCB A EXIT
             }
-
-            
-
-            //Buscar en diccionario interfaz
-            //Enviarle lo necesario para que haga la operacion
-
             log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
             break;
     }
@@ -296,17 +286,12 @@ void planificador_RR(){
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
-    t_paquete* paquete = malloc(sizeof(t_paquete));
 
-    paquete->codigo_operacion = ENVIO_INTERRUPCION;
-    paquete->buffer = buffer_create(sizeof(uint32_t));
-    buffer_add_uint32(paquete->buffer, *PID);
-
-    void* a_enviar = crear_a_enviar(paquete);
-    send(socket_interrupt, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
-
-	free(a_enviar);
-    eliminar_paquete(paquete);
+    t_buffer* buffer = buffer_create(sizeof(uint32_t));
+    buffer_add_uint32(buffer, *PID);
+    
+    t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
+    enviar_paquete(paquete, socket_interrupt);
 }
 
 

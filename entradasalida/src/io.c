@@ -42,18 +42,8 @@ int iniciar_conexion_kernel(char* tipo_interfaz, char* nombre_interfaz){
     };
 
     t_buffer* buffer = serializar_interfaz(&interfaz);
-    
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-
-    paquete->codigo_operacion = ENVIO_INTERFAZ_CONECTADA;
-    paquete->buffer = buffer; 
-
-    void* a_enviar = crear_a_enviar(paquete);
-
-    // Por último enviamos
-    int result = send(conexion, a_enviar, buffer->size + sizeof(int) + sizeof(uint32_t), 0);
-
-    buffer_destroy(buffer);
+    t_paquete* paquete = crear_paquete(ENVIO_INTERFAZ_CONECTADA, buffer);
+    enviar_paquete(paquete, conexion);
 
     return conexion;
 }

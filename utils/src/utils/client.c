@@ -104,4 +104,29 @@ void responder_ok(int socket){
 	send(socket, &ok, sizeof(uint32_t), 0);
 }
 
+void* crear_a_enviar(t_paquete* paquete){
+    void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
+    int offset = 0;
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
+    offset += sizeof(int);
+    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+    return a_enviar;
+}
 
+int enviar_paquete(t_paquete* paquete, int socket){
+	void* a_enviar = crear_a_enviar(paquete);
+	int result = send(socket, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
+	free(a_enviar);
+	eliminar_paquete(paquete);
+
+	return result;
+}
+
+t_paquete* crear_paquete(int codigo_operacion, t_buffer* buffer){
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = codigo_operacion;
+	paquete->buffer = buffer;
+	return paquete;
+}

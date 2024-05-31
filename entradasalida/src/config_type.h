@@ -11,6 +11,7 @@ typedef struct {
     char* ip_kernel;
     char* ip_memoria;
     char* path_base_dialfs;
+    int retraso_compactacion;
 } ConfiguracionIO;
 
 #endif

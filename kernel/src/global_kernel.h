@@ -7,9 +7,11 @@
 #include <utils/procesos.h>
 
 extern int g_contador_pid;
+
 extern t_queue* g_cola_new;
 extern t_queue* g_cola_ready;
 extern t_queue* g_cola_exit;
+
 extern t_log* g_logger;
 extern int g_grado_multiprogramacion;
 extern int g_socket_memoria;

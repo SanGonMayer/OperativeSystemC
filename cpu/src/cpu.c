@@ -38,14 +38,9 @@ char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* dic
     log_info(logger, "Pidiendo instruccion a memoria");
     t_paquete_instruccion* paquete_instruccion = crear_paquete_instruccion(pcb->PID, dictionary_get(diccionario, "PC"));
     
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = ENVIO_PID_PC;
-    paquete->buffer = serializar_paquete_instruccion(paquete_instruccion);
-
-    void* a_enviar = crear_a_enviar(paquete);
-
-    send(socket, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
-
+    t_paquete* paquete = crear_paquete(ENVIO_PID_PC, serializar_paquete_instruccion(paquete_instruccion));
+    enviar_paquete(paquete, socket);
+    
     return recibir_instruccion(socket);
 }
 

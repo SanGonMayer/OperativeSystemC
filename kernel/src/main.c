@@ -35,41 +35,43 @@ void procesar_cola_interfaz(t_interfaz_conectada* interfaz){
 void procesar_cliente(int* fd){
 
     handshake_server(*fd, g_logger);
-    int iterador = 1;
 
-    while (iterador) {
-        int cod_op = recibir_operacion(*fd);
-        switch (cod_op) 
-        {
-        case ENVIO_INTERFAZ_CONECTADA:
-        
-            t_buffer* buffer = recibir_buffer(*fd);
-            t_interfaz* interfaz = deserializar_interfaz(buffer);
-            t_interfaz_conectada* interfaz_conectada = malloc(sizeof(t_interfaz_conectada));
+    int cod_op = recibir_operacion(*fd);
 
-            *interfaz_conectada = (t_interfaz_conectada) {
-                .fd = *fd,
-                .cola = queue_create(),
-                .interfaz = interfaz
-            };
+    if(cod_op != ENVIO_INTERFAZ_CONECTADA){
+        log_error(g_logger, "Se esperaba un primer mensaje de tipo ENVIO_INTERFAZ_CONECTADA. Se recibió otro tipo de mensaje.");
+        return;
+    }
+    t_buffer* buffer = recibir_buffer(*fd);
+    t_interfaz* interfaz = deserializar_interfaz(buffer);
+    t_interfaz_conectada* interfaz_conectada = malloc(sizeof(t_interfaz_conectada));
+
+    *interfaz_conectada = (t_interfaz_conectada) {
+        .fd = *fd,
+        .cola = queue_create(),
+        .interfaz = interfaz
+    };
+    
+    sem_init(&interfaz_conectada->semaforo, 0, 0);
+
+    dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
+
+    while(1){
+        sem_wait(&interfaz_conectada->semaforo);
+        t_parametro_cola_interfaz* instruccion = queue_pop(interfaz_conectada->cola);
+        t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
+        enviar_buffer(interfaz_conectada->fd, buffer, g_logger);
+
+        bool result = recibir_ok(interfaz_conectada->fd);
+
+        if(result){
+            log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
             
-            sem_init(&interfaz_conectada->semaforo, 0, 0);
-
-            dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
-
-            pthread_t hilo;
-            pthread_create(&hilo, NULL, (void*) &procesar_cola_interfaz, interfaz_conectada);
-            pthread_detach(hilo);
-            break;
-        case -1:
-            log_error(g_logger, "la interfaz se desconectó.");
-            iterador = 0;
-            break;
-        default:
-            log_warning(g_logger,"Operacion desconocida.");
-            break;
+            enviar_proceso_a_ready(instruccion->pcb);
+            sem_post(&g_hay_elementos_en_ready);
+            // enviar proceso a ready
         }
-    }  
+    }
 }
 
 void proceso_io(){

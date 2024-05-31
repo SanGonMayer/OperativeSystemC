@@ -1,5 +1,6 @@
 #include "procesos.h"
 #include "utils/buffer.h"
+#include "utils/client.h"
 #include "utils/codigo_operacion.h"
 
 t_PCB* crear_PCB(){
@@ -35,16 +36,6 @@ t_PCB* crear_PCB(){
     return pcb;
 }
 
-void* crear_a_enviar(t_paquete* paquete){
-    void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
-    int offset = 0;
-    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(int));
-    offset += sizeof(int);
-    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
-    return a_enviar;
-}
 
 void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
     t_buffer* buffer = serializar_pcb(pcb);
@@ -55,23 +46,8 @@ void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
 int enviar_pcb(int socket, t_PCB *pcb) {
 
     t_buffer* buffer = serializar_pcb(pcb);
-
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-
-    paquete->codigo_operacion = ENVIO_PCB;
-    paquete->buffer = buffer; 
-
-    void* a_enviar = crear_a_enviar(paquete);
-
-    // Por último enviamos
-    int result = send(socket, a_enviar, buffer->size + sizeof(int) + sizeof(uint32_t), 0);
-
-    // No nos olvidamos de liberar la memoria que ya no usaremos
-    free(a_enviar);
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(paquete);
-
+    t_paquete* paquete = crear_paquete(ENVIO_PCB, buffer);
+    int result = enviar_paquete(paquete, socket);
     return result;
 }
 

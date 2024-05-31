@@ -26,4 +26,10 @@ void eliminar_paquete(t_paquete* paquete);
 void* serializar_paquete(t_paquete* paquete);
 
 void responder_ok(int socket);
+
+void* crear_a_enviar(t_paquete* paquete);
+
+int enviar_paquete(t_paquete* paquete, int socket);
+
+t_paquete* crear_paquete(int codigo_operacion, t_buffer* buffer);
 #endif

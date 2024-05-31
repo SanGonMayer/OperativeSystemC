@@ -66,8 +66,6 @@ void responder_pcb(int socket, t_PCB *pcb, t_log* logger);
 
 void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
 
-void* crear_a_enviar(t_paquete* paquete);
-
 t_PCB* recibir_pcb(int socket);
 
 #endif

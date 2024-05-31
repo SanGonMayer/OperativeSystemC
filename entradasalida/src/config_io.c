@@ -23,6 +23,7 @@ ConfiguracionIO* leer_configuracion(t_config* config){
     g_config_io->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     g_config_io->tipo_interfaz = config_get_string_value(config, "TIPO_INTERFAZ");
     g_config_io->path_base_dialfs = config_get_string_value(config, "PATH_BASE_DIALFS");
+    g_config_io->retraso_compactacion = config_get_int_value(config, "RETRASO_COMPACTACION");
     
     return g_config_io;
 }

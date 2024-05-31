@@ -25,6 +25,7 @@ void procesar_cliente(int* socket){
             break;
 
         case ENVIO_PID_PC: //Recibir posicion de codigo de CPU
+
             log_info(g_logger, "Recibiendo pedido de instruccion PID PC");
             retardo_respuesta_memoria();
             procesar_pedido_instruccion(*socket);
