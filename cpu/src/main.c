@@ -41,7 +41,6 @@ int main(int argc, char* argv[]) {
 
     int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
     handshake_cliente(conexion_memoria_fd, logger);
-    enviar_mensaje("Mensaje CPU a MEMORIA", conexion_memoria_fd);
 
     cola_interrupciones = queue_create();
 
@@ -142,7 +141,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
 void servidor_dispatch(int* socket_memoria){
     int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
-    int cliente_dispatch_fd = esperar_cliente(socket_servidor, logger);
+    int cliente_dispatch_fd = esperar_nueva_conexion_cliente(socket_servidor, logger);
     handshake_server(cliente_dispatch_fd, logger);
 
     int conectado = 1;
@@ -155,9 +154,6 @@ void servidor_dispatch(int* socket_memoria){
 
         switch (cod_op)
         {
-        case 1:
-            recibir_mensaje_logger(cliente_dispatch_fd, logger);
-            break;
         case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
             log_info(logger, "Listo para recibir un PCB de Kernel");
             t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
@@ -179,7 +175,7 @@ void servidor_dispatch(int* socket_memoria){
 
 void servidor_interrupt(){
     int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, logger, "CPU INTERRUPT");
-    int cliente_interrupt_fd = esperar_cliente(socket_servidor, logger);
+    int cliente_interrupt_fd = esperar_nueva_conexion_cliente(socket_servidor, logger);
     handshake_server(cliente_interrupt_fd, logger);
 
     int conectado = 1;
@@ -189,9 +185,6 @@ void servidor_interrupt(){
         
         switch (cod_op)
         {
-        case 1:
-            recibir_mensaje_logger(cliente_interrupt_fd, logger);
-            break;
         case ENVIO_INTERRUPCION:
             uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd);
             sem_wait(&mutex_cola_interrupciones);
