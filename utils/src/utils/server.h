@@ -30,28 +30,18 @@ typedef void* (*ProcesarRequestFunc)(int* fd);
 */
 int iniciar_servidor(char* puerto, t_log* logger, char* aQuienEspera);
 /**
-* @fn    esperar_cliente
+* @fn    esperar_nueva_conexion_cliente
 * @brief Devuelve el Socket del cliente. Recibe como paramentro el socket del servidor.
 */
-int esperar_cliente(int socket_servidor, t_log* logger);
+int esperar_nueva_conexion_cliente(int socket_servidor, t_log* logger);
 
 void atender_clientes(int socket_servidor, t_log* logger,ProcesarRequestFunc procesar_request);
 
 int recibir_operacion(int socket_cliente);
 
-void* recibir_buffer_piton(int* size, int socket_cliente);
-
 void handshake_server(int fd, t_log* logger);
 
-void recibir_mensaje(int socket_cliente);
-
-void recibir_mensaje_logger(int socket_cliente, t_log* logger);
-
-t_list* recibir_paquete(int);
-
 void confirmar_recepcion(int socket);
-
-t_paquete* esperar_paquete(int socket_cliente);
 
 bool recibir_ok(int socket);
 #endif

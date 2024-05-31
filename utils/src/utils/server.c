@@ -51,7 +51,7 @@ int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor, t_log* logger)
+int esperar_nueva_conexion_cliente(int socket_servidor, t_log* logger)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente;
@@ -71,13 +71,8 @@ void atender_clientes(int socket_servidor, t_log* logger,ProcesarRequestFunc pro
 	while (true) {
 		pthread_t thread;
 		int *fd_conexion_ptr = malloc(sizeof(int));
-		*fd_conexion_ptr = accept(socket_servidor, NULL, NULL);
-		if(*fd_conexion_ptr == -1){
-			error_show("Error en la espera del cliente");
-			exit(EXIT_FAILURE);
-		} else{
-			log_info(logger, "Se conecto un cliente!");
-		}
+		*fd_conexion_ptr = esperar_nueva_conexion_cliente(socket_servidor, logger);
+
 		pthread_create(&thread,
 						NULL,
 						(void*) procesar_request,
@@ -97,16 +92,6 @@ int recibir_operacion(int socket_cliente)
 		return -1;
 	}
 }
-void* recibir_buffer_piton(int* size, int socket_cliente)
-{
-	void * buffer;
-
-	recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
-	buffer = malloc(*size);
-	recv(socket_cliente, buffer, *size, MSG_WAITALL);
-
-	return buffer;
-}
 
 void handshake_server(int fd, t_log* logger){
     size_t bytes;
@@ -123,68 +108,6 @@ void handshake_server(int fd, t_log* logger){
 		log_error(logger, "Handshake Error");
         bytes = send(fd, &resultError, sizeof(int32_t), 0);
     }
-}
-
-void recibir_mensaje(int fd)
-{
-	int size;
-	char* buffer = recibir_buffer_piton(&size, fd);
-
-	t_log *logger = log_create("cpu.log", "messagge", 1, LOG_LEVEL_INFO);
-	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
-	log_destroy(logger);
-
-	free(buffer);
-}
-
-void recibir_mensaje_logger(int fd, t_log* logger){
-	int size;
-	char* buffer = recibir_buffer_piton(&size, fd);
-
-	log_info(logger, "Mensaje recibido -> \"%s\"", buffer);
-
-	free(buffer);
-}
-
-t_paquete* esperar_paquete(int socket_cliente)
-{
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	int size;
-	int desplazamiento = 0;
-	void * buffer;
-
-	buffer = recibir_buffer(socket_cliente);
-	memcpy(&(paquete->codigo_operacion), buffer + desplazamiento, sizeof(int));
-	desplazamiento+=sizeof(int);
-	memcpy(&(paquete->buffer->size), buffer + desplazamiento, sizeof(uint32_t));
-	desplazamiento+=sizeof(uint32_t);
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	memcpy(paquete->buffer->stream, buffer + desplazamiento, paquete->buffer->size);
-
-	free(buffer);
-	return paquete;
-}
-
-t_list* recibir_paquete(int socket_cliente)
-{
-    int size;
-    int desplazamiento = 0;
-    void * buffer;
-    t_list* valores = list_create();
-    int tamanio;
-
-    buffer = recibir_buffer_piton(&size, socket_cliente);
-    while(desplazamiento < size)
-    {
-        memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-        desplazamiento+=sizeof(int);
-        char* valor = malloc(tamanio);
-        memcpy(valor, buffer+desplazamiento, tamanio);
-        desplazamiento+=tamanio;
-        list_add(valores, valor);
-    }
-    free(buffer);
-    return valores;
 }
 
 void confirmar_recepcion(int socket){

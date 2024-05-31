@@ -15,6 +15,8 @@ typedef struct{
     void* stream;
 }t_buffer;
 
+void enviar_buffer(int socket, t_buffer* buffer, t_log* logger);
+
 t_buffer* recibir_buffer(int socket);
 
 // Crea un buffer vacío de tamaño size y offset 0
@@ -46,8 +48,6 @@ void buffer_add_string(t_buffer *buffer, uint32_t length, char *string);
 
 // Lee un string y su longitud del buffer y avanza el offset
 char *buffer_read_string(t_buffer *buffer, uint32_t *length);
-
-void enviar_buffer(int socket, t_buffer* buffer, t_log* logger);
 
 void buffer_add_int(t_buffer* buffer, int data);
 

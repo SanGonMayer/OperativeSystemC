@@ -122,16 +122,14 @@ int main(void){
     // CONEXIONES DE PRUEBA -- BORRAR LUEGO
     g_conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch, "CPU DISPATCH", g_logger);
     handshake_cliente(g_conexion_cpu_dispatch, g_logger);
-    enviar_mensaje("Mensaje KERNEL a CPU DISPATCH", g_conexion_cpu_dispatch);
 
     g_conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt, "CPU INTERRUPT", g_logger);
     handshake_cliente(g_conexion_cpu_interrupt, g_logger);
-    enviar_mensaje("Mensaje KERNEL a CPU INTERRUPT", g_conexion_cpu_interrupt);
 
     g_socket_memoria = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", g_logger);
     sem_init(&g_mutex_socket_memoria,0,1);
     handshake_cliente(g_socket_memoria, g_logger);
-    enviar_mensaje("Mensaje KERNEL a MEMORIA", g_socket_memoria);
+    
     //PLANIFICACION
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
     pthread_t hilo_exit;

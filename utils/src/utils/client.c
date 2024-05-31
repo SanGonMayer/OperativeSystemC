@@ -1,5 +1,5 @@
 #include "client.h"
-#include "utils/codigo_operacion.h"
+#include "utils/buffer.h"
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -62,24 +62,6 @@ void handshake_cliente(int socket_conexion, t_log* logger){
 }
 
 
-void enviar_mensaje(char* mensaje, int socket_cliente)
-{
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-
-	paquete->codigo_operacion = HANDSHAKE;
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = strlen(mensaje) + 1;
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
-
-	void* a_enviar = serializar_paquete(paquete);
-
-	send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
-
-	free(a_enviar);
-	eliminar_paquete(paquete);
-}
-
 void* serializar_paquete(t_paquete* paquete)
 {
 	void * magic = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
@@ -97,34 +79,8 @@ void* serializar_paquete(t_paquete* paquete)
 
 void eliminar_paquete(t_paquete* paquete)
 {
-	free(paquete->buffer->stream);
-	free(paquete->buffer);
+	buffer_destroy(paquete->buffer);
 	free(paquete);
-}
-
-void crear_buffer(t_paquete* paquete)
-{
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = 0;
-	paquete->buffer->stream = NULL;
-}
-
-t_paquete* crear_paquete(void)
-{
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = 0;
-	crear_buffer(paquete);
-	return paquete;
-}
-
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
-{
-	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
-
-	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
-	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
-
-	paquete->buffer->size += tamanio + sizeof(int);
 }
 
 int serializar_y_enviar_paquete(t_paquete* paquete, int socket_cliente)
