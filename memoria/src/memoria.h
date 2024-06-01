@@ -6,7 +6,7 @@
 #include <commons/log.h>
 
 typedef struct{
-    void* memoria;
+    void* espacio_contiguo;
     uint32_t tam_memoria;
     uint32_t tam_pagina;
     uint32_t cantidad_marcos;
@@ -14,8 +14,7 @@ typedef struct{
 
 typedef struct{
     
-
-}t_tabla_paginas;
+}t_pagina;
 
 void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina);
 

@@ -29,7 +29,9 @@ int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
 		SOL_SOCKET, 
 		SO_REUSEADDR,
 		&(int){1}, 
-		sizeof(int)) < 0){
+		sizeof(int)) < 0
+	)
+	{
 		error_show("Error al setear opciones del socket");
 		exit(EXIT_FAILURE);
 	}

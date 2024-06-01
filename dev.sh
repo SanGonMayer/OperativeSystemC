@@ -19,3 +19,8 @@ x-terminal-emulator -e "cd kernel && make memcheck" &
 sleep 2
 # Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una tercera terminal
 x-terminal-emulator -e "cd entradasalida && make memcheck" &
+
+# Esperar unos segundos para dar tiempo a que se abra la segunda terminal
+sleep 2
+# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una tercera terminal
+x-terminal-emulator -e "cd entradasalida && make memcheck" &

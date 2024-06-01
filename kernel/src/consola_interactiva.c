@@ -37,27 +37,14 @@ void consola_interactiva(){
 
     int opcion_funciones_consola;
 
-    // t_dictionary* comandos = get_comandos();
+    t_dictionary* comandos = get_comandos();
 
-    // if(dictionary_has_key(comandos, funcion)){
-    //     opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
-
-    if (strcmp(funcion, "EJECUTAR_SCRIPT") == 0) {
-        opcion_funciones_consola = EJECUTAR_SCRIPT;
-    } else if (strcmp(funcion, "INICIAR_PROCESO") == 0) {
-        opcion_funciones_consola = INICIAR_PROCESO;
-    } else if (strcmp(funcion, "FINALIZAR_PROCESO") == 0) {
-        opcion_funciones_consola = FINALIZAR_PROCESO;
-    } else if (strcmp(funcion, "DETENER_PLANIFICACION") == 0) {
-        opcion_funciones_consola = DETENER_PLANIFICACION;
-    } else if (strcmp(funcion, "INICIAR_PLANIFICACION") == 0) {
-        opcion_funciones_consola = INICIAR_PLANIFIACION;
-    } else if (strcmp(funcion, "MULTIPROGRAMACION") == 0) {
-        opcion_funciones_consola = MULTIPROGRAMACION;
-    } else if (strcmp(funcion, "PROCESO_ESTADO") == 0) {
-        opcion_funciones_consola = PROCESO_ESTADO;
-    }else
+    if(dictionary_has_key(comandos, funcion)){
+        opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
+    }else{
         log_error(g_logger, "ingresaste una funcion no valida");
+        break;
+    }
 
     switch (opcion_funciones_consola) {
 

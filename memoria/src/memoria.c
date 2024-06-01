@@ -11,7 +11,7 @@ void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina){
         memoria->tam_memoria = tam_memoria;
         memoria->tam_pagina = tam_pagina;
         memoria->cantidad_marcos = tam_memoria / tam_pagina;
-        memoria->memoria = malloc(tam_memoria);
+        memoria->espacio_contiguo = malloc(tam_memoria);
     }
 }
 
