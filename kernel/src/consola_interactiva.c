@@ -1,5 +1,3 @@
-
-
 #include "consola_interactiva.h"
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
@@ -30,31 +28,45 @@ void consola_interactiva(){
 
 	while (strcmp(linea_leida, "q")){
 
-    char ** linea_leida_separada = string_split(linea_leida, " ");
+        char ** linea_leida_separada = string_split(linea_leida, " ");
 
-    char *funcion = linea_leida_separada[0];
-    string_to_upper(funcion);
+        char *funcion = linea_leida_separada[0];
+        string_to_upper(funcion);
 
-    int opcion_funciones_consola;
+        int opcion_funciones_consola;
 
-    t_dictionary* comandos = get_comandos();
+        t_dictionary* comandos = get_comandos();
 
-    if(dictionary_has_key(comandos, funcion)){
-        opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
-    }else{
-        log_error(g_logger, "ingresaste una funcion no valida");
-        break;
-    }
+        if(dictionary_has_key(comandos, funcion)){
+            opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
+        }else{
+            log_error(g_logger, "ingresaste una funcion no valida");
+            break;
+        }
+        ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
+        
+        log_info(g_logger, "me llego la instruccion: %s", linea_leida);
 
-    switch (opcion_funciones_consola) {
+        linea_leida = readline(">");
+
+        free(funcion);
+	}
+
+	free(linea_leida);
+}
+
+
+void ejecutar_comando(t_funciones_consola comando, char** args){
+    switch (comando) {
 
         case EJECUTAR_SCRIPT:
             printf("e\n");
-            
+            // char** comandos = leer_script(args[1]);
+            // ejecutar_script(comandos);
             break;
         case INICIAR_PROCESO:
             printf("Se seleccionó la opción 2\n");
-            char* path = linea_leida_separada[1];
+            char* path = args[1];
             
             string_trim(&path);
 
@@ -83,16 +95,4 @@ void consola_interactiva(){
             printf("Opción no válida\n");
             break;
     }
-
-
-        log_info(g_logger, "me llego la instruccion: %s", linea_leida);
-		//log_info(logger, linea_leida);
-
-		linea_leida = readline(">");
-
-        free(funcion);
-	}
-
-	free(linea_leida);
-    
 }

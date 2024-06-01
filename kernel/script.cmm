@@ -1,3 +1,5 @@
-INICIAR_PROCESO path
-FINALIZAR_PROCESO 1
-DETENER_PLANIFICACION
+INICIAR_PROCESO ../memoria/instrucciones.dummy
+INICIAR_PROCESO ../memoria/instrucciones2.dummy
+INICIAR_PROCESO ../memoria/instrucciones.dummy
+INICIAR_PROCESO ../memoria/instrucciones2.dummy
+

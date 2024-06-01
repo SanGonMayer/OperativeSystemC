@@ -19,16 +19,6 @@ typedef enum {
     VRR= 3,
 } t_algoritmoPlanificacion;
 
-typedef enum {
-    EJECUTAR_SCRIPT= 1,
-    INICIAR_PROCESO= 2,
-    FINALIZAR_PROCESO= 3,
-    DETENER_PLANIFICACION= 4,
-    INICIAR_PLANIFIACION= 5,
-    MULTIPROGRAMACION =6, 
-    PROCESO_ESTADO= 7,
-} t_funciones_consola;
-
 typedef struct {
     int motivo;
     t_PCB* pcb;
