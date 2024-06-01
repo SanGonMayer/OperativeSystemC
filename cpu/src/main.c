@@ -154,18 +154,19 @@ void servidor_dispatch(int* socket_memoria){
 
         switch (cod_op)
         {
-        case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
-            log_info(logger, "Listo para recibir un PCB de Kernel");
-            t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
-            log_info(logger, "Recibí el PCB con PID %d", pcb->PID);
-            log_info(logger, "Con un ax = %d", pcb->registrosCPU.ax);
-            t_dictionary* diccionario = dictionary_create();
-            registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
-            log_info(logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
-            ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
-            
+            case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
+                log_info(logger, "Listo para recibir un PCB de Kernel");
+                t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
+                log_info(logger, "Recibí el PCB con PID %d", pcb->PID);
+                log_info(logger, "Con un ax = %d", pcb->registrosCPU.ax);
+                t_dictionary* diccionario = dictionary_create();
+                registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
+                log_info(logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
+                ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
+                
             break;
-        default:
+            
+            default:
             log_info(logger, "No entiendo el mensaje");
             break;
         }

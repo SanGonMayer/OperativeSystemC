@@ -64,4 +64,6 @@ void recibir_pcb_desalojado(t_PCB* pcb);
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID);
 
+//void listar_procesos tiene que mostrar todos los procesos por estado
+
 #endif

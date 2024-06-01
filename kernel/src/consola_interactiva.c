@@ -114,16 +114,34 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             printf("Se seleccionó la opción 3\n");
             break;
         case DETENER_PLANIFICACION:
-            printf("Opción no válida\n");
+            printf("Opción Detener planificacion\n");
+            
+            sem_wait(&g_notif_corto_plazo);
+            sem_wait(&g_notif_largo_plazo);
+            g_planificacion_pausada = 1;
+
             break;
+        
         case INICIAR_PLANIFIACION:
             printf("Opción no válida\n");
+
+            if (g_planificacion_pausada == 0){
+                printf("No es posible detener planificacion");
+                break;
+            }
+
+            g_planificacion_pausada = 1;
+            sem_post(&g_notif_corto_plazo);
+            sem_post(&g_notif_largo_plazo);
+            
             break;
         case MULTIPROGRAMACION:
             printf("Opción no válida\n");
             break;
         case PROCESO_ESTADO:
-            printf("Opción no válida\n");
+            
+            //listar_procesos
+
             break;
     }
 }
