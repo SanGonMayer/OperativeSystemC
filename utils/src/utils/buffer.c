@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include <sys/socket.h>
 
 
 // Crea un buffer vacío de tamaño size y offset 0

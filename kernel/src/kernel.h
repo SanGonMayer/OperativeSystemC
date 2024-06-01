@@ -44,8 +44,6 @@ t_paquete* crear_contexto_memoria(t_PCB* pcb);
 
 void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger);
 
-t_registrosMem recibir_contexto_memoria(int socket);
-
 void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger);
 
 void iniciar_proceso(char* path);
@@ -55,8 +53,6 @@ void preparar_proceso_a_ready();
 void enviar_proceso_a_ready(t_PCB* pcb);
 
 void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
-
-void consola_interactiva(t_log *logger);
    
 bool es_parametro_valido(char* parametro);
 

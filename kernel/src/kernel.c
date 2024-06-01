@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include "global_kernel.h"
 #include "utils/instrucciones_io.h"
+#include "utils/server.h"
 
 bool es_parametro_valido(char* parametro){
 
@@ -58,21 +59,14 @@ void enviar_contexto_memoria(t_paquete* paquete, int socket, t_log*logger){
     free(paquete);
 
 }
-//piton
-t_registrosMem recibir_contexto_memoria(int socket){
-    t_registrosMem registrosMemoria;
-    recv(socket, &registrosMemoria, sizeof(t_registrosMem), MSG_WAITALL);
-    return registrosMemoria;
-}
 
 void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
     t_paquete* paquete = crear_contexto_memoria(pcb);
     enviar_contexto_memoria(paquete, socketMemoria, logger);
     
     // Recibir OK
-    int result;
-    recv(socketMemoria, &result, sizeof(int), MSG_WAITALL);
-    if(result == -1){
+    bool success = recibir_ok(socketMemoria);
+    if(!success){
         log_error(logger, "Error al recibir el OK de memoria");
     }
 }
@@ -253,11 +247,13 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
                 sem_post(&interfaz->semaforo);
+                log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
             }else{
                 sem_post(&g_mutex_acceso_interfaces);
-                // ENVIAR PCB A EXIT
+
+                finalizar_proceso(desalojo->pcb);
             }
-            log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+           
             break;
     }
     free(desalojo);
@@ -292,88 +288,4 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
     
     t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
     enviar_paquete(paquete, socket_interrupt);
-}
-
-
-void consola_interactiva(t_log *logger){
-
-    char* linea_leida;
-    
-	linea_leida = readline(">");
-
-	while (strcmp(linea_leida, "q")){
-
-    char ** linea_leida_separada = string_split(linea_leida, " ");
-
-    char *funcion = linea_leida_separada[0];
-    string_to_upper(funcion);
-
-    int opcion_funciones_consola;
-
-    if (strcmp(funcion, "EJECUTAR_SCRIPT") == 0) {
-        opcion_funciones_consola = EJECUTAR_SCRIPT;
-    } else if (strcmp(funcion, "INICIAR_PROCESO") == 0) {
-        opcion_funciones_consola = INICIAR_PROCESO;
-    } else if (strcmp(funcion, "FINALIZAR_PROCESO") == 0) {
-        opcion_funciones_consola = FINALIZAR_PROCESO;
-    } else if (strcmp(funcion, "DETENER_PLANIFICACION") == 0) {
-        opcion_funciones_consola = DETENER_PLANIFICACION;
-    } else if (strcmp(funcion, "INICIAR_PLANIFICACION") == 0) {
-        opcion_funciones_consola = INICIAR_PLANIFIACION;
-    } else if (strcmp(funcion, "MULTIPROGRAMACION") == 0) {
-        opcion_funciones_consola = MULTIPROGRAMACION;
-    } else if (strcmp(funcion, "PROCESO_ESTADO") == 0) {
-        opcion_funciones_consola = PROCESO_ESTADO;
-    }else
-        log_error(logger, "ingresaste una funcion no valida");
-
-    switch (opcion_funciones_consola) {
-
-        case EJECUTAR_SCRIPT:
-            printf("e\n");
-            
-            break;
-        case INICIAR_PROCESO:
-            printf("Se seleccionó la opción 2\n");
-            char* path = linea_leida_separada[1];
-            
-            string_trim(&path);
-
-            if(!es_parametro_valido(path)){
-                log_error(logger, "El path ingresado no es válido");
-                break;
-            }
-
-            pthread_t hilo_iniciar_proceso;
-            pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);
-            pthread_detach(hilo_iniciar_proceso);
-            break;
-        case FINALIZAR_PROCESO:
-            printf("Se seleccionó la opción 3\n");
-            break;
-        case DETENER_PLANIFICACION:
-            printf("Opción no válida\n");
-            break;
-        case INICIAR_PLANIFIACION:
-            printf("Opción no válida\n");
-            break;
-        case MULTIPROGRAMACION:
-            printf("Opción no válida\n");
-            break;
-        case PROCESO_ESTADO:
-            printf("Opción no válida\n");
-            break;
-    }
-
-
-        log_info(logger, "me llego la instruccion: %s", linea_leida);
-		//log_info(logger, linea_leida);
-
-		linea_leida = readline(">");
-
-        free(funcion);
-	}
-
-	free(linea_leida);
-    
 }

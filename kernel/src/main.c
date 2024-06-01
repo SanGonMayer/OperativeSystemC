@@ -1,3 +1,4 @@
+#include "consola_interactiva.h"
 #include "global_kernel.h"
 #include "kernel.h"
 #include "utils/buffer.h"
@@ -69,7 +70,11 @@ void procesar_cliente(int* fd){
             
             enviar_proceso_a_ready(instruccion->pcb);
             sem_post(&g_hay_elementos_en_ready);
-            // enviar proceso a ready
+            
+        }else{
+            log_error(g_logger, "No se pudo ejecutar la instrucción enviada a la interfaz %s", interfaz->nombre);
+            
+            finalizar_proceso(instruccion->pcb);
         }
     }
 }
@@ -168,7 +173,7 @@ int main(void){
 
     g_interfaces = dictionary_create();
 
-    consola_interactiva(g_logger);
+    consola_interactiva();
     
     free(g_cola_new);
     free(g_cola_ready);

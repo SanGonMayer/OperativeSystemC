@@ -10,6 +10,11 @@
 
 uint32_t* posicionFinalEscrita = 0;
 
+void retardo_respuesta_memoria(){
+    int retardo_respuesta = get_config_memoria()->retardo_respuesta;
+    sleep(retardo_respuesta / 1000);
+}
+
 void procesar_cliente(int* socket){
 
     handshake_server(*socket, g_logger);
@@ -48,6 +53,8 @@ int main(int argc, char* argv[]) {
     g_logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
     
     t_config_memoria* config = get_config_memoria();
+
+    inicializar_memoria(config->tam_memoria, config->tam_pagina);
     
     int socket_escucha = iniciar_servidor(config->puerto_escucha, g_logger, "CLIENTE");
     

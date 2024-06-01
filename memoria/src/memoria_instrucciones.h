@@ -3,6 +3,16 @@
 
 #include "utils/instrucciones.h"
 
+typedef struct{
+    uint32_t PID;
+    uint32_t path_length;
+    char* path;
+}t_paqueteMemoria;
+
+t_paqueteMemoria* inicializar_paquete_memoria();
+
+void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_log*logger);
+
 t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger);
 
 void enviar_instruccion(int socket, char* instruccion, t_log* logger);

@@ -17,18 +17,6 @@ typedef struct{
 
 }t_tabla_paginas;
 
-typedef struct{
-    uint32_t PID;
-    uint32_t path_length;
-    char* path;
-}t_paqueteMemoria;
-
-t_paqueteMemoria* inicializar_paquete_memoria();
-
-void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_log*logger);
-
-void confirmar_recepcion(int socket);
-
-void retardo_respuesta_memoria();
+void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina);
 
 #endif

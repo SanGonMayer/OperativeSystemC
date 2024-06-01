@@ -2,6 +2,7 @@
 #include "utils/client.h"
 #include <asm-generic/socket.h>
 #include <commons/error.h>
+#include <commons/log.h>
 #include <sys/socket.h>
 
 int iniciar_servidor(char* puerto, t_log* logger, char* clienteEsperado){
@@ -117,6 +118,11 @@ void confirmar_recepcion(int socket){
 
 bool recibir_ok(int socket){
 	uint32_t ok;
-	recv(socket, &ok, sizeof(uint32_t), MSG_WAITALL);
+	int codigo_error = recv(socket, &ok, sizeof(uint32_t), MSG_WAITALL);
+
+	if(codigo_error == 0){
+		return false;
+	}
+
 	return ok > 0;
 }
