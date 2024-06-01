@@ -4,6 +4,7 @@
 #include <readline/readline.h>
 #include "global_kernel.h"
 #include "kernel.h"
+#include "utils/files.h"
 
 t_dictionary* get_comandos(){
 
@@ -55,14 +56,44 @@ void consola_interactiva(){
 	free(linea_leida);
 }
 
+char** leer_script(char* path){
+    
+    char* script = leer_archivo_txt(path);
+    char** comandos = string_split(script, "\n");
+
+    return comandos;
+}
+
+void ejecutar_script(char** comandos){
+    for(int i = 0; comandos[i] != NULL; i++){
+        char** comando = string_split(comandos[i], " ");
+        char* funcion = comando[0];
+        string_to_upper(funcion);
+
+        int opcion_funciones_consola;
+
+        t_dictionary* comandos_diccionario = get_comandos();
+
+        if(dictionary_has_key(comandos_diccionario, funcion)){
+            opcion_funciones_consola = (int) dictionary_get(comandos_diccionario, funcion);
+        }else{
+            log_error(g_logger, "ingresaste una funcion no valida");
+            break;
+        }
+        char ** args =  comando;
+        ejecutar_comando(opcion_funciones_consola, args);
+    }
+}
+
+
 
 void ejecutar_comando(t_funciones_consola comando, char** args){
     switch (comando) {
 
         case EJECUTAR_SCRIPT:
             printf("e\n");
-            // char** comandos = leer_script(args[1]);
-            // ejecutar_script(comandos);
+            char** comandos = leer_script(args[1]);
+            ejecutar_script(comandos);
             break;
         case INICIAR_PROCESO:
             printf("Se seleccionó la opción 2\n");
