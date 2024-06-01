@@ -37,4 +37,8 @@ extern sem_t g_hay_elementos_en_exit;
 extern sem_t g_mutex_acceso_interfaces;
 
 extern t_dictionary* g_interfaces;
+
+extern sem_t g_notif_corto_plazo;
+extern sem_t g_notif_largo_plazo;
+extern int g_planificacion_pausada;
 #endif

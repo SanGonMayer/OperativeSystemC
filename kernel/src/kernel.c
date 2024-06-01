@@ -72,6 +72,9 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 }
 
 void iniciar_proceso(char* path){
+    sem_wait(&g_notif_largo_plazo);
+    sem_post(&g_notif_largo_plazo); 
+
     t_PCB* pcb = crear_PCB();
     log_info(g_logger,"Creando PCB para el proceso %d", g_contador_pid);
     sem_wait(&mutex_contador_pid);
@@ -109,6 +112,9 @@ void preparar_proceso_a_ready(){
 }
 
 void enviar_proceso_a_ready(t_PCB* pcb){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    
     sem_wait(&g_mutex_cola_ready);
     queue_push(g_cola_ready, pcb);
     sem_post(&g_mutex_cola_ready);
@@ -159,7 +165,9 @@ void ejecutar_cpu_RR(t_PCB* pcb){
 
 }
 
-void recibir_pcb_desalojado(t_PCB* pcb){
+void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
 
     t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
     int motivo;
@@ -168,15 +176,16 @@ void recibir_pcb_desalojado(t_PCB* pcb){
         free(pcb_recibido);
     }else{
         log_info(g_logger, "PCB recibido de CPU");
-        actualizar_pcb(pcb, pcb_recibido);
+        actualizar_pcb(pcb_ejecutando, pcb_recibido);
         free(pcb_recibido);
+        g_exec = NULL;
     }
 
     recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
     log_info(g_logger, "Motivo de finalizacion: %d", motivo);
 
     t_desalojo* desalojo = malloc(sizeof(t_desalojo));
-    desalojo->pcb = pcb;
+    desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
 
     pthread_t hilo_desalojo;
@@ -187,6 +196,9 @@ void recibir_pcb_desalojado(t_PCB* pcb){
 }
 
 void planificador_exit(){
+    sem_wait(&g_notif_largo_plazo);
+    sem_post(&g_notif_largo_plazo);  
+
     while(1){
         sem_wait(&g_hay_elementos_en_exit);
         sem_wait(&g_mutex_cola_exit);
@@ -199,6 +211,9 @@ void planificador_exit(){
 }
 
 void finalizar_proceso(t_PCB* pcb){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    
     pcb->estado = EXIT;
     log_info(g_logger, "Proceso %d finalizado", pcb->PID);
     sem_wait(&g_mutex_cola_exit);
@@ -209,6 +224,9 @@ void finalizar_proceso(t_PCB* pcb){
 }
 
 void atender_desalojo(t_desalojo* desalojo){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    
     switch(desalojo->motivo){
         case FINALIZACION:
             finalizar_proceso(desalojo->pcb);
@@ -248,6 +266,8 @@ void atender_desalojo(t_desalojo* desalojo){
                 queue_push(interfaz->cola, item);
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+                //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
+
             }else{
                 sem_post(&g_mutex_acceso_interfaces);
 
@@ -260,6 +280,9 @@ void atender_desalojo(t_desalojo* desalojo){
 }
 
 void planificador_fifo(){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    
     while(1){
         sem_wait(&g_hay_elementos_en_ready);
         log_info(g_logger, "Planificador FIFO");
@@ -271,6 +294,9 @@ void planificador_fifo(){
 }
 
 void planificador_RR(){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    
     while(1){
     sem_wait(&g_hay_elementos_en_ready);
     log_info(g_logger, "Planificador RR");

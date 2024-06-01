@@ -29,3 +29,8 @@ sem_t g_mutex_cola_exit;
 sem_t g_hay_elementos_en_exit;
 
 sem_t g_mutex_acceso_interfaces;
+
+sem_t g_notif_corto_plazo;
+sem_t g_notif_largo_plazo;
+int g_planificacion_pausada;
+

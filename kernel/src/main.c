@@ -29,7 +29,7 @@ void procesar_cola_interfaz(t_interfaz_conectada* interfaz){
         enviar_buffer(interfaz->fd, buffer, g_logger);
 
         recibir_ok(interfaz->fd);
-        // enviar proceso a ready
+        enviar_proceso_a_ready(instruccion->pcb);
     }
 }
 
@@ -86,6 +86,9 @@ void proceso_io(){
 
 int main(void){
 	
+    //semaforos para pausar o reanudar planificadores
+    sem_init(&g_notif_corto_plazo,0,1); 
+    sem_init(&g_notif_largo_plazo,0,1);
 
     g_logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
     
@@ -149,10 +152,12 @@ int main(void){
     if(strcmp(algoritmo_planificacion, "FIFO") == 0){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_fifo, NULL);
         pthread_detach(hilo_planificador);
-    } else if(strcmp(algoritmo_planificacion, "RR") == 0){
+    }
+    else if(strcmp(algoritmo_planificacion, "RR") == 0){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_RR, NULL);
         pthread_detach(hilo_planificador);
-    } else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+    } 
+    else if(strcmp(algoritmo_planificacion, "VRR") == 0){
         //planificador_vrr()
     }
 
