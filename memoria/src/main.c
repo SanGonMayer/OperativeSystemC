@@ -2,6 +2,7 @@
 #include "config.h"
 #include "global_memoria.h"
 #include "memoria.h"
+#include "memoria_instrucciones.h"
 #include "utils/codigo_operacion.h"
 #include <commons/config.h>
 #include <utils/server.h>
@@ -45,8 +46,6 @@ int main(int argc, char* argv[]) {
 
 
     g_logger = log_create("memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
-
-    g_memoria_instrucciones = dictionary_create();
     
     t_config_memoria* config = get_config_memoria();
     

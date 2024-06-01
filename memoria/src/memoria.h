@@ -6,6 +6,18 @@
 #include <commons/log.h>
 
 typedef struct{
+    void* memoria;
+    uint32_t tam_memoria;
+    uint32_t tam_pagina;
+    uint32_t cantidad_marcos;
+} t_memoria;
+
+typedef struct{
+    
+
+}t_tabla_paginas;
+
+typedef struct{
     uint32_t PID;
     uint32_t path_length;
     char* path;
@@ -17,19 +29,6 @@ void recibir_contexto_de_kernel(int socket, t_paqueteMemoria* paqueteMemoria, t_
 
 void confirmar_recepcion(int socket);
 
-t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger);
-
-void enviar_instruccion(int socket, char* instruccion, t_log* logger);
-
 void retardo_respuesta_memoria();
-
-void cargar_instrucciones(t_dictionary* memoria_archivo, uint32_t pid, char* path_instrucciones);
-
-char* leer_instruccion(t_dictionary* memoria_archivo, uint32_t pid, uint32_t* pc);
-
-void liberar_instrucciones(t_dictionary* memoria_archivo, uint32_t pid);
-
-void procesar_carga_instrucciones(int socket);
-void procesar_pedido_instruccion(int socket);
 
 #endif

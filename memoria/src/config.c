@@ -45,6 +45,8 @@ t_config_memoria* get_config_memoria(){
 }
 
 void config_memoria_destroy(){
+    free(config_memoria->puerto_escucha);
+    free(config_memoria->path_instrucciones);
     free(config_memoria);
     config_memoria = NULL;
 }

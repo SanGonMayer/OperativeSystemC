@@ -7,6 +7,5 @@
 #include <commons/collections/dictionary.h>
 
 extern t_log* g_logger;
-extern t_dictionary* g_memoria_instrucciones;
 
 #endif
