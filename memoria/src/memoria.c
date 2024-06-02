@@ -1,8 +1,11 @@
 #include "memoria.h"
 #include <commons/collections/dictionary.h>
 #include <commons/collections/list.h>
+#include <commons/string.h>
 #include <stdint.h>
-#include <math.h>
+#include <string.h>
+#include "global_memoria.h"
+#include <stdlib.h>
 
 static t_memoria* memoria = NULL;
 
@@ -38,6 +41,7 @@ t_list* inicializar_tabla_paginas(uint32_t pid){
     char* pid_string = string_itoa(pid);
     dictionary_put(memoria->tablas_de_paginas, pid_string, tabla_paginas);
 
+    free(pid_string);
     return tabla_paginas;
 }
 
@@ -46,23 +50,33 @@ void liberar_tabla_paginas(uint32_t pid){
 
     t_list* tabla_paginas = dictionary_get(memoria->tablas_de_paginas, pid_string);
    
-    for(int i = 0; i < tabla_paginas[i] != NULL; i++){
+    for(int i = 0; i < list_size(tabla_paginas); i++){
         int nro_marco = (int) list_get(tabla_paginas, i);
         liberar_marco(nro_marco);
     }
     
     list_destroy(tabla_paginas);
     dictionary_remove(memoria->tablas_de_paginas, pid_string);
+    free(pid_string);
 }
 
 int leer_nro_marco(uint32_t pid, uint32_t nro_pagina){
     char* pid_string = string_itoa(pid);
     t_list* tabla_paginas = dictionary_get(memoria->tablas_de_paginas, pid_string);
+    free(pid_string);
+    
     return (int) list_get(tabla_paginas, nro_pagina);
 }
 
 int obtener_marco_libre(){
-    return bitarray_test_and_set_bit(memoria->bitarray, 0);
+
+    for(int i = 0; i < memoria->cantidad_marcos; i++){
+        if(!bitarray_test_bit(memoria->bitarray, i)){
+            bitarray_set_bit(memoria->bitarray, i);
+            return i;
+        }
+    }
+    return -1;
 }
 
 void liberar_marco(uint32_t nro_marco){
@@ -72,6 +86,9 @@ void liberar_marco(uint32_t nro_marco){
 void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     char* pid_string = string_itoa(pid);
     t_list* tabla_paginas = dictionary_get(memoria->tablas_de_paginas, pid_string);
+
+    free(pid_string);
+
     uint32_t tamanio_actual = list_size(tabla_paginas);
     uint32_t tamanio_nuevo = nuevo_tamanio / memoria->tam_pagina;
 
@@ -79,6 +96,12 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
         uint32_t paginas_a_agregar = tamanio_nuevo - tamanio_actual;
         for(int i = 0; i < paginas_a_agregar; i++){
             int marco_libre = obtener_marco_libre();
+
+            if(marco_libre == -1){
+                log_error(g_logger, "No hay marcos libres");
+                break;
+            }
+
             list_add(tabla_paginas, (void*) marco_libre);
         }
     } else {
