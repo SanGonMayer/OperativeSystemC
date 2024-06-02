@@ -15,6 +15,7 @@ int g_conexion_cpu_dispatch;
 int g_quantum;
 t_PCB* g_exec;
 int g_conexion_cpu_interrupt;
+t_queue* g_cola_auxiliar;
 
 t_dictionary* g_interfaces;
 
@@ -27,6 +28,7 @@ sem_t g_mutex_cola_new;
 sem_t g_mutex_socket_memoria;
 sem_t g_mutex_cola_exit;
 sem_t g_hay_elementos_en_exit;
+sem_t g_mutex_cola_auxiliar;
 
 sem_t g_mutex_acceso_interfaces;
 

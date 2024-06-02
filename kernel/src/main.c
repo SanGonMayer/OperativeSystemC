@@ -33,6 +33,7 @@ void procesar_cola_interfaz(t_interfaz_conectada* interfaz){
     }
 }
 
+
 void procesar_cliente(int* fd){
 
     handshake_server(*fd, g_logger);
@@ -108,6 +109,7 @@ int main(void){
     sem_init(&g_disponible_exec, 0, 1);
     g_cola_exit = queue_create();
     sem_init(&g_mutex_cola_exit, 0, 1); 
+
 
     //Semaforos para io
     sem_init(&g_mutex_acceso_interfaces, 0, 1);

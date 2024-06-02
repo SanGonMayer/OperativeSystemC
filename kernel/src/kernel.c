@@ -165,6 +165,29 @@ void ejecutar_cpu_RR(t_PCB* pcb){
 
 }
 
+void agregar_a_cola_auxiliar(t_PCB* pcb){
+    sem_wait(&g_mutex_cola_auxiliar);
+    queue_push(g_cola_auxiliar, pcb);
+    sem_post(&g_mutex_cola_auxiliar);
+}
+
+void ejecutar_cpu_VRR(t_PCB* pcb){
+    g_cola_auxiliar = queue_create();
+    sem_init(&g_mutex_cola_auxiliar, 0, 1);
+    
+    int error;
+    sem_wait(&g_disponible_exec);
+    error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+    g_exec = pcb;
+
+    pthread_t hilo_quantum;
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
+    pthread_detach(hilo_quantum);
+
+    recibir_pcb_desalojado(pcb);
+    pthread_cancel(hilo_quantum);
+}
+
 void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);

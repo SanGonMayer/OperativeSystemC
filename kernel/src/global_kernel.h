@@ -11,6 +11,7 @@ extern int g_contador_pid;
 extern t_queue* g_cola_new;
 extern t_queue* g_cola_ready;
 extern t_queue* g_cola_exit;
+extern t_queue* g_cola_auxiliar;
 
 extern t_log* g_logger;
 extern int g_grado_multiprogramacion;
@@ -32,6 +33,7 @@ extern sem_t g_mutex_cola_new;
 extern sem_t g_mutex_socket_memoria;
 extern sem_t g_mutex_cola_exit;
 extern sem_t g_hay_elementos_en_exit;
+extern sem_t g_mutex_cola_auxiliar;
 
 // Semaforos para interfaces
 extern sem_t g_mutex_acceso_interfaces;
