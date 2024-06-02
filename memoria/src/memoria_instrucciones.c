@@ -1,5 +1,6 @@
 #include "memoria_instrucciones.h"
 #include "global_memoria.h"
+#include "memoria.h"
 #include "utils/files.h"
 #include "utils/server.h"
 #include <commons/collections/dictionary.h>
@@ -74,6 +75,8 @@ void procesar_carga_instrucciones(int socket){
     t_paqueteMemoria* paqueteMemoria = inicializar_paquete_memoria();  
     recibir_contexto_de_kernel(socket, paqueteMemoria, g_logger);
     cargar_instrucciones(paqueteMemoria->PID, paqueteMemoria->path);
+    inicializar_tabla_paginas(paqueteMemoria->PID);
+
     confirmar_recepcion(socket);
     log_info(g_logger, "Instrucciones cargadas correctamente para el PID %d", paqueteMemoria->PID);
     free(paqueteMemoria);

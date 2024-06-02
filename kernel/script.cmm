@@ -1,5 +1,4 @@
 INICIAR_PROCESO ../memoria/instrucciones.dummy
-INICIAR_PROCESO ../memoria/instrucciones2.dummy
 INICIAR_PROCESO ../memoria/instrucciones.dummy
-INICIAR_PROCESO ../memoria/instrucciones2.dummy
-
+INICIAR_PROCESO ../memoria/instrucciones.dummy
+INICIAR_PROCESO ../memoria/instrucciones.dummy
