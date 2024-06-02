@@ -82,21 +82,21 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio);
 /**
  * @brief Lee datos desde la memoria.
  * 
- * @param pid Identificador del proceso.
  * @param direccion_fisica Dirección física de inicio de la lectura.
  * @param tamanio Tamaño de los datos a leer.
  * @param buffer Puntero al buffer donde se almacenarán los datos leídos.
  */
-void leer_de_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
+void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
 
 /**
  * @brief Escribe datos en la memoria.
  * 
- * @param pid Identificador del proceso.
  * @param direccion_fisica Dirección física de inicio de la escritura.
  * @param tamanio Tamaño de los datos a escribir.
  * @param buffer Puntero al buffer que contiene los datos a escribir.
  */
-void escribir_en_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
+void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
+
+void loggear_tabla_paginas(t_list* tabla_paginas);
 
 #endif // MEMORIA_H

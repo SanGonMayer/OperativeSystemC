@@ -9,13 +9,13 @@
 
 static t_memoria* memoria = NULL;
 
-int calcular_bits_necesarios(uint32_t cantidad_marcos){
-    int bits = cantidad_marcos / 8;
+int calcular_bytes_necesarios(uint32_t cantidad_marcos){
+    int bytes = cantidad_marcos / 8;
 
     if(cantidad_marcos % 8 != 0){
-        bits++;
+        bytes++;
     }
-    return bits;
+    return bytes;
 }
 
 void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina){
@@ -28,11 +28,15 @@ void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina){
         memoria->espacio_contiguo = malloc(tam_memoria);
         memoria->tablas_de_paginas = dictionary_create();
 
-        memoria->bitmap = malloc(calcular_bits_necesarios(memoria->cantidad_marcos));
+        memoria->bitmap = malloc(calcular_bytes_necesarios(memoria->cantidad_marcos));
         memoria->bitarray = bitarray_create_with_mode(
             memoria->bitmap, 
-            calcular_bits_necesarios(memoria->cantidad_marcos), 
+            calcular_bytes_necesarios(memoria->cantidad_marcos), 
             LSB_FIRST);
+        
+        for (int i = 0; i < memoria->cantidad_marcos; i++){
+            bitarray_clean_bit(memoria->bitarray, i);
+        }
     }
 }
 
@@ -70,10 +74,11 @@ int leer_nro_marco(uint32_t pid, uint32_t nro_pagina){
 
 int obtener_marco_libre(){
 
-    for(int i = 0; i < memoria->cantidad_marcos; i++){
-        if(!bitarray_test_bit(memoria->bitarray, i)){
-            bitarray_set_bit(memoria->bitarray, i);
-            return i;
+    for(int nro_marco = 0; nro_marco < memoria->cantidad_marcos; nro_marco++){
+        bool marco_libre = bitarray_test_bit(memoria->bitarray, nro_marco) == 0;
+        if(marco_libre){
+            bitarray_set_bit(memoria->bitarray, nro_marco);
+            return nro_marco;
         }
     }
     return -1;
@@ -91,6 +96,10 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
 
     uint32_t tamanio_actual = list_size(tabla_paginas);
     uint32_t tamanio_nuevo = nuevo_tamanio / memoria->tam_pagina;
+
+    if(nuevo_tamanio % memoria->tam_pagina != 0){
+        tamanio_nuevo++;
+    }
 
     if(tamanio_nuevo > tamanio_actual){
         uint32_t paginas_a_agregar = tamanio_nuevo - tamanio_actual;
@@ -115,15 +124,25 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
             list_remove(tabla_paginas, pagina_a_eliminar);
         }
     }
+
+    loggear_tabla_paginas(tabla_paginas);
 }
 
+void loggear_tabla_paginas(t_list* tabla_paginas){
 
-void leer_de_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
+    log_info(g_logger, "Tabla de páginas actualizada");
+    for(int i = 0; i < list_size(tabla_paginas); i++){
+        int nro_marco = (int) list_get(tabla_paginas, i);
+        log_info(g_logger, "Página %d -> Marco %d", i, nro_marco);
+    }
+}
+
+void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
     memcpy(buffer, direccion_fisica_real, tamanio);
 }
 
-void escribir_en_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
+void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
     memcpy(direccion_fisica_real, buffer, tamanio);
 }
