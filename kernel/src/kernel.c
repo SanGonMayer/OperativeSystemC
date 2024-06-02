@@ -149,6 +149,8 @@ void esperar_quantum(uint32_t PID){
     }
 }
 
+
+
 void ejecutar_cpu_RR(t_PCB* pcb){
 
     int error;
@@ -172,14 +174,12 @@ void agregar_a_cola_auxiliar(t_PCB* pcb){
 }
 
 void ejecutar_cpu_VRR(t_PCB* pcb){
-    g_cola_auxiliar = queue_create();
-    sem_init(&g_mutex_cola_auxiliar, 0, 1);
-    
+
     int error;
     sem_wait(&g_disponible_exec);
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     g_exec = pcb;
-
+    
     pthread_t hilo_quantum;
     pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
     pthread_detach(hilo_quantum);
@@ -327,6 +327,23 @@ void planificador_RR(){
     t_PCB* pcb = queue_pop(g_cola_ready);
     sem_post(&g_mutex_cola_ready);
     ejecutar_cpu_RR(pcb);
+    }
+}
+
+void planificador_VRR(){
+    sem_wait(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+
+    g_cola_auxiliar = queue_create();
+    sem_init(&g_mutex_cola_auxiliar, 0, 1);
+    
+    while(1){
+        sem_wait(&g_hay_elementos_en_ready);
+        log_info(g_logger, "Planificador VRR");
+        sem_wait(&g_mutex_cola_ready);
+        t_PCB* pcb = queue_pop(g_cola_ready);
+        sem_post(&g_mutex_cola_ready);
+        ejecutar_cpu_VRR(pcb);
     }
 }
 
