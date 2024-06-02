@@ -3,6 +3,7 @@
 #include "utils/instrucciones.h"
 #include <commons/collections/dictionary.h>
 #include <commons/collections/list.h>
+#include <commons/bitarray.h>
 #include <utils/procesos.h>
 #include <utils/buffer.h>
 #include <commons/log.h>
@@ -13,6 +14,8 @@ typedef struct{
     uint32_t tam_pagina;
     uint32_t cantidad_marcos;
     t_dictionary* tablas_de_paginas;
+    void* bitmap;
+    t_bitarray* bitarray;
 } t_memoria;
 
 void inicializar_memoria(uint32_t tam_memoria, uint32_t tam_pagina);
