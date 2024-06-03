@@ -5,6 +5,7 @@
 #include "global_kernel.h"
 #include "kernel.h"
 #include "utils/files.h"
+#include <readline/history.h>
 
 t_dictionary* get_comandos(){
 
@@ -39,6 +40,9 @@ void consola_interactiva(){
         t_dictionary* comandos = get_comandos();
 
         if(dictionary_has_key(comandos, funcion)){
+
+            add_history(linea_leida);
+
             opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
             ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
         }else{
