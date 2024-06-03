@@ -41,7 +41,8 @@ typedef enum {
     READY = 2,
     EXEC = 3,
     BLOCKED = 4,
-    EXIT = 5
+    EXIT = 5,
+    READYPLUS = 6
 } t_estadoProceso;
 
 typedef struct{
@@ -50,6 +51,7 @@ typedef struct{
     t_registrosCPU registrosCPU;
     t_registrosMem registrosMem;
     int quantum;
+    int readyplus;
     uint32_t path_length;
     char* path;
 } t_PCB;

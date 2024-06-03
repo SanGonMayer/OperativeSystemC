@@ -12,7 +12,7 @@
 #include <commons/collections/list.h>
 #include <utils/procesos.h>
 #include <utils/codigo_operacion.h>
-
+#include <commons/temporal.h>
 typedef enum {
     FIFO= 1,
     RR= 2,
@@ -58,11 +58,15 @@ void planificador_RR();
 
 void ejecutar_cpu_RR(t_PCB* pcb);
 
-void esperar_quantum(uint32_t PID);
+void esperar_quantum(t_PCB* pcb);
 
 void recibir_pcb_desalojado(t_PCB* pcb);
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID);
+
+void planificador_VRR();
+
+void planificador_readyplus();
 
 //void listar_procesos tiene que mostrar todos los procesos por estado
 

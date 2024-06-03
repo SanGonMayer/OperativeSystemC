@@ -15,23 +15,11 @@ char * puerto_memoria;
 char * ip_cpu;
 char * puerto_cpu_dispatch;
 char * puerto_cpu_interrupt;
-char * algoritmo_planificacion;
+
 int quantum;
 
 t_config* config;
 t_queue* cola_exec;
-
-void procesar_cola_interfaz(t_interfaz_conectada* interfaz){
-    while(1){
-        sem_wait(&interfaz->semaforo);
-        t_parametro_cola_interfaz* instruccion = queue_pop(interfaz->cola);
-        t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
-        enviar_buffer(interfaz->fd, buffer, g_logger);
-
-        recibir_ok(interfaz->fd);
-        enviar_proceso_a_ready(instruccion->pcb);
-    }
-}
 
 void procesar_cliente(int* fd){
 
@@ -67,9 +55,14 @@ void procesar_cliente(int* fd){
 
         if(result){
             log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
-            
-            enviar_proceso_a_ready(instruccion->pcb);
-            sem_post(&g_hay_elementos_en_ready);
+            if(algoritmo_planificacion == "VRR"){
+                if(instruccion->pcb->readyplus == 1){
+                    agregar_a_cola_auxiliar(instruccion->pcb);
+                    sem_post(&g_hay_elementos_para_ejecutar);
+                }
+            } else {
+                enviar_proceso_a_ready(instruccion->pcb);
+            }
             
         }else{
             log_error(g_logger, "No se pudo ejecutar la instrucción enviada a la interfaz %s", interfaz->nombre);
@@ -89,7 +82,8 @@ int main(void){
     //semaforos para pausar o reanudar planificadores
     sem_init(&g_notif_corto_plazo,0,1); 
     sem_init(&g_notif_largo_plazo,0,1);
-
+    //VRR
+    
     g_logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
     
     config = config_create("../kernel/kernel.config");
@@ -108,6 +102,7 @@ int main(void){
     sem_init(&g_disponible_exec, 0, 1);
     g_cola_exit = queue_create();
     sem_init(&g_mutex_cola_exit, 0, 1); 
+
 
     //Semaforos para io
     sem_init(&g_mutex_acceso_interfaces, 0, 1);
@@ -158,7 +153,10 @@ int main(void){
         pthread_detach(hilo_planificador);
     } 
     else if(strcmp(algoritmo_planificacion, "VRR") == 0){
-        //planificador_vrr()
+        sem_init(&g_tiempo_calculado, 0,0);
+        sem_init(&g_hay_elementos_para_ejecutar, 0, 0);
+        hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_VRR, NULL);
+        pthread_detach(hilo_planificador);
     }
 
     // IO

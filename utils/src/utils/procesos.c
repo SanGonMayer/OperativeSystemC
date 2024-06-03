@@ -70,6 +70,7 @@ t_buffer* serializar_pcb(t_PCB* pcb){
         sizeof(pcb->PID) + 
         sizeof(pcb->estado) + 
         sizeof(pcb->quantum) + 
+        sizeof(pcb->readyplus) + 
         sizeof(pcb->registrosCPU) + 
         sizeof(pcb->registrosMem) + 
         sizeof(pcb->path_length) +
@@ -78,7 +79,8 @@ t_buffer* serializar_pcb(t_PCB* pcb){
 
     buffer_add_uint32(buffer, pcb->PID);
     buffer_add_uint32(buffer, pcb->estado);
-    buffer_add_uint32(buffer, pcb->quantum);
+    buffer_add_int(buffer, pcb->quantum);
+    buffer_add_int(buffer, pcb->readyplus);
     buffer_add(buffer, &pcb->registrosCPU, sizeof(t_registrosCPU));
     buffer_add(buffer, &pcb->registrosMem, sizeof(t_registrosMem));
     buffer_add_string(buffer, pcb->path_length, pcb->path);
@@ -99,7 +101,8 @@ t_PCB* deserializar_pcb(t_buffer* buffer){
 
     pcb->PID = buffer_read_uint32(buffer);
     pcb->estado = buffer_read_uint32(buffer);
-    pcb->quantum = buffer_read_uint32(buffer);
+    pcb->quantum = buffer_read_int(buffer);
+    pcb->readyplus = buffer_read_int(buffer);
     buffer_read(buffer, &pcb->registrosCPU, sizeof(t_registrosCPU));
     buffer_read(buffer, &pcb->registrosMem, sizeof(t_registrosMem));
     pcb->path = buffer_read_string(buffer, &pcb->path_length);
