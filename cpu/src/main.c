@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "global_cpu.h"
 #include "mmu.h"
+#include "tlb.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
@@ -56,6 +57,8 @@ int main(int argc, char* argv[]) {
     uint32_t tam_pagina = buffer_read_uint32(tam_pagina_response);
     buffer_destroy(tam_pagina_response);
     set_tamanio_pagina(tam_pagina);
+
+    tlb_init(cantidad_entradas_tlb, algoritmo_tlb);
 
     cola_interrupciones = queue_create();
 

@@ -1,4 +1,6 @@
 #include "cpu.h"
+#include "mmu.h"
+#include "tlb.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
@@ -116,4 +118,22 @@ t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
     registros.edx = dictionary_get(dictionary, "EDX");
 
     return registros;
+}
+
+
+int obtener_direccion_fisica(int pid, int direccion_logica){
+    bool tlb_hit = false;
+    int direccion_fisica;
+
+    if(tlb_enabled())
+        tlb_hit = tlb_get_marco(pid, direccion_logica, &direccion_fisica);
+
+    if(!tlb_hit){
+        tlb_hit = traducir_a_direccion_fisica(pid, direccion_logica);
+
+        if(tlb_enabled())
+            tlb_add(pid, direccion_logica, direccion_fisica);
+    }
+
+    return direccion_fisica;
 }
