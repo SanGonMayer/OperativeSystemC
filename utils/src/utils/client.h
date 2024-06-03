@@ -7,6 +7,7 @@
 #include <commons/log.h>
 #include <string.h>
 #include "buffer.h"
+#include "utils/codigo_error.h"
 
 
 typedef struct
@@ -26,6 +27,8 @@ void eliminar_paquete(t_paquete* paquete);
 void* serializar_paquete(t_paquete* paquete);
 
 void responder_ok(int socket);
+
+void responder_error(int socket, t_codigo_error error);
 
 void* crear_a_enviar(t_paquete* paquete);
 

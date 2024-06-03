@@ -44,4 +44,6 @@ void handshake_server(int fd, t_log* logger);
 void confirmar_recepcion(int socket);
 
 bool recibir_ok(int socket);
+
+uint32_t recibir_codigo_error(int socket);
 #endif

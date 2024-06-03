@@ -1,7 +1,14 @@
 #include "cpu.h"
+#include "global_cpu.h"
+#include "mmu.h"
+#include "utils/buffer.h"
+#include "utils/client.h"
 #include "utils/codigo_operacion.h"
+#include <sys/socket.h>
+#include "utils/peticiones_memoria.h"
+#include "global_cpu.h"
+#include "utils/server.h"
 
-t_log* logger;
 t_config* config;
 
 char* ip_memoria;
@@ -23,12 +30,12 @@ sem_t g_actualizacion_pcb;
 
 int main(int argc, char* argv[]) {
     
-    logger = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
+    g_logger = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
     
     config = config_create("../cpu/cpu.config");
     
     if(config == NULL){
-        log_error(logger, "Mal el path");
+        log_error(g_logger, "Mal el path");
         exit(EXIT_FAILURE);
     }
 
@@ -39,8 +46,15 @@ int main(int argc, char* argv[]) {
     cantidad_entradas_tlb = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
     algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
 
-    int conexion_memoria_fd = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", logger);
-    handshake_cliente(conexion_memoria_fd, logger);
+    g_socket_memoria = crear_conexion(ip_memoria, puerto_memoria, "MEMORIA", g_logger);
+    handshake_cliente(g_socket_memoria, g_logger);
+
+    int op_tam_pagina = OBTENER_TAMANIO_PAGINA;
+    send(g_socket_memoria, &op_tam_pagina, sizeof(int), 0);
+    t_buffer* tam_pagina_response = recibir_buffer(g_socket_memoria);
+    uint32_t tam_pagina = buffer_read_uint32(tam_pagina_response);
+    buffer_destroy(tam_pagina_response);
+    set_tamanio_pagina(tam_pagina);
 
     cola_interrupciones = queue_create();
 
@@ -49,15 +63,15 @@ int main(int argc, char* argv[]) {
     pthread_t hilo_dispatch;
     pthread_t hilo_interrupt;
 
-    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, &conexion_memoria_fd);
+    pthread_create(&hilo_dispatch, NULL, (void*)servidor_dispatch, &g_socket_memoria);
     pthread_create(&hilo_interrupt, NULL, (void*)servidor_interrupt, NULL);
 
     pthread_join(hilo_dispatch, NULL);
     pthread_join(hilo_interrupt, NULL);
     
-    close(conexion_memoria_fd);
+    close(g_socket_memoria);
     config_destroy(config);
-    log_destroy(logger);
+    log_destroy(g_logger);
 
     return 0;
 }
@@ -129,10 +143,38 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
             log_info(logger, "Se ejecuto EXIT");
             return;
+        }else if(strcmp(instruccion_separada[0], "RESIZE") == 0){
+            
+            int tamanio = atoi(instruccion_separada[1]);
+
+            t_peticion_resize* peticion = crear_peticion_resize(pcb->PID, tamanio);
+            t_buffer* buffer = serializar_peticion_resize(peticion);
+            t_paquete* paquete = crear_paquete(RESIZE_MEMORIA, buffer);
+            int err = enviar_paquete(paquete, g_socket_memoria);
+
+            if(err == -1){
+                log_error(logger, "Error al enviar la peticion de resize a memoria");
+                return;
+            }
+
+            eliminar_paquete(paquete);
+            destruir_peticion_resize(peticion);
+
+            bool ok = recibir_ok(g_socket_memoria);
+
+            log_info(logger, "Se ejecuto RESIZE %d", tamanio);
+            if(!ok){
+                t_codigo_error error = recibir_codigo_error(g_socket_memoria);
+                if(error == ERROR_OUT_OF_MEMORY){
+                    log_error(logger, "Error al hacer el resize, no hay memoria suficiente");
+                    desalojar_pcb(socket_dispatch, pcb, (int)ERROR_OUT_OF_MEMORY, logger, diccionario);
+                }
+                return;
+            }
         }
 
         if(check_interrupt(pcb, logger) == 1){
-            desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
+            desalojar_pcb(socket_dispatch, pcb, (int)OUT_OF_MEMORY, logger, diccionario);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
@@ -140,9 +182,9 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 }
 
 void servidor_dispatch(int* socket_memoria){
-    int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, logger, "CPU DISPATCH");
-    int cliente_dispatch_fd = esperar_nueva_conexion_cliente(socket_servidor, logger);
-    handshake_server(cliente_dispatch_fd, logger);
+    int socket_servidor = iniciar_servidor(puerto_escucha_dispatch, g_logger, "CPU DISPATCH");
+    int cliente_dispatch_fd = esperar_nueva_conexion_cliente(socket_servidor, g_logger);
+    handshake_server(cliente_dispatch_fd, g_logger);
 
     int conectado = 1;
     
@@ -150,24 +192,24 @@ void servidor_dispatch(int* socket_memoria){
         // agrego logs para ver si se conecta
         int cod_op = recibir_operacion(cliente_dispatch_fd);
         
-        log_info(logger, "Recibí la operación %d", cod_op);
+        log_info(g_logger, "Recibí la operación %d", cod_op);
 
         switch (cod_op)
         {
             case ENVIO_PCB: // recibir PCB de Kernel para ejecutar
-                log_info(logger, "Listo para recibir un PCB de Kernel");
+                log_info(g_logger, "Listo para recibir un PCB de Kernel");
                 t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
-                log_info(logger, "Recibí el PCB con PID %d", pcb->PID);
-                log_info(logger, "Con un ax = %d", pcb->registrosCPU.ax);
+                log_info(g_logger, "Recibí el PCB con PID %d", pcb->PID);
+                log_info(g_logger, "Con un ax = %d", pcb->registrosCPU.ax);
                 t_dictionary* diccionario = dictionary_create();
                 registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
-                log_info(logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
-                ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, logger, diccionario);
+                log_info(g_logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
+                ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, g_logger, diccionario);
                 
             break;
             
             default:
-            log_info(logger, "No entiendo el mensaje");
+            log_info(g_logger, "No entiendo el mensaje");
             break;
         }
     }
@@ -175,9 +217,9 @@ void servidor_dispatch(int* socket_memoria){
 }
 
 void servidor_interrupt(){
-    int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, logger, "CPU INTERRUPT");
-    int cliente_interrupt_fd = esperar_nueva_conexion_cliente(socket_servidor, logger);
-    handshake_server(cliente_interrupt_fd, logger);
+    int socket_servidor = iniciar_servidor(puerto_escucha_interrupt, g_logger, "CPU INTERRUPT");
+    int cliente_interrupt_fd = esperar_nueva_conexion_cliente(socket_servidor, g_logger);
+    handshake_server(cliente_interrupt_fd, g_logger);
 
     int conectado = 1;
     while(conectado){
@@ -198,7 +240,7 @@ void servidor_interrupt(){
             conectado = 0;
             break;
         default:
-            log_info(logger, "No entiendo el mensaje");
+            log_info(g_logger, "No entiendo el mensaje");
             break;
         }
     }

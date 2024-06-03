@@ -104,6 +104,13 @@ void responder_ok(int socket){
 	send(socket, &ok, sizeof(uint32_t), 0);
 }
 
+void responder_error(int socket, t_codigo_error error){
+	uint32_t err = error;
+	uint32_t ok = 0;
+	send(socket, &ok, sizeof(uint32_t), 0);
+	send(socket, &err, sizeof(uint32_t), 0);
+}
+
 void* crear_a_enviar(t_paquete* paquete){
     void* a_enviar = malloc(paquete->buffer->size + sizeof(int) + sizeof(uint32_t));
     int offset = 0;
@@ -119,7 +126,6 @@ int enviar_paquete(t_paquete* paquete, int socket){
 	void* a_enviar = crear_a_enviar(paquete);
 	int result = send(socket, a_enviar, paquete->buffer->size + sizeof(int) + sizeof(uint32_t), 0);
 	free(a_enviar);
-	eliminar_paquete(paquete);
 
 	return result;
 }

@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <string.h>
 #include "global_memoria.h"
+#include "utils/buffer.h"
+#include "utils/client.h"
+#include "utils/codigo_error.h"
+#include "utils/peticiones_memoria.h"
 #include <stdlib.h>
 
 static t_memoria* memoria = NULL;
@@ -88,7 +92,7 @@ void liberar_marco(uint32_t nro_marco){
     bitarray_clean_bit(memoria->bitarray, nro_marco);
 }
 
-void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
+bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     char* pid_string = string_itoa(pid);
     t_list* tabla_paginas = dictionary_get(memoria->tablas_de_paginas, pid_string);
 
@@ -108,7 +112,7 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
 
             if(marco_libre == -1){
                 log_error(g_logger, "No hay marcos libres");
-                break;
+                return false;
             }
 
             list_add(tabla_paginas, (void*) marco_libre);
@@ -126,6 +130,7 @@ void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     }
 
     loggear_tabla_paginas(tabla_paginas);
+    return true;
 }
 
 void loggear_tabla_paginas(t_list* tabla_paginas){
@@ -148,6 +153,70 @@ void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buff
 }
 
 
+
+void procesar_pedido_marco(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+    t_peticion_marco* peticion = deserializar_peticion_marco(buffer);
+    int nro_marco = leer_nro_marco(peticion->pid, peticion->pagina);
+
+    t_buffer* respuesta = buffer_create(sizeof(uint32_t));
+    buffer_add_int(respuesta, nro_marco);
+
+    enviar_buffer(socket, respuesta, g_logger);
+    buffer_destroy(respuesta);
+    buffer_destroy(buffer);
+    destruir_peticion_marco(peticion);
+}
+
+void procesar_resize_memoria(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+    t_peticion_resize* peticion = deserializar_peticion_resize(buffer);
+
+    bool success = ajustar_tamanio_proceso(peticion->pid, peticion->tamanio);
+
+    if(success){
+        responder_ok(socket);
+    } else {
+        responder_error(socket, ERROR_OUT_OF_MEMORY);
+    }
+    
+    buffer_destroy(buffer);
+    destruir_peticion_resize(peticion);
+}
+
+void procesar_acceso_espacio_usuario(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+    t_peticion_acceso_usuario* peticion = deserializar_peticion_acceso_usuario(buffer);
+
+    if(peticion->tipo_acceso == LECTURA){
+        char* valor = malloc(peticion->tamanio_a_leer);
+        leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
+        int tamanio_respuesta;
+        t_buffer* respuesta = buffer_create(peticion->tamanio_a_leer);
+        buffer_add_string(respuesta,tamanio_respuesta, valor);
+        buffer_destroy(respuesta);
+    }
+
+    if(peticion->tipo_acceso == ESCRITURA){
+        escribir_en_memoria(peticion->direccion_fisica, strlen(peticion->string), peticion->string);
+
+        responder_ok(socket);
+    }
+
+    buffer_destroy(buffer);
+    destruir_peticion_acceso_usuario(peticion);
+}
+
+void procesar_finalizacion_proceso(int socket){
+    t_buffer* buffer = recibir_buffer(socket);
+    t_peticion_finalizar_proceso* peticion = deserializar_peticion_finalizar_proceso(buffer);
+
+    liberar_tabla_paginas(peticion->pid);
+
+    responder_ok(socket);
+    buffer_destroy(buffer);
+    destruir_peticion_finalizar_proceso(peticion);
+}
 
 
 

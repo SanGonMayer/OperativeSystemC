@@ -1,6 +1,7 @@
 #ifndef CODIGO_OPERACION_H_
 #define CODIGO_OPERACION_H_
 
+#include "utils/codigo_error.h"
 typedef enum
 {
     HANDSHAKE = 1,
@@ -15,7 +16,9 @@ typedef enum
     FINALIZAR_PROCESO_MEMORIA = 10,
     OBTENER_MARCO_MEMORIA = 11,
     RESIZE_MEMORIA = 12,
-    ACCEDER_ESPACIO_DE_USUARIO_MEMORIA = 13
+    ACCEDER_ESPACIO_DE_USUARIO_MEMORIA = 13,
+    OBTENER_TAMANIO_PAGINA = 14,
+    OUT_OF_MEMORY = 15
 } t_codigo_operacion;
 
 #endif

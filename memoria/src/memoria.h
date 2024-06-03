@@ -77,7 +77,7 @@ void liberar_marco(uint32_t nro_marco);
  * @param pid Identificador del proceso.
  * @param nuevo_tamanio Nuevo tamaño de memoria requerido.
  */
-void ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio);
+bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio);
 
 /**
  * @brief Lee datos desde la memoria.
@@ -98,5 +98,8 @@ void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
 void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
 
 void loggear_tabla_paginas(t_list* tabla_paginas);
-
+void procesar_pedido_marco(int socket);
+void procesar_resize_memoria(int socket);
+void procesar_acceso_espacio_usuario(int socket);
+void procesar_finalizacion_proceso(int socket);
 #endif // MEMORIA_H

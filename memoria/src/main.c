@@ -36,6 +36,32 @@ void procesar_cliente(int* socket){
             retardo_respuesta_memoria();
             procesar_pedido_instruccion(*socket);
             break;
+        case OBTENER_MARCO_MEMORIA:
+            log_info(g_logger, "Recibiendo pedido de marco de memoria");
+            retardo_respuesta_memoria();
+            procesar_pedido_marco(*socket);
+            break;
+        case RESIZE_MEMORIA:
+            log_info(g_logger, "Recibiendo pedido de resize de memoria");
+            retardo_respuesta_memoria();
+            procesar_resize_memoria(*socket);
+            break;
+        case ACCEDER_ESPACIO_DE_USUARIO_MEMORIA:
+            log_info(g_logger, "Recibiendo pedido de acceso a espacio de usuario");
+            retardo_respuesta_memoria();
+            procesar_acceso_espacio_usuario(*socket);
+            break;
+        case FINALIZAR_PROCESO_MEMORIA:
+            log_info(g_logger, "Recibiendo pedido de finalizacion de proceso");
+            retardo_respuesta_memoria();
+            procesar_finalizacion_proceso(*socket);
+            break;
+        case OBTENER_TAMANIO_PAGINA:
+            t_buffer* buffer = buffer_create(sizeof(uint32_t));
+            buffer_add_uint32(buffer, get_config_memoria()->tam_pagina);
+            enviar_buffer(*socket, buffer, g_logger);
+            buffer_destroy(buffer);
+            break;
         case -1:
             log_error(g_logger, "el cliente se desconectó.");
             iterador = 0;

@@ -128,3 +128,9 @@ bool recibir_ok(int socket){
 
 	return ok > 0;
 }
+
+uint32_t recibir_codigo_error(int socket){
+	uint32_t codigo_error;
+	recv(socket, &codigo_error, sizeof(uint32_t), MSG_WAITALL);
+	return codigo_error;
+}
