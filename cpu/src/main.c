@@ -4,6 +4,7 @@
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
+#include <commons/string.h>
 #include <sys/socket.h>
 #include "utils/peticiones_memoria.h"
 #include "global_cpu.h"
@@ -100,28 +101,28 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         //etapa decode
         char** instruccion_separada = string_split(instruccion, " ");
         log_info(logger, "Se ejecuta la instruccion %s", instruccion_separada[0]);
-        if (strcmp(instruccion_separada[0], "SET") == 0) {
+        if (string_equals_ignore_case(instruccion_separada[0], "SET")) {
             char* registro = instruccion_separada[1];
             int valor = atoi(instruccion_separada[2]);
             //etapa execute
             ejecutar_set(registro, valor, pcb, diccionario);
             log_info(logger, "Se ejecuto SET en el registro %s y queda con valor %d", registro, dictionary_get(diccionario,registro));
 
-        }else if(strcmp(instruccion_separada[0], "SUM") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "SUM")){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sum(registroDestino, registroValor, pcb, diccionario);
             log_info(logger, "Se ejecuto SUM quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
 
-        }else if(strcmp(instruccion_separada[0], "SUB") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "SUB")){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sub(registroDestino, registroValor, pcb, diccionario);
             log_info(logger, "Se ejecuto SUB quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
 
-        }else if(strcmp(instruccion_separada[0], "JNZ") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "JNZ")){
             char* registro = instruccion_separada[1];
             int valorPC = atoi(instruccion_separada[2]);
             //etapa execute
@@ -129,7 +130,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             ejecutar_jnz(registro, valorPC-1, pcb, diccionario);
             log_info(logger, "Se ejecuto JNZ %s %d", registro, valorPC);
             log_info(logger, "PC queda con valor %d", dictionary_get(diccionario,"PC"));
-        }else if(strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "IO_GEN_SLEEP")){
             char* dispositivo = instruccion_separada[1];
             int unidadesDeTrabajo = atoi(instruccion_separada[2]);
             desalojar_pcb(socket_dispatch,pcb, (int)IO_GEN_SLEEP, logger, diccionario);
@@ -138,12 +139,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             log_info(logger, "Se ejecuto IO_GEN_SLEEP %s %d", dispositivo, unidadesDeTrabajo);
             return;
 
-        }else if(strcmp(instruccion_separada[0], "EXIT") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
             log_info(logger, "Se ejecuto EXIT");
             return;
-        }else if(strcmp(instruccion_separada[0], "RESIZE") == 0){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "RESIZE")){
             
             int tamanio = atoi(instruccion_separada[1]);
 

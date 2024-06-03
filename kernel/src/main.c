@@ -145,11 +145,11 @@ int main(void){
     pthread_t hilo_planificador;
     sem_init(&g_hay_elementos_en_ready, 0, 0);
 
-    if(strcmp(algoritmo_planificacion, "FIFO") == 0){
+    if(string_equals_ignore_case(algoritmo_planificacion, "FIFO")){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_fifo, NULL);
         pthread_detach(hilo_planificador);
     }
-    else if(strcmp(algoritmo_planificacion, "RR") == 0){
+    else if(string_equals_ignore_case(algoritmo_planificacion, "RR")){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_RR, NULL);
         pthread_detach(hilo_planificador);
     } 

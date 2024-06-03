@@ -27,7 +27,7 @@ void consola_interactiva(){
     
 	linea_leida = readline(">");
 
-	while (strcmp(linea_leida, "q")){
+	while (!string_equals_ignore_case(linea_leida, "q")){
 
         char ** linea_leida_separada = string_split(linea_leida, " ");
 
@@ -40,17 +40,19 @@ void consola_interactiva(){
 
         if(dictionary_has_key(comandos, funcion)){
             opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
+            ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
         }else{
             log_error(g_logger, "ingresaste una funcion no valida");
             break;
         }
-        ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
         
-        log_info(g_logger, "me llego la instruccion: %s", linea_leida);
-
         linea_leida = readline(">");
 
         free(funcion);
+        for(int i = 0; linea_leida_separada[i] != NULL; i++){
+            free(linea_leida_separada[i]);
+        }
+        free(linea_leida_separada);
 	}
 
 	free(linea_leida);
