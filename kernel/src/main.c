@@ -5,6 +5,7 @@
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
 #include <commons/collections/dictionary.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <threads.h>
@@ -152,7 +153,7 @@ int main(void){
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_RR, NULL);
         pthread_detach(hilo_planificador);
     } 
-    else if(strcmp(algoritmo_planificacion, "VRR") == 0){
+    else if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
         sem_init(&g_tiempo_calculado, 0,0);
         sem_init(&g_hay_elementos_para_ejecutar, 0, 0);
         hilo_planificador = pthread_create(&hilo_planificador, NULL, (void*)&planificador_VRR, NULL);

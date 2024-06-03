@@ -122,8 +122,8 @@ void enviar_proceso_a_ready(t_PCB* pcb){
     sem_wait(&g_mutex_cola_ready);
     queue_push(g_cola_ready, pcb);
     sem_post(&g_mutex_cola_ready);
-
-    if(strcmp(algoritmo_planificacion, "VRR")){
+    
+    if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
         sem_post(&g_hay_elementos_para_ejecutar);
     } else {
         sem_post(&g_hay_elementos_en_ready);
@@ -272,11 +272,11 @@ void atender_desalojo(t_desalojo* desalojo){
             break;
         case IO_GEN_SLEEP:
             //Abstraer a un case IO
-            if(strcmp(algoritmo_planificacion, "VRR")){
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
-                instruccion->pcb->quantum -= ms_transcurridos;
-                instruccion->pcb->readyplus = 1;       
+                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
             }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametro

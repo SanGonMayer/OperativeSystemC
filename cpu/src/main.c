@@ -174,7 +174,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         }
 
         if(check_interrupt(pcb, logger) == 1){
-            desalojar_pcb(socket_dispatch, pcb, (int)OUT_OF_MEMORY, logger, diccionario);
+            desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
