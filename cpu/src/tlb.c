@@ -1,5 +1,7 @@
 #include "tlb.h"
+#include "global_cpu.h"
 #include <commons/collections/list.h>
+#include <commons/log.h>
 #include <commons/string.h>
 #include <stdlib.h>
 
@@ -36,26 +38,27 @@ t_tlb* tlb_create(int capacidad) {
 }
 
 void tlb_replace_entry(t_tlb* tlb, int pid, int pagina, int marco) {
-    if (string_equals_ignore_case(tlb->algoritmo,"LRU")) {
-        t_tlb_entry* entry = list_get(tlb->entradas, 0);
-        int index = 0;
+    int index = 0;
+    if (string_equals_ignore_case(tlb->algoritmo, "FIFO")) {
+
+        list_remove_and_destroy_element(tlb->entradas, 0, free);
+    } else if (string_equals_ignore_case(tlb->algoritmo, "LRU")) {
+
+        int ultimo_uso_mas_antiguo = ((t_tlb_entry*)list_get(tlb->entradas, 0))->ultimo_uso;
         for (int i = 1; i < list_size(tlb->entradas); ++i) {
-            t_tlb_entry* current = list_get(tlb->entradas, i);
-            if (current->ultimo_uso < entry->ultimo_uso) {
-                entry = current;
+            t_tlb_entry *entry = list_get(tlb->entradas, i);
+            if (entry->ultimo_uso < ultimo_uso_mas_antiguo) {
+                ultimo_uso_mas_antiguo = entry->ultimo_uso;
                 index = i;
             }
         }
-        entry->pid = pid;
-        entry->pagina = pagina;
-        entry->marco = marco;
-        entry->ultimo_uso = tlb->tiempo++;
-    } else {
-        t_tlb_entry* entry = list_get(tlb->entradas, 0);
-        entry->pid = pid;
-        entry->pagina = pagina;
-        entry->marco = marco;
+        list_remove_and_destroy_element(tlb->entradas, index, &tlb_entry_destroyer);
+    }else{
+        log_error(g_logger, "Algoritmo de reemplazo de TLB no soportado: %s", tlb->algoritmo);
+        exit(EXIT_FAILURE);
     }
+    
+    tlb_add(pid, pagina, marco);
 }
 
 void tlb_add(int pid, int pagina, int marco) {
@@ -78,8 +81,11 @@ bool tlb_get_marco(int pid, int pagina, int* marco) {
             if (string_equals_ignore_case(tlb->algoritmo,"LRU")) {
                 entry->ultimo_uso = tlb->tiempo++;
             }
+            log_info(g_logger, "PID: %d - TLB HIT - Pagina: %d", pid, pagina);
             return true;
         }
     }
+
+    log_info(g_logger, "PID: %d - TLB MISS - Pagina: %d", pid, pagina);
     return false;
 }
