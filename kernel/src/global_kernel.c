@@ -3,6 +3,8 @@
 #include <commons/log.h>
 #include <semaphore.h>
 #include <utils/procesos.h>
+#include <commons/temporal.h>
+
 int g_contador_pid = 0;
 t_queue* g_cola_new;
 t_queue* g_cola_ready;
@@ -16,6 +18,7 @@ int g_quantum;
 t_PCB* g_exec;
 int g_conexion_cpu_interrupt;
 t_queue* g_cola_auxiliar;
+char * algoritmo_planificacion;
 
 t_dictionary* g_interfaces;
 
@@ -36,3 +39,7 @@ sem_t g_notif_corto_plazo;
 sem_t g_notif_largo_plazo;
 int g_planificacion_pausada;
 
+t_temporal* timer;
+int ms_transcurridos;
+sem_t g_tiempo_calculado;
+sem_t g_hay_elementos_para_ejecutar;

@@ -5,6 +5,7 @@
 #include <commons/log.h>
 #include <semaphore.h>
 #include <utils/procesos.h>
+#include <commons/temporal.h>
 
 extern int g_contador_pid;
 
@@ -21,6 +22,7 @@ extern int g_conexion_cpu_dispatch;
 extern int g_quantum;
 extern t_PCB* g_exec;
 extern int g_conexion_cpu_interrupt;
+extern char * algoritmo_planificacion;
 
 //Semaforos para corto plazo
 extern sem_t g_hay_elementos_en_ready;
@@ -43,4 +45,10 @@ extern t_dictionary* g_interfaces;
 extern sem_t g_notif_corto_plazo;
 extern sem_t g_notif_largo_plazo;
 extern int g_planificacion_pausada;
+
+//VRR
+extern t_temporal* timer;
+extern int ms_transcurridos;
+extern sem_t g_tiempo_calculado;
+extern sem_t g_hay_elementos_para_ejecutar;
 #endif

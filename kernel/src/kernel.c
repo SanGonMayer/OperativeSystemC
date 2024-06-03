@@ -13,6 +13,7 @@
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
 
+
 bool es_parametro_valido(char* parametro){
 
     if(parametro == NULL){
@@ -83,6 +84,8 @@ void iniciar_proceso(char* path){
     sem_post(&mutex_contador_pid);
     log_info(g_logger,"Proceso %d creado", pcb->PID);
     pcb->estado = NEW;
+    pcb->quantum = g_quantum;
+    pcb->readyplus = 0;
     pcb->path_length = strlen(path) + 1;
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
@@ -95,7 +98,6 @@ void iniciar_proceso(char* path){
 
     sem_wait(&g_tope_multiprogramacion);
     preparar_proceso_a_ready();
-    sem_post(&g_hay_elementos_en_ready);
 }
 
 
@@ -115,10 +117,18 @@ void enviar_proceso_a_ready(t_PCB* pcb){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);
     
+    pcb->quantum = g_quantum;
+
     sem_wait(&g_mutex_cola_ready);
     queue_push(g_cola_ready, pcb);
     sem_post(&g_mutex_cola_ready);
-        
+
+    if(strcmp(algoritmo_planificacion, "VRR")){
+        sem_post(&g_hay_elementos_para_ejecutar);
+    } else {
+        sem_post(&g_hay_elementos_en_ready);
+    }
+
     pcb-> estado = READY;
     log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
     log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
@@ -142,14 +152,12 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
     recibir_pcb_desalojado(pcb);
 }
 
-void esperar_quantum(uint32_t PID){
-    sleep(g_quantum);
-    if(g_exec->PID == PID){
-    enviar_interrupcion(g_conexion_cpu_interrupt, PID);
+void esperar_quantum(t_PCB* pcb){
+    sleep(pcb->quantum);
+    if(g_exec->PID == pcb->PID){
+    enviar_interrupcion(g_conexion_cpu_interrupt, pcb->PID);
     }
 }
-
-
 
 void ejecutar_cpu_RR(t_PCB* pcb){
 
@@ -171,21 +179,26 @@ void agregar_a_cola_auxiliar(t_PCB* pcb){
     sem_wait(&g_mutex_cola_auxiliar);
     queue_push(g_cola_auxiliar, pcb);
     sem_post(&g_mutex_cola_auxiliar);
+    pcb->estado = READYPLUS;
 }
 
 void ejecutar_cpu_VRR(t_PCB* pcb){
-
     int error;
     sem_wait(&g_disponible_exec);
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     g_exec = pcb;
     
     pthread_t hilo_quantum;
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
+    timer = temporal_create();
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
     pthread_detach(hilo_quantum);
 
     recibir_pcb_desalojado(pcb);
+    temporal_stop(timer);
+    ms_transcurridos = temporal_gettime(timer);
+    sem_post(&g_tiempo_calculado);
     pthread_cancel(hilo_quantum);
+    temporal_destroy(timer);
 }
 
 void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
@@ -249,15 +262,22 @@ void finalizar_proceso(t_PCB* pcb){
 void atender_desalojo(t_desalojo* desalojo){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);
-    
+    desalojo->pcb->estado = BLOCKED;
     switch(desalojo->motivo){
         case FINALIZACION:
             finalizar_proceso(desalojo->pcb);
             break;
-        case INTERRUPCION:
+        case INTERRUPCION: //CLOCK
             enviar_proceso_a_ready(desalojo->pcb);
             break;
         case IO_GEN_SLEEP:
+            //Abstraer a un case IO
+            if(strcmp(algoritmo_planificacion, "VRR")){
+                if(ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                instruccion->pcb->quantum -= ms_transcurridos;
+                instruccion->pcb->readyplus = 1;       
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametro
             int unidadesDeTrabajo = buffer_read_int(buffer);
@@ -300,8 +320,8 @@ void atender_desalojo(t_desalojo* desalojo){
             break;
     }
     free(desalojo);
+    }
 }
-
 void planificador_fifo(){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);
@@ -320,7 +340,7 @@ void planificador_RR(){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);
     
-    while(1){
+    while(1){  
     sem_wait(&g_hay_elementos_en_ready);
     log_info(g_logger, "Planificador RR");
     sem_wait(&g_mutex_cola_ready);
@@ -334,15 +354,20 @@ void planificador_VRR(){
     sem_wait(&g_notif_corto_plazo);
     sem_post(&g_notif_corto_plazo);
 
-    g_cola_auxiliar = queue_create();
-    sem_init(&g_mutex_cola_auxiliar, 0, 1);
-    
     while(1){
-        sem_wait(&g_hay_elementos_en_ready);
+        sem_wait(&g_hay_elementos_para_ejecutar);
         log_info(g_logger, "Planificador VRR");
-        sem_wait(&g_mutex_cola_ready);
-        t_PCB* pcb = queue_pop(g_cola_ready);
-        sem_post(&g_mutex_cola_ready);
+        
+        t_PCB* pcb; 
+        if(!queue_is_empty(g_cola_auxiliar)){
+            sem_wait(&g_mutex_cola_auxiliar);
+            pcb = queue_pop(g_cola_auxiliar);
+            sem_post(&g_mutex_cola_auxiliar);
+        } else{
+            sem_wait(&g_mutex_cola_ready);
+            pcb = queue_pop(g_cola_ready);
+            sem_post(&g_mutex_cola_ready);
+        }
         ejecutar_cpu_VRR(pcb);
     }
 }
