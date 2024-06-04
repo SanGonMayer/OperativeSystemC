@@ -2,3 +2,4 @@
 
 t_log* g_logger;
 ConfiguracionIO* g_config_io;
+int g_socket_memoria;
