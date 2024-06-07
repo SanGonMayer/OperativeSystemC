@@ -6,5 +6,6 @@
 
 extern t_log* g_logger;
 extern ConfiguracionIO* g_config_io;
+extern int g_socket_memoria;
 
 #endif
