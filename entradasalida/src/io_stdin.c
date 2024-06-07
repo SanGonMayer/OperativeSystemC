@@ -20,7 +20,7 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         // que hay que hacer en este caso?
         return;
     }
-
+    //TODO texto del tamaño exacto del parametro tamanio
     char* texto = stdin_leer_texto();
     guardar_en_memoria(texto, instruccion->puntero_archivo);
 

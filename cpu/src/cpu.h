@@ -42,4 +42,6 @@ void registros_cpu_dictionary(t_registrosCPU registros, t_dictionary* dictionary
 
 t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary);
 
+t_buffer* ejecutar_io_stdin_read(char* dispositivo, int registro_direccion, int registro_tamanio);
+
 #endif
