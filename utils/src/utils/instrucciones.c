@@ -19,7 +19,6 @@ t_buffer* serializar_paquete_instruccion(t_paquete_instruccion* instruccion){
 }
 
 t_paquete_instruccion* deserializar_paquete_instruccion(t_buffer* buffer){
-    // TODO revisar si hay que liberar el buffer
 
     t_paquete_instruccion* instruccion = malloc(sizeof(t_paquete_instruccion));
     instruccion->pc = buffer_read_uint32(buffer);

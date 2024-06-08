@@ -49,6 +49,8 @@ t_list* inicializar_tabla_paginas(uint32_t pid){
     char* pid_string = string_itoa(pid);
     dictionary_put(memoria->tablas_de_paginas, pid_string, tabla_paginas);
 
+    log_info(g_logger, "PID: %s - Tamaño: %d", pid_string, list_size(tabla_paginas));
+
     free(pid_string);
     return tabla_paginas;
 }
@@ -58,6 +60,8 @@ void liberar_tabla_paginas(uint32_t pid){
 
     t_list* tabla_paginas = dictionary_get(memoria->tablas_de_paginas, pid_string);
    
+    log_info(g_logger, "PID: %s - Tamaño: %d", pid_string, list_size(tabla_paginas));
+
     for(int i = 0; i < list_size(tabla_paginas); i++){
         int nro_marco = (int) list_get(tabla_paginas, i);
         liberar_marco(nro_marco);
@@ -106,6 +110,7 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     }
 
     if(tamanio_nuevo > tamanio_actual){
+        log_info(g_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", pid, tamanio_actual, tamanio_nuevo);
         uint32_t paginas_a_agregar = tamanio_nuevo - tamanio_actual;
         for(int i = 0; i < paginas_a_agregar; i++){
             int marco_libre = obtener_marco_libre();
@@ -118,6 +123,8 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
             list_add(tabla_paginas, (void*) marco_libre);
         }
     } else {
+        log_info(g_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", pid, tamanio_actual, tamanio_nuevo);
+
         uint32_t paginas_a_eliminar = tamanio_actual - tamanio_nuevo;
         for(int i = 0; i < paginas_a_eliminar; i++){
 
@@ -128,18 +135,7 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
             list_remove(tabla_paginas, pagina_a_eliminar);
         }
     }
-
-    loggear_tabla_paginas(tabla_paginas);
     return true;
-}
-
-void loggear_tabla_paginas(t_list* tabla_paginas){
-
-    log_info(g_logger, "Tabla de páginas actualizada");
-    for(int i = 0; i < list_size(tabla_paginas); i++){
-        int nro_marco = (int) list_get(tabla_paginas, i);
-        log_info(g_logger, "Página %d -> Marco %d", i, nro_marco);
-    }
 }
 
 void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
@@ -187,6 +183,10 @@ void procesar_resize_memoria(int socket){
 void procesar_acceso_espacio_usuario(int socket){
     t_buffer* buffer = recibir_buffer(socket);
     t_peticion_acceso_usuario* peticion = deserializar_peticion_acceso_usuario(buffer);
+
+    // TODO Consultar si este log puede no tener el PID ya se podria dar que venga de una io
+    // PID: <PID> - Accion: <LEER / ESCRIBIR> - Direccion fisica: <DIRECCION_FISICA>” - Tamaño <TAMAÑO A LEER / ESCRIBIR>
+    // log_info(g_logger, "PID: %d - Accion: %s - Direccion fisica: %d - Tamaño: %d", peticion->pid, peticion->tipo_acceso == LECTURA ? "LEER" : "ESCRIBIR", peticion->direccion_fisica, peticion->tamanio_a_leer);
 
     if(peticion->tipo_acceso == LECTURA){
         char* valor = malloc(peticion->tamanio_a_leer);
