@@ -11,7 +11,7 @@ char* stdin_leer_texto();
 void guardar_en_memoria(char* texto, int direccion_fisica);
 bool stdin_soporta_instruccion(char* instruccion);
 
-char instruccion_soportada[14] = "IO_STDIN_READ";
+char instruccion_soportada_stdin[14] = "IO_STDIN_READ";
 
 void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
 
@@ -59,5 +59,5 @@ void guardar_en_memoria(char* texto, int direccion_fisica) {
 }
 
 bool stdin_soporta_instruccion(char* instruccion){
-    return string_equals_ignore_case(instruccion, instruccion_soportada);
+    return string_equals_ignore_case(instruccion, instruccion_soportada_stdin);
 }
