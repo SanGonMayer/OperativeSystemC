@@ -102,6 +102,13 @@ t_buffer* ejecutar_io_stdout_write(char* dispositivo, int direccion_fisica, int 
     return buffer;
 }
 
+void ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion){}
+
+void ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion){}
+
+void ejecutar_copy_string(tamanio){}
+
+
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){
     pcb->registrosCPU = registros_cpu_from_dictionary(diccionario);
     responder_pcb(socket_dispatch, pcb, logger);

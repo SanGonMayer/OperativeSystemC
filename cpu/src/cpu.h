@@ -46,6 +46,12 @@ t_buffer* ejecutar_io_stdin_read(char* dispositivo, int registro_direccion, int 
 
 t_buffer* ejecutar_io_stdout_write(char* dispositivo, int registro_direccion, int registro_tamanio);
 
+void ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion);
+
+void ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion);
+
+void ejecutar_copy_string(tamanio);
+
 int obtener_direccion_fisica(int pid, int direccion_logica);
 
 #endif

@@ -143,8 +143,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "IO_STDIN_READ")){
             char* dispositivo = instruccion_separada[1];
-            int registro_direccion = atoi(instruccion_separada[2]);
-            int registro_tamanio = atoi(instruccion_separada[3]);
+            char* registro_direccion = instruccion_separada[2];
+            char* registro_tamanio = instruccion_separada[3];
 
             desalojar_pcb(socket_dispatch,pcb, (int)IO_STDIN_READ, logger, diccionario);
             // Valores de direcciones
@@ -161,8 +161,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         }
         else if(string_equals_ignore_case(instruccion_separada[0], "IO_STDOUT_WRITE")){
             char* dispositivo = instruccion_separada[1];
-            int registro_direccion = atoi(instruccion_separada[2]);
-            int registro_tamanio = atoi(instruccion_separada[3]);
+            char* registro_direccion = instruccion_separada[2];
+            char* registro_tamanio = instruccion_separada[3];
 
             desalojar_pcb(socket_dispatch,pcb, (int)IO_STDOUT_WRITE, logger, diccionario);
             // Valores de direcciones
@@ -170,13 +170,50 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int tamanio = dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
             int direccion_fisica = obtener_direccion_fisica(pcb->PID, registro_direccion);
-            
+
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
             
             return;
-        }else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
+        }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
+            //(Registro Datos, Registro Dirección)
+            char* registro_datos = instruccion_separada[1];
+            char* registro_direccion = instruccion_separada[2];
+
+            int direccion_logica_datos = dictionary_get(diccionario, registro_datos);
+            int direccion_logica_direccion = dictionary_get(diccionario, registro_direccion);
+
+            int direccion_fisica_datos = obtener_direccion_fisica(pcb->PID, registro_datos);
+            int direccion_fisica_direccion = obtener_direccion_fisica(pcb->PID, registro_direccion);
+
+            //TODO
+            ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion);
+
+            return;
+        } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
+            //(Registro Datos, Registro Dirección)
+            char* registro_datos = instruccion_separada[1];
+            char* registro_direccion = instruccion_separada[2];
+
+            int direccion_logica_datos = dictionary_get(diccionario, registro_datos);
+            int direccion_logica_direccion = dictionary_get(diccionario, registro_direccion);
+
+            int direccion_fisica_datos = obtener_direccion_fisica(pcb->PID, registro_datos);
+            int direccion_fisica_direccion = obtener_direccion_fisica(pcb->PID, registro_direccion);
+
+            //TODO
+            ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion);
+
+            return;
+        } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
+            //(Tamanio)
+            int tamanio = atoi(instruccion_separada[1]);
+
+            ejecutar_copy_string(tamanio);
+
+            return;
+        } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
             log_info(logger, "Se ejecuto EXIT");
