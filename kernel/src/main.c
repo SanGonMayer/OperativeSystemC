@@ -66,8 +66,8 @@ void procesar_cliente(int* fd){
             }
             
         }else{
-            log_error(g_logger, "No se pudo ejecutar la instrucción enviada a la interfaz %s", interfaz->nombre);
-            
+            uint32_t error = recibir_codigo_error(interfaz_conectada->fd);
+            log_error(g_logger, "No se pudo ejecutar la instrucción enviada a la interfaz %s. Error: %d", interfaz->nombre, error);
             finalizar_proceso(instruccion->pcb);
         }
     }

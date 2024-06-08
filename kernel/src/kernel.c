@@ -355,7 +355,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, direccion_fisica, tamanio, NULL);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, NULL, tamanio, direccion_fisica);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;

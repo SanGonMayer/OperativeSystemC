@@ -145,13 +145,18 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             char* dispositivo = instruccion_separada[1];
             int registro_direccion = atoi(instruccion_separada[2]);
             int registro_tamanio = atoi(instruccion_separada[3]);
+
             desalojar_pcb(socket_dispatch,pcb, (int)IO_STDIN_READ, logger, diccionario);
-            //TODO traducir direccion logica a fisica 
+            // Valores de direcciones
+            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            int tamanio = dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica;
-            t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, registro_tamanio);
+            int direccion_fisica = obtener_direccion_fisica(pcb->PID, registro_direccion);
+
+            t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "Se ejecuto IO_STDIN_READ %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
+            
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);

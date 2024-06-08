@@ -44,4 +44,6 @@ t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary);
 
 t_buffer* ejecutar_io_stdin_read(char* dispositivo, int registro_direccion, int registro_tamanio);
 
+int obtener_direccion_fisica(int pid, int direccion_logica);
+
 #endif
