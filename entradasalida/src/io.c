@@ -18,6 +18,7 @@ void atender_instrucciones(int conexion_kernel, ProcesarInstruccion procesar_ins
     while(1){
         t_instruccion_io* instruccion = recibir_instruccion_io(conexion_kernel);
         procesar_instruccion(conexion_kernel, instruccion);
+        destruir_instruccion_io(instruccion);
     }
 }
 
@@ -44,6 +45,8 @@ int iniciar_conexion_kernel(char* tipo_interfaz, char* nombre_interfaz){
     t_buffer* buffer = serializar_interfaz(&interfaz);
     t_paquete* paquete = crear_paquete(ENVIO_INTERFAZ_CONECTADA, buffer);
     enviar_paquete(paquete, conexion);
+
+    eliminar_paquete(paquete);
 
     return conexion;
 }

@@ -1,5 +1,6 @@
 #include "utils/instrucciones_io.h"
 #include "utils/buffer.h"
+#include <commons/string.h>
 #include <stdint.h>
 
 // unidades de trabajo
@@ -20,11 +21,10 @@ t_instruccion_io* crear_instruccion_io(
 
     instruccion_io->unidades_trabajo = unidades_trabajo;
 
-    instruccion_io->instruccion = malloc(strlen(instruccion) + 1);
-    strcpy(instruccion_io->instruccion, instruccion);
+    instruccion_io->instruccion = string_duplicate(instruccion);
 
     if(direccion != NULL){
-        instruccion_io->direccion = direccion;
+        instruccion_io->direccion = string_duplicate(direccion);
     }
     else
     {
@@ -35,7 +35,7 @@ t_instruccion_io* crear_instruccion_io(
     instruccion_io->tamanio = tamanio;
 
     if(nombre_archivo != NULL){
-        instruccion_io->nombre_archivo = nombre_archivo;
+        instruccion_io->nombre_archivo = string_duplicate(nombre_archivo);
     }
     else
     {
@@ -80,7 +80,12 @@ t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
     int puntero_archivo = buffer_read_int(buffer);
 
     buffer_destroy(buffer);
-    return crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo);
+    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo);
+
+    free(instruccion);
+    free(direccion);
+    free(nombre_archivo);
+    return ins_io;
 }
 
 t_buffer* serializar_interfaz(t_interfaz* interfaz){
@@ -108,4 +113,15 @@ t_interfaz* deserializar_interfaz(t_buffer* buffer){
 }
 
 
-
+void destruir_instruccion_io(t_instruccion_io* instruccion_io){
+    if(instruccion_io->instruccion != NULL){
+        free(instruccion_io->instruccion);
+    }
+    if(instruccion_io->direccion != NULL){
+        free(instruccion_io->direccion);
+    }
+    if(instruccion_io->nombre_archivo != NULL){
+        free(instruccion_io->nombre_archivo);
+    }
+    free(instruccion_io);
+}

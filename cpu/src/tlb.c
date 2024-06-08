@@ -12,7 +12,7 @@ bool tlb_enabled() {
 }
 
 void tlb_init(int size, char* algoritmo) {
-    if(tlb != NULL){
+    if(tlb == NULL){
         tlb = tlb_create(size);
     }
 

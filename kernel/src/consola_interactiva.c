@@ -32,7 +32,7 @@ void consola_interactiva(){
 
         char ** linea_leida_separada = string_split(linea_leida, " ");
 
-        char *funcion = linea_leida_separada[0];
+        char *funcion = string_duplicate(linea_leida_separada[0]);
         string_to_upper(funcion);
 
         int opcion_funciones_consola;
@@ -47,7 +47,6 @@ void consola_interactiva(){
             ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
         }else{
             log_error(g_logger, "ingresaste una funcion no valida");
-            break;
         }
         
         linea_leida = readline(">");

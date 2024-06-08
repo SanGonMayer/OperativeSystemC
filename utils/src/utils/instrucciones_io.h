@@ -34,6 +34,8 @@ t_instruccion_io* crear_instruccion_io(
     char* nombre_archivo,
     int puntero_archivo);
 
+void destruir_instruccion_io(t_instruccion_io* instruccion_io);
+
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io);
 
 t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer);

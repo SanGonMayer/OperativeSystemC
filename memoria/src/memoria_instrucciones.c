@@ -1,6 +1,7 @@
 #include "memoria_instrucciones.h"
 #include "global_memoria.h"
 #include "memoria.h"
+#include "utils/buffer.h"
 #include "utils/files.h"
 #include "utils/server.h"
 #include <commons/collections/dictionary.h>
@@ -42,7 +43,10 @@ void cargar_instrucciones(uint32_t pid, char* path_instrucciones){
     char* instrucciones = leer_archivo_txt(path_instrucciones);
     char** instrucciones_separadas = string_split(instrucciones, "\n");
 
-    dictionary_put(memoria_archivo, string_itoa(pid), instrucciones_separadas);
+    free(instrucciones);
+    char* pid_string = string_itoa(pid);
+    dictionary_put(memoria_archivo, pid_string, instrucciones_separadas);
+    free(pid_string);
 }
 
 char* leer_instruccion(uint32_t pid, uint32_t* pc){
@@ -56,7 +60,7 @@ char* leer_instruccion(uint32_t pid, uint32_t* pc){
     if(instrucciones != NULL){
         instruccion = instrucciones[*pc];
     }
-    
+    free(pid_string);
     return instruccion;
 }
 
@@ -79,6 +83,9 @@ void procesar_carga_instrucciones(int socket){
 
     confirmar_recepcion(socket);
     log_info(g_logger, "Instrucciones cargadas correctamente para el PID %d", paqueteMemoria->PID);
+    if(paqueteMemoria->path != NULL){
+        free(paqueteMemoria->path);
+    }
     free(paqueteMemoria);
 }
 
@@ -87,13 +94,16 @@ void procesar_pedido_instruccion(int socket){
     char* instruccion = leer_instruccion(pedido_instruccion->pid, &pedido_instruccion->pc);
     log_info(g_logger, "Instruccion leida: %s", instruccion);
     enviar_instruccion(socket, instruccion, g_logger);
+    free(instruccion);
     free(pedido_instruccion);
 }
 
 
 t_paquete_instruccion* recibir_instruccion(int socket, t_log* logger){
     t_buffer* buffer = recibir_buffer(socket);
-    return deserializar_paquete_instruccion(buffer);
+    t_paquete_instruccion* instruccion = deserializar_paquete_instruccion(buffer);
+    buffer_destroy(buffer);
+    return instruccion;
 }
 
 void enviar_instruccion(int socket, char* instruccion, t_log* logger){
@@ -101,4 +111,5 @@ void enviar_instruccion(int socket, char* instruccion, t_log* logger){
     t_buffer* buffer = buffer_create(sizeof(uint32_t) + instruccion_length);
     buffer_add_string(buffer, instruccion_length,instruccion);
     enviar_buffer(socket, buffer, logger);
+    buffer_destroy(buffer);
 }

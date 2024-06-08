@@ -274,9 +274,10 @@ void atender_desalojo(t_desalojo* desalojo){
             //Abstraer a un case IO
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(ms_transcurridos < desalojo->pcb->quantum){
-                sem_wait(&g_tiempo_calculado);
-                desalojo->pcb->quantum -= ms_transcurridos;
-                desalojo->pcb->readyplus = 1;       
+                    sem_wait(&g_tiempo_calculado);
+                    desalojo->pcb->quantum -= ms_transcurridos;
+                    desalojo->pcb->readyplus = 1;       
+                }
             }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametro
@@ -318,7 +319,7 @@ void atender_desalojo(t_desalojo* desalojo){
             }
            
             break;
-            }
+            
         case IO_STDIN_READ:
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
@@ -328,14 +329,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
             int direccion_fisica = buffer_read_int(buffer);
             int tamanio = buffer_read_int(buffer);
-            uint32_t* length = malloc(sizeof(uint32_t));
-            char* nombreInterfaz = buffer_read_string(buffer, length);
+            uint32_t* length2 = malloc(sizeof(uint32_t));
+            char* nombreInterfaz2 = buffer_read_string(buffer, length);
             
-            char* instruccion = string_new();
+            char* instruccion2 = string_new();
             //instruccion que deba entender
             instruccion = "IO_STDIN_READ";
 
@@ -377,14 +378,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer1 = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer);
-            int tamanio = buffer_read_int(buffer);
-            uint32_t* length = malloc(sizeof(uint32_t));
-            char* nombreInterfaz = buffer_read_string(buffer, length);
+            int direccion_fisica1 = buffer_read_int(buffer);
+            int tamanio1 = buffer_read_int(buffer);
+            uint32_t* length1 = malloc(sizeof(uint32_t));
+            char* nombreInterfaz1 = buffer_read_string(buffer, length);
             
-            char* instruccion = string_new();
+            char* instruccion1 = string_new();
             //instruccion que deba entender
             instruccion = "IO_STDOUT_WRITE";
 
