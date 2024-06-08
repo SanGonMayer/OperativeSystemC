@@ -93,6 +93,15 @@ t_buffer* ejecutar_io_stdin_read(char* dispositivo, int direccion_fisica, int re
     return buffer;
 }
 
+t_buffer* ejecutar_io_stdout_write(char* dispositivo, int direccion_fisica, int registro_tamanio){
+    uint32_t length = strlen(dispositivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeof(uint32_t) + length);
+    buffer_add_int(buffer, direccion_fisica); //Direccion fisica
+    buffer_add_int(buffer, registro_tamanio);
+    buffer_add_string(buffer, length, dispositivo);
+    return buffer;
+}
+
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){
     pcb->registrosCPU = registros_cpu_from_dictionary(diccionario);
     responder_pcb(socket_dispatch, pcb, logger);

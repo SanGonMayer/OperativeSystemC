@@ -355,7 +355,56 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, NULL, tamanio, direccion_fisica);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
+
+                item->instruccion = malloc(sizeof(t_instruccion_io));
+                item->instruccion = instruccion_io;
+                queue_push(interfaz->cola, item);
+                sem_post(&interfaz->semaforo);
+                log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+                //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
+
+            }else{
+                sem_post(&g_mutex_acceso_interfaces);
+                finalizar_proceso(desalojo->pcb);
+            }
+        case IO_STDOUT_WRITE:
+            //TODO Abstraer a un case IO 
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            //Parametros
+            int direccion_fisica = buffer_read_int(buffer);
+            int tamanio = buffer_read_int(buffer);
+            uint32_t* length = malloc(sizeof(uint32_t));
+            char* nombreInterfaz = buffer_read_string(buffer, length);
+            
+            char* instruccion = string_new();
+            //instruccion que deba entender
+            instruccion = "IO_STDOUT_WRITE";
+
+            //TODO abstraer a una funcion, es todo igual menos el paquete t_instruccion_io
+
+            sem_wait(&g_mutex_acceso_interfaces);
+
+            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
+
+                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
+
+                sem_post(&g_mutex_acceso_interfaces);
+
+                // TODO: checkear que pueda hacer la operacion
+
+                t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+
+                item->pcb = desalojo->pcb;
+
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;

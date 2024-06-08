@@ -18,7 +18,8 @@ typedef enum
     RESIZE_MEMORIA = 12,
     ACCEDER_ESPACIO_DE_USUARIO_MEMORIA = 13,
     OBTENER_TAMANIO_PAGINA = 14,
-    IO_STDIN_READ = 15
+    IO_STDIN_READ = 15,
+    IO_STDOUT_WRITE = 16
 } t_codigo_operacion;
 
 #endif
