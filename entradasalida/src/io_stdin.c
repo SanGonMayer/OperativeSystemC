@@ -1,11 +1,13 @@
 #include "io_stdin.h"
 #include "global_io.h"
+#include "utils/buffer.h"
 #include "utils/codigo_operacion.h"
 #include "utils/peticiones_memoria.h"
 #include "utils/client.h"
 #include "utils/server.h"
 #include <commons/string.h>
 #include <readline/readline.h>
+#include <stdint.h>
 
 char* stdin_leer_texto();
 void guardar_en_memoria(char* texto, int direccion_fisica);
