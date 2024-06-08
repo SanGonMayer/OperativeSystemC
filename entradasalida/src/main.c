@@ -3,6 +3,7 @@
 #include "io.h"
 #include "io_generica.h"
 #include "io_stdin.h"
+#include "io_stdout.h"
 #include <commons/config.h>
 #include <commons/log.h>
 #include <commons/string.h>
@@ -83,6 +84,11 @@ int main(int argc, char* argv[]){
     if(string_equals_ignore_case(tipo, "STDIN")){
         g_socket_memoria = iniciar_conexion_memoria();
         estrategia_procesar_instruccion = &procesar_instruccion_stdin;
+    }
+
+    if(string_equals_ignore_case(tipo, "STDOUT")){
+        g_socket_memoria = iniciar_conexion_memoria();
+        estrategia_procesar_instruccion = &procesar_instruccion_stdout;
     }
 
     atender_instrucciones(conexion_kernel, estrategia_procesar_instruccion);
