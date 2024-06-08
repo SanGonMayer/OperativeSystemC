@@ -194,6 +194,7 @@ void procesar_acceso_espacio_usuario(int socket){
         int tamanio_respuesta;
         t_buffer* respuesta = buffer_create(peticion->tamanio_a_leer);
         buffer_add_string(respuesta,tamanio_respuesta, valor);
+        enviar_buffer(socket, respuesta, g_logger);
         buffer_destroy(respuesta);
     }
 
