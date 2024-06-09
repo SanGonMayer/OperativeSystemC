@@ -1,13 +1,4 @@
 #include "cpu.h"
-#include "mmu.h"
-#include "tlb.h"
-#include "utils/buffer.h"
-#include "utils/client.h"
-#include "utils/codigo_operacion.h"
-#include "utils/instrucciones.h"
-#include <utils/peticiones_memoria.h>
-#include "global_cpu.h"
-#include <stdint.h>
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
     char* instruccion;
@@ -114,7 +105,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
     t_list* peticiones = obtener_direcciones_logicas(pid, direccion_logica, tamanio);
     char* mensaje = string_new();
     for(int i = 0; i < list_size(peticiones); i++){
-        t_peticion_acceso_usuario peticion = list_get(peticiones, i);
+        t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
         t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
         t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
         enviar_paquete(paquete, g_socket_memoria);

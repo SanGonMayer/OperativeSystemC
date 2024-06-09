@@ -12,6 +12,14 @@
 #include <utils/codigo_operacion.h>
 #include <commons/string.h>
 #include <semaphore.h>
+#include "global_cpu.h"
+#include <utils/peticiones_memoria.h>
+#include <utils/instrucciones.h>
+#include <utils/buffer.h>
+#include "mmu.h"
+#include "tlb.h"
+#include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 
 /**
 * @fn    etapa_fetch

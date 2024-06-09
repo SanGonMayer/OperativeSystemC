@@ -1,15 +1,5 @@
 #include "cpu.h"
-#include "global_cpu.h"
-#include "mmu.h"
-#include "tlb.h"
-#include "utils/buffer.h"
-#include "utils/client.h"
-#include "utils/codigo_operacion.h"
-#include <commons/string.h>
 #include <sys/socket.h>
-#include "utils/peticiones_memoria.h"
-#include "global_cpu.h"
-#include "utils/server.h"
 
 t_config* config;
 

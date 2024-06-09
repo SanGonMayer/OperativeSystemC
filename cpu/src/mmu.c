@@ -27,7 +27,7 @@ t_list* obtener_direcciones_logicas(uint32_t pid, int direccion_logica,uint32_t 
     int pagina = direccion_logica / tamanio_pagina;
     int offset = direccion_logica % tamanio_pagina;
 
-    int tamanio_disponible = tamanio_pagina - offset;
+    uint32_t tamanio_disponible = tamanio_pagina - offset;
     int direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
     
     while(tamanio_total_lectura > 0){
