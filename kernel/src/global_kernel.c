@@ -43,3 +43,6 @@ t_temporal* timer;
 int ms_transcurridos;
 sem_t g_tiempo_calculado;
 sem_t g_hay_elementos_para_ejecutar;
+
+t_dictionary* g_diccionario_recursos;
+t_dictionary* g_diccionario_recursos_colas_blocked;

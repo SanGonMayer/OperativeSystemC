@@ -19,7 +19,10 @@ typedef enum
     ACCEDER_ESPACIO_DE_USUARIO_MEMORIA = 13,
     OBTENER_TAMANIO_PAGINA = 14,
     IO_STDIN_READ = 15,
-    IO_STDOUT_WRITE = 16
+    IO_STDOUT_WRITE = 16,
+    //estas son las dos señales que se mandan con el desalojo para el manejo de recursos
+    WAIT = 17, 
+    SIGNAL = 18
 } t_codigo_operacion;
 
 #endif
