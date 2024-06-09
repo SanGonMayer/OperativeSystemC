@@ -5,6 +5,8 @@
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
 #include "utils/instrucciones.h"
+#include <utils/peticiones_memoria.h>
+#include "global_cpu.h"
 #include <stdint.h>
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
@@ -102,7 +104,39 @@ t_buffer* ejecutar_io_stdout_write(char* dispositivo, int direccion_fisica, int 
     return buffer;
 }
 
-void ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion){}
+void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_dictionary* diccionario){
+    uint32_t tamanio;
+    if(string_starts_with(registro_datos, "E")){
+        tamanio = sizeof(uint32_t);
+    } else {
+        tamanio = sizeof(uint8_t);
+    }
+    t_list* peticiones = obtener_direcciones_logicas(pid, direccion_logica, tamanio);
+    char* mensaje = string_new();
+    for(int i = 0; i < list_size(peticiones); i++){
+        t_peticion_acceso_usuario peticion = list_get(peticiones, i);
+        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        string_append(&mensaje, respuesta);
+
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
+    }
+
+    uint32_t mensaje_diccionario;
+
+    memcpy(&mensaje_diccionario, mensaje, sizeof(uint32_t));
+
+    dictionary_put(diccionario, registro_datos, mensaje_diccionario);
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
+
+    return;
+}
 
 void ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion){}
 
