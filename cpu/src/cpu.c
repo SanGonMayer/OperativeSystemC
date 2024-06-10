@@ -102,7 +102,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
     } else {
         tamanio = sizeof(uint8_t);
     }
-    t_list* peticiones = obtener_direcciones_logicas(pid, direccion_logica, tamanio);
+    t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, tamanio);
     char* mensaje = string_new();
     for(int i = 0; i < list_size(peticiones); i++){
         t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
@@ -129,7 +129,25 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
     return;
 }
 
-void ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion){}
+void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dictionary* diccionario){
+
+    //char* valor_string = string_itoa(valor);
+    char* valor_string = string_new();
+    memcpy(valor_string, &valor, sizeof(uint32_t));
+
+    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, valor_string);
+
+    for(int i = 0; i < list_size(peticiones); i++){
+        t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
+        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        recibir_ok(g_socket_memoria);
+        eliminar_paquete(paquete);
+    }
+
+    return;
+}   
 
 void ejecutar_copy_string(tamanio){}
 

@@ -177,18 +177,14 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
-            //(Registro Datos, Registro Dirección)
-            char* registro_datos = instruccion_separada[1];
-            char* registro_direccion = instruccion_separada[2];
+            //(Registro Direccion, Registro Datos)
+            char* registro_direccion = instruccion_separada[1];
+            char* registro_datos = instruccion_separada[2];
 
-            int direccion_logica_datos = dictionary_get(diccionario, registro_datos);
-            int direccion_logica_direccion = dictionary_get(diccionario, registro_direccion);
-
-            int direccion_fisica_datos = obtener_direccion_fisica(pcb->PID, registro_datos);
-            int direccion_fisica_direccion = obtener_direccion_fisica(pcb->PID, registro_direccion);
-
-            //TODO
-            ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion);
+            uint32_t valor = dictionary_get(diccionario, registro_datos);
+            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            
+            ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
