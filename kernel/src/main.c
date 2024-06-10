@@ -16,6 +16,8 @@ char * puerto_memoria;
 char * ip_cpu;
 char * puerto_cpu_dispatch;
 char * puerto_cpu_interrupt;
+char ** recursos;
+char ** recursos_instancias;
 
 int quantum;
 
@@ -115,6 +117,10 @@ int main(void){
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
+    recursos = config_get_array_value(config, "RECURSOS");
+    recursos_instancias = config_get_array_value(config, "RECURSOS_INSTANCIAS");
+
+    iniciar_diccionario_y_listas_recursos(recursos, recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
 
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
     sem_init(&g_tope_multiprogramacion, 0, g_grado_multiprogramacion);

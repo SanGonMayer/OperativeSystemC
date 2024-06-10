@@ -51,4 +51,7 @@ extern t_temporal* timer;
 extern int ms_transcurridos;
 extern sem_t g_tiempo_calculado;
 extern sem_t g_hay_elementos_para_ejecutar;
+
+extern t_dictionary* g_diccionario_recursos;
+extern t_dictionary* g_diccionario_recursos_colas_blocked;
 #endif
