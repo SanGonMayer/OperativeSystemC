@@ -154,7 +154,61 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
     return;
 }   
 
-void ejecutar_copy_string(tamanio){}
+void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario){
+    int direccion_logica_si = dictionary_get(diccionario, "SI");
+    int direccion_logica_di = dictionary_get(diccionario, "DI");
+
+    t_list* peticiones_lectura = obtener_direcciones_logicas_lectura(pid, direccion_logica_si, tamanio);
+    char* buffer_lectura = malloc(tamanio + 1);
+    memset(buffer_lectura, 0, tamanio + 1); // Inicializar el buffer para evitar basura
+
+    char* ptr_buffer = buffer_lectura;
+    uint32_t bytes_leidos = 0;
+
+    // Leer datos desde la dirección lógica SI
+    for (int i = 0; i < list_size(peticiones_lectura); i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones_lectura, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        memcpy(ptr_buffer, respuesta, length);
+
+        ptr_buffer += length;
+        bytes_leidos += length;
+
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
+    }
+
+    list_destroy_and_destroy_elements(peticiones_lectura, (void*)destruir_peticion_acceso_usuario);
+
+    // Ahora escribir los datos en la dirección lógica DI
+    t_list* peticiones_escritura = obtener_direcciones_logicas_escritura(pid, direccion_logica_di, buffer_lectura);
+
+    for (int i = 0; i < list_size(peticiones_escritura); i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones_escritura, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        
+        if(recibir_ok(g_socket_memoria)){
+            log_info(g_logger, "Se escribio correctamente en memoria con COPY STRING EN DI");
+        } else {
+            log_error(g_logger, "No se pudo escribir en memoria con COPY STRING EN DI");
+        }
+        eliminar_paquete(paquete);
+
+    }
+
+    list_destroy_and_destroy_elements(peticiones_escritura, (void*)destruir_peticion_acceso_usuario);
+
+    free(buffer_lectura);
+}
 
 
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){

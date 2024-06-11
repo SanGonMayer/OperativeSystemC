@@ -191,7 +191,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             //(Tamanio)
             int tamanio = atoi(instruccion_separada[1]);
 
-            ejecutar_copy_string(tamanio);
+            ejecutar_copy_string(tamanio, pcb->PID, diccionario);
 
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){

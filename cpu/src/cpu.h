@@ -58,7 +58,7 @@ void ejecutar_mov_in(uint32_t pid, char* registro_datos, int direccion_logica, t
 
 void ejecutar_mov_out(uint32_t pid,int direccion_logica, uint32_t valor,t_dictionary* diccionario);
 
-void ejecutar_copy_string();
+void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario);
 
 int obtener_direccion_fisica(int pid, int direccion_logica);
 
