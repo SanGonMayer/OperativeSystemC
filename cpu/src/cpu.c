@@ -133,19 +133,24 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
 
     //char* valor_string = string_itoa(valor);
     char* valor_string = string_new();
+    //Convertir un uint32 en un string, a traves de memcpy no necesita casteo segun Issue pero hay que probarlo
     memcpy(valor_string, &valor, sizeof(uint32_t));
 
     t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, valor_string);
 
     for(int i = 0; i < list_size(peticiones); i++){
-        t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
-        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
         t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
         enviar_paquete(paquete, g_socket_memoria);
-        recibir_ok(g_socket_memoria);
+        if(recibir_ok(g_socket_memoria)){
+            log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
+        } else {
+            log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");
+        }
         eliminar_paquete(paquete);
     }
-
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
     return;
 }   
 

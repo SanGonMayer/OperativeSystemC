@@ -51,35 +51,34 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
     return peticiones;
 }
 
-t_list* obtener_direcciones_logicas_escritura(uint32_t pid,int direccion_logica,char* valor){
+t_list* obtener_direcciones_logicas_escritura(uint32_t pid, int direccion_logica, char* valor) {
     t_list* peticiones = list_create();
     int pagina = direccion_logica / tamanio_pagina;
     int offset = direccion_logica % tamanio_pagina;
 
     int tamanio = strlen(valor);
+    int tamanio_restante = tamanio;
+    char* ptr_valor = valor;
 
-    uint32_t tamanio_disponible = tamanio_pagina - offset;
-    int direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
-    
-    while(tamanio > 0){
-        if(tamanio_disponible < tamanio){
-            //TODO separar valor
-            t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, valor);
-            list_add(peticiones, peticion);
-            tamanio -= tamanio_disponible;
-            direccion_logica += tamanio_disponible;
-            pagina = direccion_logica / tamanio_pagina;
-            offset = direccion_logica % tamanio_pagina;
-            tamanio_disponible = tamanio_pagina - offset;
-            direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
-            //Calcular direccion logica siguiente
-        } else {
-            t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, valor);
-            list_add(peticiones, peticion);
-            tamanio = 0;
-        }        
+    while (tamanio_restante > 0) {
+        uint32_t tamanio_disponible = tamanio_pagina - offset;
+        uint32_t tamanio_escritura = tamanio_disponible < tamanio_restante ? tamanio_disponible : tamanio_restante;
+
+        char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
+        int direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
+        t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, fragmento_valor);
+
+        list_add(peticiones, peticion);
+
+        free(fragmento_valor);
+
+        tamanio_restante -= tamanio_escritura;
+        ptr_valor += tamanio_escritura;
+        direccion_logica += tamanio_escritura;
+        pagina = direccion_logica / tamanio_pagina;
+        offset = direccion_logica % tamanio_pagina;
     }
-    
+
     return peticiones;
 }
 
