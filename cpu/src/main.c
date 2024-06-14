@@ -5,6 +5,7 @@
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
+#include <commons/collections/dictionary.h>
 #include <commons/string.h>
 #include <sys/socket.h>
 #include "utils/peticiones_memoria.h"
@@ -281,6 +282,7 @@ void servidor_dispatch(int* socket_memoria){
                 log_info(g_logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
                 ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, g_logger, diccionario);
                 
+                dictionary_destroy(diccionario);
             break;
             
             default:

@@ -18,7 +18,7 @@ void procesarParametros(int argc, char* argv[], char** param1, char** param2) {
         *param1 = argv[1];
     }
 
-    if (argc > 2) {
+    if (argc >= 2) {
         *param2 = argv[2];
     }
 }

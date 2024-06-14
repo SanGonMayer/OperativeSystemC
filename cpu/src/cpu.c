@@ -24,8 +24,10 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
 char* recibir_instruccion(int socket){
     t_buffer* buffer = recibir_buffer(socket);
 
-    uint32_t* size_instruccion = malloc(sizeof(uint32_t));
-    char* instruccion = buffer_read_string(buffer, size_instruccion);
+    uint32_t size_instruccion;
+    char* instruccion = buffer_read_string(buffer, &size_instruccion);
+
+    buffer_destroy(buffer);
     return instruccion;
 }
 
@@ -41,8 +43,15 @@ char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* dic
     t_paquete_instruccion* paquete_instruccion = crear_paquete_instruccion(pcb->PID, dictionary_get(diccionario, "PC"));
     
     t_paquete* paquete = crear_paquete(ENVIO_PID_PC, serializar_paquete_instruccion(paquete_instruccion));
-    enviar_paquete(paquete, socket);
+    int err = enviar_paquete(paquete, socket);
     
+    if(err < 0){
+        log_error(logger, "Error al enviar paquete");
+        return NULL;
+    }
+
+    eliminar_paquete(paquete);
+
     return recibir_instruccion(socket);
 }
 

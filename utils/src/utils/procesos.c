@@ -41,6 +41,8 @@ void responder_pcb(int socket, t_PCB *pcb, t_log* logger) {
     t_buffer* buffer = serializar_pcb(pcb);
 
     enviar_buffer(socket, buffer, logger);
+
+    buffer_destroy(buffer);
 }
 
 int enviar_pcb(int socket, t_PCB *pcb) {
@@ -92,7 +94,9 @@ t_buffer* serializar_pcb(t_PCB* pcb){
 t_PCB* recibir_pcb(int socket){
     t_buffer* buffer = recibir_buffer(socket);
     t_PCB* pcb = deserializar_pcb(buffer);
-    free(buffer);
+    
+    buffer_destroy(buffer);
+
     return pcb;
 }
 
