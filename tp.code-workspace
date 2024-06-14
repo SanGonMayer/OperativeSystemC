@@ -5,7 +5,8 @@
 			"*.h": "c",
 			"cstdlib": "c",
 			"buffer": "c",
-			"socket": "c"
+			"socket": "c",
+			"limits": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 		"clangd.fallbackFlags": [

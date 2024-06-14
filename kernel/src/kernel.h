@@ -22,6 +22,7 @@ typedef enum {
 typedef struct {
     int motivo;
     t_PCB* pcb;
+    char* recurso;
 } t_desalojo;
 
 typedef struct {
@@ -69,5 +70,7 @@ void planificador_VRR();
 void planificador_readyplus();
 
 //void listar_procesos tiene que mostrar todos los procesos por estado
+
+void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias);
 
 #endif

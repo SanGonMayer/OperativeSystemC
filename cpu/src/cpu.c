@@ -1,11 +1,4 @@
 #include "cpu.h"
-#include "mmu.h"
-#include "tlb.h"
-#include "utils/buffer.h"
-#include "utils/client.h"
-#include "utils/codigo_operacion.h"
-#include "utils/instrucciones.h"
-#include <stdint.h>
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
     char* instruccion;
@@ -111,11 +104,120 @@ t_buffer* ejecutar_io_stdout_write(char* dispositivo, int direccion_fisica, int 
     return buffer;
 }
 
-void ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion){}
+void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_dictionary* diccionario){
+    uint32_t tamanio;
+    if(string_starts_with(registro_datos, "E")){
+        tamanio = sizeof(uint32_t);
+    } else {
+        tamanio = sizeof(uint8_t);
+    }
+    t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, tamanio);
+    char* mensaje = string_new();
+    for(int i = 0; i < list_size(peticiones); i++){
+        t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
+        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        string_append(&mensaje, respuesta);
 
-void ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion){}
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
+    }
 
-void ejecutar_copy_string(tamanio){}
+    uint32_t mensaje_diccionario;
+
+    memcpy(&mensaje_diccionario, mensaje, sizeof(uint32_t));
+
+    dictionary_put(diccionario, registro_datos, mensaje_diccionario);
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
+
+    return;
+}
+
+void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dictionary* diccionario){
+
+    //char* valor_string = string_itoa(valor);
+    char* valor_string = string_new();
+    //Convertir un uint32 en un string, a traves de memcpy no necesita casteo segun Issue pero hay que probarlo
+    memcpy(valor_string, &valor, sizeof(uint32_t));
+
+    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, valor_string);
+
+    for(int i = 0; i < list_size(peticiones); i++){
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        if(recibir_ok(g_socket_memoria)){
+            log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
+        } else {
+            log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");
+        }
+        eliminar_paquete(paquete);
+    }
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
+    return;
+}   
+
+void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario){
+    int direccion_logica_si = dictionary_get(diccionario, "SI");
+    int direccion_logica_di = dictionary_get(diccionario, "DI");
+
+    t_list* peticiones_lectura = obtener_direcciones_logicas_lectura(pid, direccion_logica_si, tamanio);
+    char* buffer_lectura = malloc(tamanio + 1);
+    memset(buffer_lectura, 0, tamanio + 1); // Inicializar el buffer para evitar basura
+
+    char* ptr_buffer = buffer_lectura;
+    uint32_t bytes_leidos = 0;
+
+    // Leer datos desde la dirección lógica SI
+    for (int i = 0; i < list_size(peticiones_lectura); i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones_lectura, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        memcpy(ptr_buffer, respuesta, length);
+
+        ptr_buffer += length;
+        bytes_leidos += length;
+
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
+    }
+
+    list_destroy_and_destroy_elements(peticiones_lectura, (void*)destruir_peticion_acceso_usuario);
+
+    // Ahora escribir los datos en la dirección lógica DI
+    t_list* peticiones_escritura = obtener_direcciones_logicas_escritura(pid, direccion_logica_di, buffer_lectura);
+
+    for (int i = 0; i < list_size(peticiones_escritura); i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones_escritura, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        
+        if(recibir_ok(g_socket_memoria)){
+            log_info(g_logger, "Se escribio correctamente en memoria con COPY STRING EN DI");
+        } else {
+            log_error(g_logger, "No se pudo escribir en memoria con COPY STRING EN DI");
+        }
+        eliminar_paquete(paquete);
+
+    }
+
+    list_destroy_and_destroy_elements(peticiones_escritura, (void*)destruir_peticion_acceso_usuario);
+
+    free(buffer_lectura);
+}
 
 
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){

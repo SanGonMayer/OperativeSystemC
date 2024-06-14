@@ -154,7 +154,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
 
 void esperar_quantum(t_PCB* pcb){
     sleep(pcb->quantum);
-    if(g_exec->PID == pcb->PID){
+    if(g_exec != NULL && g_exec->PID == pcb->PID){
     enviar_interrupcion(g_conexion_cpu_interrupt, pcb->PID);
     }
 }
@@ -195,7 +195,7 @@ void ejecutar_cpu_VRR(t_PCB* pcb){
 
     recibir_pcb_desalojado(pcb);
     temporal_stop(timer);
-    ms_transcurridos = temporal_gettime(timer);
+    g_ms_transcurridos = temporal_gettime(timer);
     sem_post(&g_tiempo_calculado);
     pthread_cancel(hilo_quantum);
     temporal_destroy(timer);
@@ -223,6 +223,20 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     t_desalojo* desalojo = malloc(sizeof(t_desalojo));
     desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
+
+    if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
+        
+        //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
+        //desde la funcion ciclo de ejecucion
+        //al struct t_desalojo se le agrega el campo char* recurso para no romper la firma de la funcion atender_desalojo
+        t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+        uint32_t length;
+        char *recurso_leido = buffer_read_string(buffer, &length);
+        desalojo->recurso = string_duplicate(recurso_leido);
+
+        buffer_destroy(buffer);
+        free(recurso_leido);
+    }
 
     pthread_t hilo_desalojo;
     pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
@@ -267,15 +281,17 @@ void atender_desalojo(t_desalojo* desalojo){
         case FINALIZACION:
             finalizar_proceso(desalojo->pcb);
             break;
+
         case INTERRUPCION: //CLOCK
             enviar_proceso_a_ready(desalojo->pcb);
             break;
+
         case IO_GEN_SLEEP:
             //Abstraer a un case IO
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                     sem_wait(&g_tiempo_calculado);
-                    desalojo->pcb->quantum -= ms_transcurridos;
+                    desalojo->pcb->quantum -= g_ms_transcurridos;
                     desalojo->pcb->readyplus = 1;       
                 }
             }
@@ -323,9 +339,9 @@ void atender_desalojo(t_desalojo* desalojo){
         case IO_STDIN_READ:
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
-                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->quantum -= g_ms_transcurridos;
                 desalojo->pcb->readyplus = 1;       
                 }
             }
@@ -369,12 +385,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 sem_post(&g_mutex_acceso_interfaces);
                 finalizar_proceso(desalojo->pcb);
             }
+            break;
+
         case IO_STDOUT_WRITE:
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
-                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->quantum -= g_ms_transcurridos;
                 desalojo->pcb->readyplus = 1;       
                 }
             }
@@ -418,6 +436,18 @@ void atender_desalojo(t_desalojo* desalojo){
                 sem_post(&g_mutex_acceso_interfaces);
                 finalizar_proceso(desalojo->pcb);
             }
+            break;
+
+        case SIGNAL:
+            char * recurso_signal = string_duplicate(desalojo->recurso);
+            manejar_recurso((int)SIGNAL, recurso_signal, desalojo->pcb);
+            break;
+
+        case WAIT:
+            char * recurso_wait = string_duplicate(desalojo->recurso);
+            manejar_recurso((int)WAIT, recurso_wait, desalojo->pcb);
+            break;
+
     free(desalojo);
     }
 }
@@ -478,4 +508,69 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
     
     t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
     enviar_paquete(paquete, socket_interrupt);
+}
+
+void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias){
+    g_diccionario_recursos = dictionary_create();
+    g_diccionario_recursos_colas_blocked = dictionary_create();
+    int i = 0;
+    
+    while(recursos[i] != NULL){
+        dictionary_put(g_diccionario_recursos, recursos[i], recursos_instancias[i]);
+        
+        t_queue* cola_bloqueados = queue_create();
+        dictionary_put(g_diccionario_recursos_colas_blocked, recursos[i], cola_bloqueados);
+        i++;
+    }
+}
+
+void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
+    
+    if (dictionary_has_key(g_diccionario_recursos, recurso))
+    {
+        char* instancias = dictionary_get(g_diccionario_recursos, recurso);
+        int instancias_int = atoi(instancias);
+
+        switch (operacion)
+        {
+            case 17: //WAIT
+                
+                
+                if(instancias_int > 0){
+                    instancias_int--;
+                    char* instancias_nuevas = string_itoa(instancias_int);
+                    dictionary_put(g_diccionario_recursos, recurso, instancias_nuevas);   
+                }
+                else{
+                    t_queue * cola = (g_diccionario_recursos_colas_blocked, recurso);
+                    queue_push(cola, pcb);
+                    pcb->estado = BLOCKED;
+                    free(cola);
+                }                
+                
+                break;
+
+            case 18: //SIGNAL
+                instancias_int++;
+                char* instancias_nuevas = string_itoa(instancias_int);
+                dictionary_put(g_diccionario_recursos, recurso, instancias_nuevas);
+                
+                t_queue * cola = (g_diccionario_recursos_colas_blocked, recurso);
+                
+                if(!queue_is_empty(cola)){
+                    t_PCB* pcb = queue_pop(cola);
+                    pcb->estado = READY;
+                    enviar_proceso_a_ready(pcb);
+                }
+
+                free(cola);
+                free(instancias_nuevas);
+                
+                break;
+        }
+    }
+    else
+    {
+        log_error(g_logger, "El recurso: %s no existe", recurso);
+    }
 }

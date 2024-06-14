@@ -1,16 +1,5 @@
 #include "cpu.h"
-#include "global_cpu.h"
-#include "mmu.h"
-#include "tlb.h"
-#include "utils/buffer.h"
-#include "utils/client.h"
-#include "utils/codigo_operacion.h"
-#include <commons/collections/dictionary.h>
-#include <commons/string.h>
 #include <sys/socket.h>
-#include "utils/peticiones_memoria.h"
-#include "global_cpu.h"
-#include "utils/server.h"
 
 t_config* config;
 
@@ -175,43 +164,34 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
-            
+            buffer_destroy(buffer);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
             //(Registro Datos, Registro Dirección)
             char* registro_datos = instruccion_separada[1];
             char* registro_direccion = instruccion_separada[2];
 
-            int direccion_logica_datos = dictionary_get(diccionario, registro_datos);
-            int direccion_logica_direccion = dictionary_get(diccionario, registro_direccion);
-
-            int direccion_fisica_datos = obtener_direccion_fisica(pcb->PID, registro_datos);
-            int direccion_fisica_direccion = obtener_direccion_fisica(pcb->PID, registro_direccion);
-
-            //TODO
-            ejecutar_mov_in(direccion_fisica_datos, direccion_fisica_direccion);
-
+            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            
+            ejecutar_mov_in(pcb->PID,registro_datos, direccion_logica, diccionario);
+            
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
-            //(Registro Datos, Registro Dirección)
-            char* registro_datos = instruccion_separada[1];
-            char* registro_direccion = instruccion_separada[2];
+            //(Registro Direccion, Registro Datos)
+            char* registro_direccion = instruccion_separada[1];
+            char* registro_datos = instruccion_separada[2];
 
-            int direccion_logica_datos = dictionary_get(diccionario, registro_datos);
-            int direccion_logica_direccion = dictionary_get(diccionario, registro_direccion);
-
-            int direccion_fisica_datos = obtener_direccion_fisica(pcb->PID, registro_datos);
-            int direccion_fisica_direccion = obtener_direccion_fisica(pcb->PID, registro_direccion);
-
-            //TODO
-            ejecutar_mov_out(direccion_fisica_datos, direccion_fisica_direccion);
+            uint32_t valor = dictionary_get(diccionario, registro_datos);
+            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            
+            ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
             //(Tamanio)
             int tamanio = atoi(instruccion_separada[1]);
 
-            ejecutar_copy_string(tamanio);
+            ejecutar_copy_string(tamanio, pcb->PID, diccionario);
 
             return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
@@ -247,8 +227,28 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
                 }
                 return;
             }
-        }
+        }else if(string_equals_ignore_case(instruccion_separada[0], "SIGNAL")){
+            char* recurso = string_duplicate(instruccion_separada[1]);
+            desalojar_pcb(socket_dispatch,pcb, (int)SIGNAL, logger, diccionario);
+            
+            //este buffer se le manda a kernel con el string del nombre del recurso pedido
+            //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
+            t_buffer* buffer = buffer_create(string_length(recurso));
+            buffer_add_string(buffer, string_length(recurso), recurso);
 
+            enviar_buffer(socket_dispatch, buffer, logger);
+        }
+        else if(string_equals_ignore_case(instruccion_separada[0], "WAIT")){
+            char* recurso = string_duplicate(instruccion_separada[1]);
+            desalojar_pcb(socket_dispatch,pcb, (int)WAIT, logger, diccionario);
+            
+            //este buffer se le manda a kernel con el string del nombre del recurso pedido
+            //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
+            t_buffer* buffer = buffer_create(string_length(recurso));
+            buffer_add_string(buffer, string_length(recurso), recurso);
+
+            enviar_buffer(socket_dispatch, buffer, logger);
+        }
         if(check_interrupt(pcb, logger) == 1){
             desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
             return;
