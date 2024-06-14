@@ -40,7 +40,7 @@ sem_t g_notif_largo_plazo;
 int g_planificacion_pausada;
 
 t_temporal* timer;
-int ms_transcurridos;
+int g_ms_transcurridos;
 sem_t g_tiempo_calculado;
 sem_t g_hay_elementos_para_ejecutar;
 

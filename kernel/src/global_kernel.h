@@ -48,7 +48,7 @@ extern int g_planificacion_pausada;
 
 //VRR
 extern t_temporal* timer;
-extern int ms_transcurridos;
+extern int g_ms_transcurridos;
 extern sem_t g_tiempo_calculado;
 extern sem_t g_hay_elementos_para_ejecutar;
 

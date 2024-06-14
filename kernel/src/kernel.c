@@ -154,7 +154,7 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
 
 void esperar_quantum(t_PCB* pcb){
     sleep(pcb->quantum);
-    if(g_exec->PID == pcb->PID){
+    if(g_exec != NULL && g_exec->PID == pcb->PID){
     enviar_interrupcion(g_conexion_cpu_interrupt, pcb->PID);
     }
 }
@@ -195,7 +195,7 @@ void ejecutar_cpu_VRR(t_PCB* pcb){
 
     recibir_pcb_desalojado(pcb);
     temporal_stop(timer);
-    ms_transcurridos = temporal_gettime(timer);
+    g_ms_transcurridos = temporal_gettime(timer);
     sem_post(&g_tiempo_calculado);
     pthread_cancel(hilo_quantum);
     temporal_destroy(timer);
@@ -289,9 +289,9 @@ void atender_desalojo(t_desalojo* desalojo){
         case IO_GEN_SLEEP:
             //Abstraer a un case IO
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                     sem_wait(&g_tiempo_calculado);
-                    desalojo->pcb->quantum -= ms_transcurridos;
+                    desalojo->pcb->quantum -= g_ms_transcurridos;
                     desalojo->pcb->readyplus = 1;       
                 }
             }
@@ -339,9 +339,9 @@ void atender_desalojo(t_desalojo* desalojo){
         case IO_STDIN_READ:
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
-                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->quantum -= g_ms_transcurridos;
                 desalojo->pcb->readyplus = 1;       
                 }
             }
@@ -390,9 +390,9 @@ void atender_desalojo(t_desalojo* desalojo){
         case IO_STDOUT_WRITE:
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-                if(ms_transcurridos < desalojo->pcb->quantum){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
-                desalojo->pcb->quantum -= ms_transcurridos;
+                desalojo->pcb->quantum -= g_ms_transcurridos;
                 desalojo->pcb->readyplus = 1;       
                 }
             }
