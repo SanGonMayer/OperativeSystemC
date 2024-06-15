@@ -78,4 +78,8 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid);
 
 t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola);
 
+t_PCB* buscar_en_diccionario_interfaces(uint32_t pid, t_dictionary* interfaces);
+
+t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos);
+
 #endif

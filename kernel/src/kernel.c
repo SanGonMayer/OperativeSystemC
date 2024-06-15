@@ -644,6 +644,9 @@ void listar_procesos(){
     list_iterator_destroy(iterador_exit);
 }
 
+
+
+
 t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     if (queue_is_empty(cola)) {
         return NULL;
@@ -676,23 +679,76 @@ t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     return pcb_encontrado;
 }
 
+t_PCB* buscar_en_diccionario_interfaces(uint32_t pid, t_dictionary* interfaces){
+    t_PCB* pcb = NULL;
+
+    t_list* lista_interfaces = dictionary_elements(interfaces);
+    t_list_iterator* iterator = list_iterator_create(lista_interfaces);
+     while(list_iterator_has_next(iterator)){
+        t_interfaz_conectada* interfaz = list_iterator_next(lista_interfaces);
+        //TODO agregar semaforo para acceso
+        pcb = buscar_y_eliminar_pid_en_cola(pid, interfaz->cola);
+        if(pcb != NULL){
+            return pcb;
+        }
+    }
+    
+
+    return pcb;
+}
+
+t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos){
+    t_PCB* pcb = NULL;
+
+    t_list* lista_recursos = dictionary_elements(colas_recursos);
+    t_list_iterator* iterator = list_iterator_create(lista_recursos);
+     while(list_iterator_has_next(iterator)){
+        t_queue* cola_recurso = list_iterator_next(lista_recursos);
+        //TODO agregar semaforo para acceso
+        pcb = buscar_y_eliminar_pid_en_cola(pid, cola_recurso);
+        if(pcb != NULL){
+            return pcb;
+        }
+    }
+
+    return pcb;
+}
+
 t_PCB* buscar_pid_en_sistema(uint32_t pid){
     t_PCB* pcb = NULL;
+
     sem_wait(g_mutex_cola_new);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
     sem_post(g_mutex_cola_new);
     if(pcb != NULL){
         return pcb; 
     }
+
+    sem_wait(g_mutex_cola_ready);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
+    sem_post(g_mutex_cola_ready);
     if(pcb != NULL){
         return pcb; 
     }
+
+    if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+        sem_wait(g_mutex_cola_auxiliar);
+        pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_auxiliar);
+        sem_post(g_mutex_cola_auxiliar);
+    }
+
     pcb = g_exec;
     if(pcb != NULL){
         //TODO enviar interrupcion y sacarlo de exec
         return pcb; 
     }
+
+    //las io
+    pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
+
+    //los recursos
+    pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);
+
     //TODO hacer el de cola blocked
     //wait(lista blocked general)
     //-> Cola de la interfaz IO
