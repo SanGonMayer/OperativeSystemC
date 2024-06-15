@@ -106,6 +106,9 @@ int main(void){
     g_cola_exit = queue_create();
     sem_init(&g_mutex_cola_exit, 0, 1); 
 
+    g_cola_auxiliar = queue_create();
+    sem_init(&g_mutex_cola_auxiliar, 0, 1);
+
 
     //Semaforos para io
     sem_init(&g_mutex_acceso_interfaces, 0, 1);
@@ -118,7 +121,7 @@ int main(void){
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
     recursos = config_get_array_value(config, "RECURSOS");
-    recursos_instancias = config_get_array_value(config, "RECURSOS_INSTANCIAS");
+    recursos_instancias = config_get_array_value(config, "INSTANCIAS_RECURSOS");
 
     iniciar_diccionario_y_listas_recursos(recursos, recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
 

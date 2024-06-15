@@ -167,7 +167,7 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     g_exec = pcb;
 
     pthread_t hilo_quantum;
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb->PID);
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
     pthread_detach(hilo_quantum);
 
     recibir_pcb_desalojado(pcb);
@@ -242,7 +242,6 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
     pthread_detach(hilo_desalojo);
  
-    sem_post(&g_disponible_exec);
 }
 
 void planificador_exit(){
@@ -450,6 +449,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
     free(desalojo);
     }
+
+
+    sem_post(&g_disponible_exec);
 }
 void planificador_fifo(){
     sem_wait(&g_notif_corto_plazo);
