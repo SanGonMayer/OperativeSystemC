@@ -78,21 +78,30 @@ void iniciar_proceso(char* path){
 
     t_PCB* pcb = crear_PCB();
     log_info(g_logger,"Creando PCB para el proceso %d", g_contador_pid);
+    
     sem_wait(&mutex_contador_pid);
     g_contador_pid++;
     pcb->PID = g_contador_pid;
     sem_post(&mutex_contador_pid);
     log_info(g_logger,"Proceso %d creado", pcb->PID);
+    
     pcb->estado = NEW;
     pcb->quantum = g_quantum;
     pcb->readyplus = 0;
     pcb->path_length = strlen(path) + 1;
     pcb->path = malloc(pcb->path_length);
     strcpy(pcb->path, path);
+    
     sem_wait(&g_mutex_cola_new);
     log_info(g_logger, "Encolando proceso %d en NEW, dentro de mutex", pcb->PID);
     queue_push(g_cola_new, pcb);
     sem_post(&g_mutex_cola_new);
+
+    //lista general de procesos
+    sem_wait(&g_mutex_lista_procesos_gral);
+    list_add(g_lista_procesos_gral, pcb);
+    sem_post(&g_mutex_lista_procesos_gral);
+
     log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(g_cola_new));
     log_info(g_logger, "Proceso %d encolado en NEW", pcb->PID);
 
@@ -130,6 +139,7 @@ void enviar_proceso_a_ready(t_PCB* pcb){
     }
 
     pcb-> estado = READY;
+
     log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
     log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
 }
@@ -527,38 +537,44 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
 
 void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias){
     g_diccionario_recursos = dictionary_create();
-    g_diccionario_recursos_colas_blocked = dictionary_create();
     int i = 0;
     
     while(recursos[i] != NULL){
-        dictionary_put(g_diccionario_recursos, recursos[i], recursos_instancias[i]);
+        t_recurso *recurso = malloc(sizeof(t_recurso));
+        recurso->nombre = recursos[i];
+        recurso->instancias = atoi(recursos_instancias[i]);
+        recurso->cola = queue_create();
+        sem_init(&recurso->semafor_cola, 0, 0);
+
+        dictionary_put(g_diccionario_recursos, recursos[i], recurso);
         
-        t_queue* cola_bloqueados = queue_create();
-        dictionary_put(g_diccionario_recursos_colas_blocked, recursos[i], cola_bloqueados);
         i++;
     }
 }
 
-void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
+void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
     
-    if (dictionary_has_key(g_diccionario_recursos, recurso))
+    if (dictionary_has_key(g_diccionario_recursos, nombre_recurso))
     {
-        char* instancias = dictionary_get(g_diccionario_recursos, recurso);
-        int instancias_int = atoi(instancias);
+        t_recurso *recurso = dictionary_remove(g_diccionario_recursos, nombre_recurso);
+        int instancias_int = atoi(recurso->instancias);
 
         switch (operacion)
         {
             case 17: //WAIT
                 
-                
                 if(instancias_int > 0){
                     instancias_int--;
-                    char* instancias_nuevas = string_itoa(instancias_int);
-                    dictionary_put(g_diccionario_recursos, recurso, instancias_nuevas);   
+                    recurso->instancias = atoi(instancias_int);
+                    dictionary_put(g_diccionario_recursos, nombre_recurso, recurso );   
                 }
                 else{
-                    t_queue * cola = (g_diccionario_recursos_colas_blocked, recurso);
+                    t_queue * cola = recurso->cola;
+                    
+                    sem_wait(&recurso->semafor_cola);
                     queue_push(cola, pcb);
+                    sem_post(&recurso->semafor_cola);
+                    
                     pcb->estado = BLOCKED;
 
                     sem_wait(&g_mutex_lista_blocked_gral);
@@ -572,80 +588,82 @@ void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
 
             case 18: //SIGNAL
                 instancias_int++;
-                char* instancias_nuevas = string_itoa(instancias_int);
-                dictionary_put(g_diccionario_recursos, recurso, instancias_nuevas);
+                recurso->instancias = instancias_int;
+                dictionary_put(g_diccionario_recursos, nombre_recurso, recurso);
                 
-                t_queue * cola = (g_diccionario_recursos_colas_blocked, recurso);
+                t_queue * cola = recurso->cola;
                 
                 if(!queue_is_empty(cola)){
+                    sem_wait(&recurso->semafor_cola);
                     t_PCB* pcb = queue_pop(cola);
+                    sem_post(&recurso->semafor_cola);
+
                     pcb->estado = READY;
                     enviar_proceso_a_ready(pcb);
                     eliminar_de_lista_blocked_gral(pcb->PID);
                 }
 
                 free(cola);
-                free(instancias_nuevas);
                 
                 break;
         }
     }
     else
     {
-        log_error(g_logger, "El recurso: %s no existe", recurso);
+        log_error(g_logger, "El recurso: %s no existe", nombre_recurso);
     }
 
 }
 
-void eliminar_de_lista_blocked_gral(t_PCB* pcb){
+void eliminar_de_lista_blocked_gral(u_int32_t pid){
       
-    sem_wait(g_lista_blocked_gral);
-    if (!list_remove_element(g_lista_blocked_gral, pcb));
-        printf("No se pudo eliminar el PID %d de la lista de bloqueados generales\n", pcb->PID);
-    sem_post(g_lista_blocked_gral);
+    sem_wait(&g_lista_blocked_gral);
+    if (!list_remove_element(g_lista_blocked_gral, pid));
+        printf("No se pudo eliminar el PID %d de la lista de bloqueados generales\n", pid);
+    sem_post(&g_lista_blocked_gral);
 }
 
 void listar_procesos(){
-    //NEW
-    t_list_iterator* iterador_new = list_iterator_create(g_cola_new);
-    
-    while(list_iterator_has_next(iterador_new)){
-        t_PCB* pcb = list_iterator_next(iterador_new);
-        printf("%-25s%-25s\n", "NEW", pcb->PID);
-    }
+    printf("%-25s%-25s\n", "NEW", g_exec->PID);
 
-    //READY
-    t_list_iterator* iterador_ready = list_iterator_create(g_cola_ready);
+    t_list_iterator* iterador_gral = list_iterator_create(g_lista_procesos_gral);
     
-    while(list_iterator_has_next(iterador_ready)){
-        t_PCB* pcb = list_iterator_next(iterador_ready);
-        printf("%-25s%-25s\n", "READY", pcb->PID);
+    while(list_iterator_has_next(iterador_gral)){
+        t_PCB* pcb = list_iterator_next(iterador_gral);
+        
+        switch (pcb->estado)
+        {
+            case NEW:
+                printf("%-25s%-25s\n", "NEW", pcb->PID);
+                break;
+            
+            case READY:
+                printf("%-25s%-25s\n", "READY", pcb->PID);
+                break;
+            
+            case EXIT:
+                printf("%-25s%-25s\n", "EXIT", pcb->PID);
+                break;
+            
+            case READYPLUS:
+                printf("%-25s%-25s\n", "READYPLUS", pcb->PID);
+                break;
+        }
+            
     }
+        
 
     //BLOCKED
     t_list_iterator* iterador_blocked = list_iterator_create(g_lista_blocked_gral);
     
     while(list_iterator_has_next(iterador_blocked)){
-        t_PCB* pcb = list_iterator_next(iterador_blocked);
-        printf("%-25s%-25s\n", "BLOCKED", pcb->PID);
+        uint32_t pid = (uint32_t)list_iterator_next(iterador_blocked);
+        printf("%-25s%-25s\n", "BLOCKED", pid);
     }
 
-    //EXIT
-    t_list_iterator* iterador_exit = list_iterator_create(g_cola_exit);
-     while(list_iterator_has_next(iterador_exit)){
-        t_PCB* pcb = list_iterator_next(iterador_exit);
-        printf("%-25s%-25s\n", "READY", pcb->PID);
-    }
-
-
-    list_iterator_destroy(iterador_new);
-    list_iterator_destroy(iterador_ready);
+    list_iterator_destroy(iterador_gral);
     list_iterator_destroy(iterador_blocked);
-    list_iterator_destroy(iterador_exit);
 }
-
-
-
 
 t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     if (queue_is_empty(cola)) {
@@ -717,24 +735,24 @@ t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos
 t_PCB* buscar_pid_en_sistema(uint32_t pid){
     t_PCB* pcb = NULL;
 
-    sem_wait(g_mutex_cola_new);
+    sem_wait(&g_mutex_cola_new);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
-    sem_post(g_mutex_cola_new);
+    sem_post(&g_mutex_cola_new);
     if(pcb != NULL){
         return pcb; 
     }
 
-    sem_wait(g_mutex_cola_ready);
+    sem_wait(&g_mutex_cola_ready);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
-    sem_post(g_mutex_cola_ready);
+    sem_post(&g_mutex_cola_ready);
     if(pcb != NULL){
         return pcb; 
     }
 
     if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
-        sem_wait(g_mutex_cola_auxiliar);
+        sem_wait(&g_mutex_cola_auxiliar);
         pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_auxiliar);
-        sem_post(g_mutex_cola_auxiliar);
+        sem_post(&g_mutex_cola_auxiliar);
     }
 
     pcb = g_exec;
@@ -747,7 +765,7 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
     pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
 
     //los recursos
-    pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);
+    //pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);
 
     //TODO hacer el de cola blocked
     //wait(lista blocked general)

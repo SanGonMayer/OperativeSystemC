@@ -31,6 +31,13 @@ typedef struct {
     t_instruccion_io* instruccion;
 } t_parametro_cola_interfaz;
 
+typedef struct {
+    char* nombre;
+    int instancias;
+    t_queue* cola;
+    sem_t semafor_cola;
+} t_recurso;
+
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);
 
@@ -70,7 +77,9 @@ void planificador_VRR();
 
 void planificador_readyplus();
 
-//void listar_procesos tiene que mostrar todos los procesos por estado
+void listar_procesos();
+
+void eliminar_de_lista_blocked_gral(uint32_t pid);
 
 void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias);
 

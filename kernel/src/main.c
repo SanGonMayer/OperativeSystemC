@@ -91,6 +91,9 @@ int main(void){
     g_lista_blocked_gral = list_create();
     sem_init(&g_mutex_lista_blocked_gral, 0, 1);
 
+    g_lista_procesos_gral = list_create();
+    sem_init(&g_mutex_lista_procesos_gral, 0, 1);
+
     //VRR
     
     g_logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
