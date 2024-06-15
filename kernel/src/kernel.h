@@ -13,6 +13,7 @@
 #include <utils/procesos.h>
 #include <utils/codigo_operacion.h>
 #include <commons/temporal.h>
+
 typedef enum {
     FIFO= 1,
     RR= 2,
@@ -72,5 +73,9 @@ void planificador_readyplus();
 //void listar_procesos tiene que mostrar todos los procesos por estado
 
 void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias);
+
+t_PCB* pcb buscar_pid_en_sistema(uint32_t pid);
+
+t_PCB* pcb buscar_y_eliminar_pid_en_cola(uint32_t pid, t_queue* cola);
 
 #endif
