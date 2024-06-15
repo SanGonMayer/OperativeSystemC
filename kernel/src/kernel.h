@@ -74,8 +74,8 @@ void planificador_readyplus();
 
 void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias);
 
-t_PCB* pcb buscar_pid_en_sistema(uint32_t pid);
+//t_PCB* pcb buscar_pid_en_sistema(uint32_t pid);
 
-t_PCB* pcb buscar_y_eliminar_pid_en_cola(uint32_t pid, t_queue* cola);
+//t_PCB* pcb buscar_y_eliminar_pid_en_cola(uint32_t pid, t_queue* cola);
 
 #endif

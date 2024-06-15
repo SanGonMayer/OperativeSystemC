@@ -119,14 +119,15 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
 
         case FINALIZAR_PROCESO:
             printf("Se seleccionó la opción Finalizar Proceso\n");
-            uint32_t pid = (uint32_t)atoi(args[1]);
+           /* uint32_t pid = (uint32_t)atoi(args[1]);
             t_PCB* pcb = buscar_pid_en_sistema(pid);
+
             if(pcb == NULL){
                 log_info(g_logger, "El PCB con pid %d no fue encontrado", pid);
             } else {
                 log_info(g_logger, "El PCB con pid %d fue encontrado con exito", pid);
                 finalizar_proceso(pcb);
-            }
+            }*/
             break;
 
         case DETENER_PLANIFICACION:
