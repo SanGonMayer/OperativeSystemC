@@ -643,3 +643,68 @@ void listar_procesos(){
     list_iterator_destroy(iterador_blocked);
     list_iterator_destroy(iterador_exit);
 }
+
+t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
+    if (queue_is_empty(cola)) {
+        return NULL;
+    }
+
+    // Crear una cola auxiliar para preservar el orden original
+    t_queue* cola_aux = queue_create();
+    t_PCB* pcb_encontrado = NULL;
+
+    // Recorrer la cola original
+    while (!queue_is_empty(cola)) {
+        t_PCB* pcb_actual = queue_pop(cola);
+        
+        if (pcb_actual->PID == pid) {
+            pcb_encontrado = pcb_actual;
+            // No agregamos el PCB encontrado a la cola auxiliar para eliminarlo de la original
+            continue;
+        }
+        
+        // Agregar el PCB actual a la cola auxiliar
+        queue_push(cola_aux, pcb_actual);
+    }
+
+    // Restaurar los elementos en la cola original
+    cola = cola_aux;
+
+    // Liberar la cola auxiliar
+    queue_destroy(cola_aux);
+
+    return pcb_encontrado;
+}
+
+t_PCB* buscar_pid_en_sistema(uint32_t pid){
+    t_PCB* pcb = NULL;
+    sem_wait(g_mutex_cola_new);
+    pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
+    sem_post(g_mutex_cola_new);
+    if(pcb != NULL){
+        return pcb; 
+    }
+    pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
+    if(pcb != NULL){
+        return pcb; 
+    }
+    pcb = g_exec;
+    if(pcb != NULL){
+        //TODO enviar interrupcion y sacarlo de exec
+        return pcb; 
+    }
+    //TODO hacer el de cola blocked
+    //wait(lista blocked general)
+    //-> Cola de la interfaz IO
+    //-> Semaforo propio
+    //-> sem wait(semaforo de la cola)
+    //Revisar si es necesario
+    /*pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_exit);
+    if(pcb != NULL){
+        return pcb; 
+    }
+    */
+
+    return pcb;
+}
+
