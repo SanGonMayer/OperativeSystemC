@@ -46,3 +46,6 @@ sem_t g_hay_elementos_para_ejecutar;
 
 t_dictionary* g_diccionario_recursos;
 t_dictionary* g_diccionario_recursos_colas_blocked;
+
+t_list* g_lista_blocked_gral;
+sem_t g_mutex_lista_blocked_gral;

@@ -323,6 +323,11 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
+
+                sem_wait(&g_lista_blocked_gral);
+                list_add(g_lista_blocked_gral, item->pcb->PID);
+                sem_post(&g_lista_blocked_gral);
+
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
                 //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
@@ -376,6 +381,9 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
+
+                list_add(g_lista_blocked_gral, item->pcb->PID);
+
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
                 //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
@@ -427,6 +435,11 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
+
+                sem_wait(&g_lista_blocked_gral);
+                list_add(g_lista_blocked_gral, item->pcb->PID);
+                sem_post(&g_lista_blocked_gral);
+
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
                 //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
@@ -547,6 +560,11 @@ void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
                     t_queue * cola = (g_diccionario_recursos_colas_blocked, recurso);
                     queue_push(cola, pcb);
                     pcb->estado = BLOCKED;
+
+                    sem_wait(&g_mutex_lista_blocked_gral);
+                    list_add(g_lista_blocked_gral, pcb->PID);
+                    sem_post(&g_mutex_lista_blocked_gral);
+
                     free(cola);
                 }                
                 
@@ -563,6 +581,7 @@ void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
                     t_PCB* pcb = queue_pop(cola);
                     pcb->estado = READY;
                     enviar_proceso_a_ready(pcb);
+                    eliminar_de_lista_blocked_gral(pcb->PID);
                 }
 
                 free(cola);
@@ -575,4 +594,53 @@ void manejar_recurso(int operacion, char* recurso, t_PCB* pcb){
     {
         log_error(g_logger, "El recurso: %s no existe", recurso);
     }
+
 }
+
+void eliminar_de_lista_blocked_gral(uint32_t PID){
+      
+    sem_wait(g_lista_blocked_gral);
+    if (!list_remove_by_condition(g_lista_blocked_gral, PID))
+        printf("No se pudo eliminar el PID %d de la lista de bloqueados generales\n", PID);
+    sem_post(g_lista_blocked_gral);
+}
+
+void listar_procesos(){
+    //NEW
+    t_list_iterator* iterador_new = list_iterator_create(g_cola_new);
+    
+    while(list_iterator_has_next(iterador_new)){
+        t_PCB* pcb = list_iterator_next(iterador_new);
+        printf("%-25s%-25s\n", "NEW", pcb->PID);
+    }
+
+    //READY
+    t_list_iterator* iterador_ready = list_iterator_create(g_cola_ready);
+    
+    while(list_iterator_has_next(iterador_ready)){
+        t_PCB* pcb = list_iterator_next(iterador_ready);
+        printf("%-25s%-25s\n", "READY", pcb->PID);
+    }
+
+    //BLOCKED
+    t_list_iterator* iterador_blocked = list_iterator_create(g_lista_blocked_gral);
+    
+    while(list_iterator_has_next(iterador_blocked)){
+        uint32_t PID = list_iterator_next(iterador_blocked);
+        printf("%-25s%-25s\n", "BLOCKED", PID);
+    }
+
+    //EXIT
+    t_list_iterator* iterador_exit = list_iterator_create(g_cola_exit);
+     while(list_iterator_has_next(iterador_exit)){
+        t_PCB* pcb = list_iterator_next(iterador_exit);
+        printf("%-25s%-25s\n", "READY", pcb->PID);
+    }
+
+
+    list_iterator_destroy(iterador_new);
+    list_iterator_destroy(iterador_ready);
+    list_iterator_destroy(iterador_blocked);
+    list_iterator_destroy(iterador_exit);
+}
+

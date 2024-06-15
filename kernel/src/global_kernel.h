@@ -54,4 +54,8 @@ extern sem_t g_hay_elementos_para_ejecutar;
 
 extern t_dictionary* g_diccionario_recursos;
 extern t_dictionary* g_diccionario_recursos_colas_blocked;
+
+//lista bloqueado gral
+extern t_list* g_lista_blocked_gral;
+extern sem_t g_mutex_lista_blocked_gral;
 #endif
