@@ -100,6 +100,7 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             char** comandos = leer_script(args[1]);
             ejecutar_script(comandos);
             break;
+
         case INICIAR_PROCESO:
             printf("Se seleccionó la opción 2\n");
             char* path = args[1];
@@ -115,16 +116,25 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);
             pthread_detach(hilo_iniciar_proceso);
             break;
+
         case FINALIZAR_PROCESO:
-            printf("Se seleccionó la opción 3\n");
+            printf("Se seleccionó la opción Finalizar Proceso\n");
+            uint32_t pid = (uint32_t)atoi(args[1]);
+            t_PCB* pcb = buscar_pid_en_sistema(pid);
+            if(pcb == NULL){
+                log_info(g_logger, "El PCB con pid %d no fue encontrado", pid);
+            } else {
+                log_info(g_logger, "El PCB con pid %d fue encontrado con exito", pid);
+                finalizar_proceso(pcb);
+            }
             break;
+
         case DETENER_PLANIFICACION:
             printf("Opción Detener planificacion\n");
             
             sem_wait(&g_notif_corto_plazo);
             sem_wait(&g_notif_largo_plazo);
             g_planificacion_pausada = 1;
-
             break;
         
         case INICIAR_PLANIFIACION:
@@ -138,15 +148,14 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             g_planificacion_pausada = 1;
             sem_post(&g_notif_corto_plazo);
             sem_post(&g_notif_largo_plazo);
-            
             break;
+        
         case MULTIPROGRAMACION:
             printf("Opción no válida\n");
             break;
+        
         case PROCESO_ESTADO:
-            
-            //listar_procesos
-
+            listar_procesos();
             break;
     }
 }

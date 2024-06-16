@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
 
     void* estrategia_procesar_instruccion = NULL;
 
-    if(string_equals_ignore_case(tipo, "GEN")){
+    if(string_equals_ignore_case(tipo, "GENERICA")){
         estrategia_procesar_instruccion = &procesar_instruccion_generica;
     }
 

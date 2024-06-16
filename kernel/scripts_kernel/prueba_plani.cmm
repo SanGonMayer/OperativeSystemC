@@ -1,0 +1,4 @@
+INICIAR_PROCESO ../memoria/scripts_memoria/PLANI_1.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/PLANI_2.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/PLANI_3.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/PLANI_4.dummy

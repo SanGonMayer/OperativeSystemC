@@ -56,6 +56,8 @@ void procesar_cliente(int* fd){
 
         bool result = recibir_ok(interfaz_conectada->fd);
 
+        eliminar_de_lista_blocked_gral(instruccion->pcb->PID);
+
         if(result){
             log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
             if(algoritmo_planificacion == "VRR"){
@@ -85,6 +87,13 @@ int main(void){
     //semaforos para pausar o reanudar planificadores
     sem_init(&g_notif_corto_plazo,0,1); 
     sem_init(&g_notif_largo_plazo,0,1);
+
+    g_lista_blocked_gral = list_create();
+    sem_init(&g_mutex_lista_blocked_gral, 0, 1);
+
+    g_lista_procesos_gral = list_create();
+    sem_init(&g_mutex_lista_procesos_gral, 0, 1);
+
     //VRR
     
     g_logger = log_create("kernel.log", "server_connection", 1, LOG_LEVEL_INFO);
