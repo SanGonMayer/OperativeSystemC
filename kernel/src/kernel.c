@@ -325,6 +325,7 @@ void atender_desalojo(t_desalojo* desalojo){
                 queue_push(interfaz->cola, item);
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+                
                 //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
 
             }else{
