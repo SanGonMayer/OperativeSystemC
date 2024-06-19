@@ -359,12 +359,12 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer_desalojo = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer);
-            int tamanio = buffer_read_int(buffer);
+            int direccion_fisica = buffer_read_int(buffer_desalojo);
+            int tamanio = buffer_read_int(buffer_desalojo);
             uint32_t* length2 = malloc(sizeof(uint32_t));
-            char* nombreInterfaz2 = buffer_read_string(buffer, length);
+            char* nombreInterfaz2 = buffer_read_string(buffer_desalojo, length);
             
             char* instruccion2 = string_new();
             //instruccion que deba entender
@@ -413,12 +413,12 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer1 = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica1 = buffer_read_int(buffer);
-            int tamanio1 = buffer_read_int(buffer);
+            int direccion_fisica1 = buffer_read_int(buffer2);
+            int tamanio1 = buffer_read_int(buffer2);
             uint32_t* length1 = malloc(sizeof(uint32_t));
-            char* nombreInterfaz1 = buffer_read_string(buffer, length);
+            char* nombreInterfaz1 = buffer_read_string(buffer2, length);
             
             char* instruccion1 = string_new();
             //instruccion que deba entender
