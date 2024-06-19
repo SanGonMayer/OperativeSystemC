@@ -1,0 +1,3 @@
+INICIAR_PROCESO ../memoria/scripts_memoria/io_a.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/io_b.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/io_c.dummy
