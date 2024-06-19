@@ -1,0 +1,6 @@
+paths config io
+../entradasalida/io_stdin.config
+../entradasalida/io_stdout.config
+../entradasalida/io_generica.config
+
+INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
