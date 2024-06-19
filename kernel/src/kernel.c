@@ -359,7 +359,7 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
             int direccion_fisica = buffer_read_int(buffer);
             int tamanio = buffer_read_int(buffer);
