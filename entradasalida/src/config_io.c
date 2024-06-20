@@ -14,6 +14,7 @@ ConfiguracionIO* leer_configuracion(t_config* config){
 
     g_config_io = malloc(sizeof(ConfiguracionIO));
 
+
     g_config_io->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
     g_config_io->puerto_kernel = config_get_string_value(config, "PUERTO_KERNEL");
     g_config_io->puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
@@ -37,3 +38,4 @@ void configuracionIO_destroy(ConfiguracionIO* config){
     free(config->path_base_dialfs);
     free(config);
 }
+

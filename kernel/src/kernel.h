@@ -91,4 +91,6 @@ t_PCB* buscar_en_diccionario_interfaces(uint32_t pid, t_dictionary* interfaces);
 
 t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos);
 
+void agregar_a_cola_auxiliar(t_PCB* pcb);
+
 #endif

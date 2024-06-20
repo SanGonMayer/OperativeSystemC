@@ -1,5 +1,4 @@
 #include "server.h"
-#include "utils/client.h"
 #include <asm-generic/socket.h>
 #include <commons/error.h>
 #include <commons/log.h>

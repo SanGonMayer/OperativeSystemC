@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include <commons/log.h>
 #include <sys/socket.h>
 
 t_config* config;
@@ -250,6 +251,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
         }
         if(check_interrupt(pcb, logger) == 1){
+            log_info(g_logger, "Se detecto una interrupcion");
             desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
             return;
         }

@@ -112,9 +112,11 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
                 break;
             }
 
-            pthread_t hilo_iniciar_proceso;
-            pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);
-            pthread_detach(hilo_iniciar_proceso);
+            iniciar_proceso(path);
+            // pthread_t hilo_iniciar_proceso;
+
+            // pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);
+            // pthread_detach(hilo_iniciar_proceso);
             break;
 
         case FINALIZAR_PROCESO:
@@ -132,8 +134,8 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
         case DETENER_PLANIFICACION:
             printf("Opción Detener planificacion\n");
             
-            sem_wait(&g_notif_corto_plazo);
-            sem_wait(&g_notif_largo_plazo);
+            // sem_wait(&g_notif_corto_plazo);
+            // sem_wait(&g_notif_largo_plazo);
             g_planificacion_pausada = 1;
             break;
         
@@ -146,8 +148,8 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             }
 
             g_planificacion_pausada = 1;
-            sem_post(&g_notif_corto_plazo);
-            sem_post(&g_notif_largo_plazo);
+            // sem_post(&g_notif_corto_plazo);
+            // sem_post(&g_notif_largo_plazo);
             break;
         
         case MULTIPROGRAMACION:
