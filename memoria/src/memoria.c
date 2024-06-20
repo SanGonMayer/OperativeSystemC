@@ -191,8 +191,8 @@ void procesar_acceso_espacio_usuario(int socket){
     if(peticion->tipo_acceso == LECTURA){
         char* valor = malloc(peticion->tamanio_a_leer);
         leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
-        int tamanio_respuesta;
-        t_buffer* respuesta = buffer_create(peticion->tamanio_a_leer);
+        uint32_t tamanio_respuesta = peticion->tamanio_a_leer;
+        t_buffer* respuesta = buffer_create(tamanio_respuesta + sizeof(uint32_t));
         buffer_add_string(respuesta,tamanio_respuesta, valor);
         enviar_buffer(socket, respuesta, g_logger);
         buffer_destroy(respuesta);
