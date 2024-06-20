@@ -4,5 +4,6 @@ paths config io
 ../entradasalida/io_generica.config
 
 INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/io_a.dummy
 
 WAR NEVER CHANGES...

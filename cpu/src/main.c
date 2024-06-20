@@ -176,7 +176,6 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             ejecutar_mov_in(pcb->PID,registro_datos, direccion_logica, diccionario);
             
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
             //(Registro Direccion, Registro Datos)
             char* registro_direccion = instruccion_separada[1];
@@ -187,14 +186,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
             //(Tamanio)
             int tamanio = atoi(instruccion_separada[1]);
 
             ejecutar_copy_string(tamanio, pcb->PID, diccionario);
 
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
