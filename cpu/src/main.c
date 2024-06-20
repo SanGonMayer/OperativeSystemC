@@ -71,19 +71,19 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-int check_interrupt(t_PCB* pcb, t_log* logger){
+t_interrupcion_dispatch* check_interrupt(t_PCB* pcb, t_log* logger){
     int hay_interrupcion = 0;
 
     while(queue_size(cola_interrupciones) > 0 && hay_interrupcion == 0){
         //Hacer mutex
         sem_wait(&mutex_cola_interrupciones);
-        uint32_t *pid = queue_pop(cola_interrupciones);
+        t_interrupcion_dispatch *interrupcion = queue_pop(cola_interrupciones);
         sem_post(&mutex_cola_interrupciones);
-        if(*pid == pcb->PID){
-            hay_interrupcion = 1;
+        if(interrupcion->pid == pcb->PID){
+            return interrupcion;
         }
     }
-    return hay_interrupcion;
+    return NULL;
 }
 
 void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
@@ -247,9 +247,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             enviar_buffer(socket_dispatch, buffer, logger);
         }
-        if(check_interrupt(pcb, logger) == 1){
+
+        t_interrupcion_dispatch* interrupcion = check_interrupt(pcb, logger);
+
+        if(interrupcion != NULL){
             log_info(g_logger, "Se detecto una interrupcion");
-            desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
+            desalojar_pcb(socket_dispatch, pcb, (int)interrupcion->motivo, logger, diccionario);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
@@ -305,9 +308,9 @@ void servidor_interrupt(){
         switch (cod_op)
         {
         case ENVIO_INTERRUPCION:
-            uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd);
+            t_interrupcion_dispatch* interrupcion = recibir_interrupcion(cliente_interrupt_fd);
             sem_wait(&mutex_cola_interrupciones);
-            queue_push(cola_interrupciones, &pidInterrupcion);
+            queue_push(cola_interrupciones, interrupcion);
             sem_post(&mutex_cola_interrupciones);
             break;
         case -1:

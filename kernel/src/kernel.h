@@ -71,7 +71,7 @@ void esperar_quantum(t_PCB* pcb);
 
 void recibir_pcb_desalojado(t_PCB* pcb);
 
-void enviar_interrupcion(int socket_interrupt, uint32_t* PID);
+void enviar_interrupcion(int socket_interrupt, uint32_t* PID,  uint32_t motivo);
 
 void planificador_VRR();
 

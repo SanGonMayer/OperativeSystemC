@@ -8,7 +8,7 @@ typedef enum
     ENVIO_PCB = 2,
     ENVIO_PID_PC = 3,
     ENVIO_PATH_INSTRUCCIONES = 4,
-    INTERRUPCION = 5,
+    INTERRUPCION_QUANTUM = 5,
     FINALIZACION = 6,
     IO_GEN_SLEEP = 7,
     ENVIO_INTERRUPCION = 8,
@@ -22,7 +22,8 @@ typedef enum
     IO_STDOUT_WRITE = 16,
     //estas son las dos señales que se mandan con el desalojo para el manejo de recursos
     WAIT = 17, 
-    SIGNAL = 18
+    SIGNAL = 18,
+    INTERRUPCION_KILL = 19
 } t_codigo_operacion;
 
 #endif
