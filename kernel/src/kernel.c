@@ -163,7 +163,7 @@ void esperar_quantum(t_PCB* pcb){
     log_info(g_logger, "Esperando quantum %d ms", pcb->quantum );
     usleep(pcb->quantum * 1000);
     if(g_exec != NULL && g_exec->PID == pcb->PID){
-    enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID);
+        enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID, INTERRUPCION_QUANTUM);
     }
 }
 
@@ -223,6 +223,8 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     }else{
         actualizar_pcb(pcb_ejecutando, pcb_recibido);
         free(pcb_recibido);
+
+        // Posible condicion de carrera
         g_exec = NULL;
     }
 
@@ -309,10 +311,16 @@ void atender_desalojo(t_desalojo* desalojo){
             finalizar_proceso(desalojo->pcb);
             return;
         }   
-        case INTERRUPCION: //CLOCK
+        case INTERRUPCION_QUANTUM: //CLOCK
         {
             liberar_cola_exec();
             enviar_proceso_a_ready(desalojo->pcb);
+            return;
+        }
+        case INTERRUPCION_KILL:
+        {
+            liberar_cola_exec();
+            finalizar_proceso(desalojo->pcb);
             return;
         }
         case IO_GEN_SLEEP:
@@ -572,10 +580,11 @@ void planificador_VRR(){
     }
 }
 
-void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
+void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
 
     t_buffer* buffer = buffer_create(sizeof(uint32_t));
     buffer_add_uint32(buffer, *PID);
+    buffer_add_uint32(buffer, motivo);
     
     t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
     enviar_paquete(paquete, socket_interrupt);
@@ -801,14 +810,18 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
         sem_post(&g_mutex_cola_auxiliar);
     }
 
-    pcb = g_exec;
+
+    if(g_exec != NULL && g_exec->PID == pid){
+        pcb = g_exec;
+    }
+    
     if(pcb != NULL){
         //TODO enviar interrupcion y sacarlo de exec
-        return pcb; 
+        return pcb;
     }
 
     //las io
-    pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
+    // pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
 
     //los recursos
     //pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);

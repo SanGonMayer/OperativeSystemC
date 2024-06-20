@@ -27,10 +27,17 @@ char* recibir_instruccion(int socket){
     return instruccion;
 }
 
-uint32_t recibir_interrupcion(int socket){
+t_interrupcion_dispatch* recibir_interrupcion(int socket){
     t_buffer* buffer = recibir_buffer(socket);
 
-    uint32_t interrupcion = buffer_read_uint32(buffer);
+    u_int32_t pid = buffer_read_uint32(buffer);
+    u_int32_t motivo = buffer_read_uint32(buffer);
+
+    t_interrupcion_dispatch* interrupcion = malloc(sizeof(t_interrupcion_dispatch));
+
+    interrupcion->pid = pid;
+    interrupcion->motivo = motivo;
+
     return interrupcion;
 }
 

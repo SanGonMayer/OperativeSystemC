@@ -25,6 +25,10 @@
 * @fn    etapa_fetch
 * @brief pide la instruccion a partir de una posicion de memoria, devuelve instruccion
 */
+typedef struct{
+    u_int32_t pid;
+    u_int32_t motivo;
+} t_interrupcion_dispatch; 
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
 
@@ -32,7 +36,7 @@ char* recibir_instruccion(int socket);
 
 char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
 
-uint32_t recibir_interrupcion(int socket);
+t_interrupcion_dispatch* recibir_interrupcion(int socket);
 
 void ejecutar_set(char* registro, int valor, t_PCB* pcb, t_dictionary* diccionario);
 
