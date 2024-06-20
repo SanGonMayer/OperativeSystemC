@@ -234,7 +234,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso)+ 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
@@ -245,7 +245,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso) + 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);

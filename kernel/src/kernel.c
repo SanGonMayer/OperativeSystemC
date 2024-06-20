@@ -233,21 +233,21 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
     
-    if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
+    // if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
         
-        //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
-        //desde la funcion ciclo de ejecucion
-        //al struct t_desalojo se le agrega el campo char* recurso para no romper la firma de la funcion atender_desalojo
-        t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
-        uint32_t length;
-        char *recurso_leido = buffer_read_string(buffer, &length);
-        desalojo->recurso = string_duplicate(recurso_leido);
-
-        buffer_destroy(buffer);
-        free(recurso_leido);
-    }
+    //     //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
+    //     //desde la funcion ciclo de ejecucion
+    //     //al struct t_desalojo se le agrega el campo char* recurso para no romper la firma de la funcion atender_desalojo
+    //     t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+    //     uint32_t length;
+    //     char *recurso_leido = buffer_read_string(buffer, &length);
+    //     desalojo->recurso = string_duplicate(recurso_leido);
+    //     log_info(g_logger, "Recibí en recibir_pcb_desalojado el Recurso: %s", desalojo->recurso);
+    //     buffer_destroy(buffer);
+    //     free(recurso_leido);
+    // }
     // Preguntar hilo desalojo
-    crear_hilo_test();
+    //crear_hilo_test();
 
     pthread_t* hilo_desalojo = malloc(sizeof(pthread_t));
     log_info(g_logger, "Creando hilo desalojo");
@@ -495,6 +495,15 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case SIGNAL:
         {
+
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char *recurso_leido = buffer_read_string(buffer, &length);
+            desalojo->recurso = string_duplicate(recurso_leido);
+            log_info(g_logger, "SIGNAL en atender desalojo del Recurso: %s", desalojo->recurso);
+            buffer_destroy(buffer);
+            free(recurso_leido);
+
             liberar_cola_exec();
             char * recurso_signal = string_duplicate(desalojo->recurso);
             manejar_recurso((int)SIGNAL, recurso_signal, desalojo->pcb);
@@ -502,6 +511,15 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case WAIT:
         {
+
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char *recurso_leido = buffer_read_string(buffer, length);
+            desalojo->recurso = recurso_leido;
+            log_info(g_logger, "WAIT en atender desalojo del Recurso: %s", desalojo->recurso);
+            buffer_destroy(buffer);
+            free(recurso_leido);
+
             liberar_cola_exec();
             char * recurso_wait = string_duplicate(desalojo->recurso);
             manejar_recurso((int)WAIT, recurso_wait, desalojo->pcb);
