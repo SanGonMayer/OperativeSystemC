@@ -26,8 +26,8 @@
 * @brief pide la instruccion a partir de una posicion de memoria, devuelve instruccion
 */
 typedef struct{
-    u_int32_t pid;
-    u_int32_t motivo;
+    uint32_t pid;
+    uint32_t motivo;
 } t_interrupcion_dispatch; 
 
 char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionario);
