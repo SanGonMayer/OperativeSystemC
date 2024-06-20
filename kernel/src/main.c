@@ -61,7 +61,7 @@ void procesar_cliente(int* fd){
 
         if(result){
             log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
-            if(algoritmo_planificacion == "VRR"){
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(instruccion->pcb->readyplus == 1){
                     agregar_a_cola_auxiliar(instruccion->pcb);
                     sem_post(&g_hay_elementos_para_ejecutar);
