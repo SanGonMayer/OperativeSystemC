@@ -24,7 +24,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
     }
     
     char* texto = stdin_leer_texto();
-    if(string_length(texto)<=instruccion->tamanio){
+    
+    if(string_length(texto)>instruccion->tamanio){
         log_error(g_logger, "Texto ingresado es mayor al tamanio permitido");
         responder_error(fd, ERROR_TAMANIO_PALABRA);
         return;

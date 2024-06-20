@@ -347,7 +347,12 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 finalizar_proceso(desalojo->pcb);
             }
-           
+
+            buffer_destroy(buffer);
+            free(length);
+            free(nombreInterfaz);
+            free(instruccion);
+
             break;
             
         case IO_STDIN_READ:
@@ -359,24 +364,24 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer_desalojo = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer);
-            int tamanio = buffer_read_int(buffer);
-            uint32_t* length2 = malloc(sizeof(uint32_t));
-            char* nombreInterfaz2 = buffer_read_string(buffer, length);
+            int direccion_fisica = buffer_read_int(buffer_desalojo);
+            int tamanio = buffer_read_int(buffer_desalojo);
+            uint32_t* length1 = malloc(sizeof(uint32_t));
+            char* nombreInterfaz1 = buffer_read_string(buffer_desalojo, length1);
             
-            char* instruccion2 = string_new();
+            char* instruccion1 = string_new();
             //instruccion que deba entender
-            instruccion = "IO_STDIN_READ";
+            instruccion1 = "IO_STDIN_READ";
 
             //TODO abstraer a una funcion, es todo igual menos el paquete t_instruccion_io
 
             sem_wait(&g_mutex_acceso_interfaces);
 
-            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
+            if(dictionary_has_key(g_interfaces, nombreInterfaz1)){
 
-                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
+                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz1);
 
                 sem_post(&g_mutex_acceso_interfaces);
 
@@ -386,7 +391,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion1, NULL, NULL, tamanio, NULL, direccion_fisica);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
@@ -402,6 +407,11 @@ void atender_desalojo(t_desalojo* desalojo){
                 sem_post(&g_mutex_acceso_interfaces);
                 finalizar_proceso(desalojo->pcb);
             }
+
+            buffer_destroy(buffer_desalojo);
+            free(length1);
+            free(nombreInterfaz1);
+
             break;
 
         case IO_STDOUT_WRITE:
@@ -413,14 +423,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer1 = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica1 = buffer_read_int(buffer);
-            int tamanio1 = buffer_read_int(buffer);
-            uint32_t* length1 = malloc(sizeof(uint32_t));
-            char* nombreInterfaz1 = buffer_read_string(buffer, length);
+            int direccion_fisica1 = buffer_read_int(buffer2);
+            int tamanio1 = buffer_read_int(buffer2);
+            //uint32_t* length1 = malloc(sizeof(uint32_t));
+            nombreInterfaz = buffer_read_string(buffer2, length);
             
-            char* instruccion1 = string_new();
+            //char* instruccion1 = string_new();
             //instruccion que deba entender
             instruccion = "IO_STDOUT_WRITE";
 

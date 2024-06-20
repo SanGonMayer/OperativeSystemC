@@ -82,24 +82,6 @@ int main(int argc, char* argv[]) {
 
     inicializar_memoria(config->tam_memoria, config->tam_pagina);
 
-    inicializar_tabla_paginas(1);
-
-    ajustar_tamanio_proceso(1, 86);
-
-    ajustar_tamanio_proceso(1, 32);
-
-    inicializar_tabla_paginas(2);
-
-    ajustar_tamanio_proceso(2, 240);
-
-    ajustar_tamanio_proceso(1, 33);
-
-    escribir_en_memoria(1, 5, "hola");
-
-    char* buffer = malloc(5);
-    leer_de_memoria(1, 5, buffer);
-
-
     int socket_escucha = iniciar_servidor(config->puerto_escucha, g_logger, "CLIENTE");
     
     atender_clientes(socket_escucha, g_logger, (void*)&procesar_cliente);
