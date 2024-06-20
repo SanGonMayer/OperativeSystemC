@@ -50,7 +50,9 @@ void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
     uint32_t* length = malloc(sizeof(uint32_t));
 
     char *texto_leido = buffer_read_string(buffer_lectura, length);
-    
+
+    string_append(&texto_leido, "\0");
+
     log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
 
     buffer_destroy(buffer_lectura);

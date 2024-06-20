@@ -184,6 +184,10 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             uint32_t valor = (uint32_t)dictionary_get(diccionario, registro_datos);
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             
+            if(direccion_logica == 14){
+                log_info(g_logger, "la 14");
+            }
+
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
@@ -279,9 +283,11 @@ void servidor_dispatch(int* socket_memoria){
                 t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
                 log_info(g_logger, "Recibí el PCB con PID %d", pcb->PID);
                 log_info(g_logger, "Con un ax = %d", pcb->registrosCPU.ax);
+                log_info(g_logger, "Con un dx = %d", pcb->registrosCPU.dx);
                 t_dictionary* diccionario = dictionary_create();
                 registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
                 log_info(g_logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
+                log_info(g_logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "DX"));
                 ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, g_logger, diccionario);
                 
                 dictionary_destroy(diccionario);
