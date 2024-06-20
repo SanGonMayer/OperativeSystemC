@@ -185,7 +185,7 @@ void procesar_acceso_espacio_usuario(int socket){
     t_peticion_acceso_usuario* peticion = deserializar_peticion_acceso_usuario(buffer);
 
     // TODO Consultar si este log puede no tener el PID ya se podria dar que venga de una io
-    // PID: <PID> - Accion: <LEER / ESCRIBIR> - Direccion fisica: <DIRECCION_FISICA>” - Tamaño <TAMAÑO A LEER / ESCRIBIR>
+    // PID: <PID> - Accion: <LEER / ESCRIBIR> - Direccion fisica: <DIRECCION_FISICA> - Tamaño <TAMAÑO A LEER / ESCRIBIR>
     // log_info(g_logger, "PID: %d - Accion: %s - Direccion fisica: %d - Tamaño: %d", peticion->pid, peticion->tipo_acceso == LECTURA ? "LEER" : "ESCRIBIR", peticion->direccion_fisica, peticion->tamanio_a_leer);
 
     if(peticion->tipo_acceso == LECTURA){
@@ -200,7 +200,6 @@ void procesar_acceso_espacio_usuario(int socket){
 
     if(peticion->tipo_acceso == ESCRITURA){
         escribir_en_memoria(peticion->direccion_fisica, strlen(peticion->string), peticion->string);
-
         responder_ok(socket);
     }
 

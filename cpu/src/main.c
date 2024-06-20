@@ -146,7 +146,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_STDIN_READ %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
+            log_info(logger, "Se ejecuto IO_STDIN_READ %s %s %s", dispositivo, registro_direccion, registro_tamanio);
 
             return;
         }

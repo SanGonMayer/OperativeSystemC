@@ -369,7 +369,12 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 finalizar_proceso(desalojo->pcb);
             }
-           
+
+            buffer_destroy(buffer);
+            free(length);
+            free(nombreInterfaz);
+            free(instruccion);
+
             break;
         }
         case IO_STDIN_READ:
@@ -425,6 +430,11 @@ void atender_desalojo(t_desalojo* desalojo){
                 sem_post(&g_mutex_acceso_interfaces);
                 finalizar_proceso(desalojo->pcb);
             }
+
+            buffer_destroy(buffer);
+            free(length);
+            free(nombreInterfaz);
+
             break;
         }
         case IO_STDOUT_WRITE:

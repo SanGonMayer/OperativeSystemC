@@ -57,7 +57,7 @@ void procesar_cliente(int* fd){
 
         bool result = recibir_ok(interfaz_conectada->fd);
 
-        eliminar_de_lista_blocked_gral(instruccion->pcb->PID);
+        //eliminar_de_lista_blocked_gral(instruccion->pcb->PID);
 
         if(result){
             log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
