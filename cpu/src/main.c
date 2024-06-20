@@ -164,7 +164,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
+            log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %s %s", dispositivo, registro_direccion, registro_tamanio);
             buffer_destroy(buffer);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
