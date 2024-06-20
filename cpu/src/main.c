@@ -139,10 +139,10 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             desalojar_pcb(socket_dispatch,pcb, (int)IO_STDIN_READ, logger, diccionario);
             // Valores de direcciones
-            int direccion_logica = dictionary_get(diccionario, registro_direccion);
-            int tamanio = dictionary_get(diccionario, registro_tamanio);
+            int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
+            int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, registro_direccion);
+            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
@@ -157,10 +157,10 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             desalojar_pcb(socket_dispatch,pcb, (int)IO_STDOUT_WRITE, logger, diccionario);
             // Valores de direcciones
-            int direccion_logica = dictionary_get(diccionario, registro_direccion);
-            int tamanio = dictionary_get(diccionario, registro_tamanio);
+            int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
+            int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, registro_direccion);
+            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
@@ -172,7 +172,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             char* registro_datos = instruccion_separada[1];
             char* registro_direccion = instruccion_separada[2];
 
-            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             
             ejecutar_mov_in(pcb->PID,registro_datos, direccion_logica, diccionario);
             
@@ -182,8 +182,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             char* registro_direccion = instruccion_separada[1];
             char* registro_datos = instruccion_separada[2];
 
-            uint32_t valor = dictionary_get(diccionario, registro_datos);
-            int direccion_logica = dictionary_get(diccionario, registro_direccion);
+            uint32_t valor = (uint32_t)dictionary_get(diccionario, registro_datos);
+            int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
