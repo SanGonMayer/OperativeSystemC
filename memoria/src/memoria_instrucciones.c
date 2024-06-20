@@ -61,7 +61,7 @@ char* leer_instruccion(uint32_t pid, uint32_t* pc){
         instruccion = instrucciones[*pc];
     }
     free(pid_string);
-    return instruccion;
+    return string_duplicate(instruccion);
 }
 
 void liberar_instrucciones(uint32_t pid){
