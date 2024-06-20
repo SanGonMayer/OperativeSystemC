@@ -24,8 +24,8 @@ void procesar_instruccion_generica(int fd, t_instruccion_io* instruccion){
 
     int tiempo_sleep = instruccion->unidades_trabajo * g_config_io->tiempo_unidad_trabajo;
 
-    log_info(g_logger, "Durmiendo %d segundos", tiempo_sleep);
-    sleep(tiempo_sleep);
+    log_info(g_logger, "Durmiendo %d ms", tiempo_sleep);
+    usleep(tiempo_sleep * 1000);
 
     log_info(g_logger, "Interfaz termino de procesar instruccion generica");
     responder_ok(fd);

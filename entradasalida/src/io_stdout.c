@@ -3,14 +3,13 @@
 #include "utils/codigo_operacion.h"
 #include "utils/peticiones_memoria.h"
 #include "utils/client.h"
-#include "utils/server.h"
 #include <commons/string.h>
 #include <readline/readline.h>
 
 void leer_de_memoria_stdout(int tamanio, int direccion_fisica);
 bool stdout_soporta_instruccion(char* instruccion);
 
-char instruccion_soportada_stdout[14] = "IO_STDOUT_WRITE";
+char instruccion_soportada_stdout[15] = "IO_STDOUT_WRITE";
 
 void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     
@@ -24,7 +23,7 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     int tamanio = instruccion->tamanio;
     char *valor_a_mostrar = malloc(tamanio);
     
-    void leer_de_memoria_stdout( tamanio, direccion);
+    leer_de_memoria_stdout( tamanio, direccion);
 
     printf("%s\n", valor_a_mostrar); //esto es el putero archivo
     

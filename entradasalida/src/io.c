@@ -4,7 +4,6 @@
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
 #include "utils/instrucciones_io.h"
-#include "utils/procesos.h"
 
 t_instruccion_io* recibir_instruccion_io(int conexion_kernel){
 

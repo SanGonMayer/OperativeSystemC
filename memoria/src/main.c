@@ -12,7 +12,7 @@ uint32_t* posicionFinalEscrita = 0;
 
 void retardo_respuesta_memoria(){
     int retardo_respuesta = get_config_memoria()->retardo_respuesta;
-    sleep(retardo_respuesta / 1000);
+    usleep(retardo_respuesta * 1000);
 }
 
 void procesar_cliente(int* socket){
@@ -26,7 +26,6 @@ void procesar_cliente(int* socket){
         switch (cod_op) 
         {
         case ENVIO_PATH_INSTRUCCIONES: //Recibir contexto de kernel
-            retardo_respuesta_memoria();
             procesar_carga_instrucciones(*socket);
             break;
 

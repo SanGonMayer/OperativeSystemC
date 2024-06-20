@@ -15,11 +15,11 @@ t_config* config;
 
 void procesarParametros(int argc, char* argv[], char** param1, char** param2) {
     if (argc > 1) {
-        *param1 = argv[1];
+        *param1 = string_duplicate(argv[1]);
     }
 
     if (argc >= 2) {
-        *param2 = argv[2];
+        *param2 = string_duplicate(argv[2]);
     }
 }
 
@@ -63,6 +63,9 @@ int main(int argc, char* argv[]){
         1,
         LOG_LEVEL_INFO);
     
+    log_info(g_logger, "Config path: %s", config_path);
+    log_info(g_logger, "Nombre: %s", nombre);
+
     config = config_create(config_path);
 
     if(config == NULL){
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]){
 
     void* estrategia_procesar_instruccion = NULL;
 
-    if(string_equals_ignore_case(tipo, "GEN")){
+    if(string_equals_ignore_case(tipo, "GENERICA")){
         estrategia_procesar_instruccion = &procesar_instruccion_generica;
     }
 

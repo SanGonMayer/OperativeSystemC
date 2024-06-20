@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "cola_exit.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
@@ -13,6 +14,9 @@
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
 
+void manejar_recurso(int, char*, t_PCB*);
+void liberar_cola_exec();
+void crear_hilo_test();
 
 bool es_parametro_valido(char* parametro){
 
@@ -73,11 +77,10 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 }
 
 void iniciar_proceso(char* path){
-    sem_wait(&g_notif_largo_plazo);
-    sem_post(&g_notif_largo_plazo); 
+    // sem_wait(&g_notif_largo_plazo);
+    // sem_post(&g_notif_largo_plazo); 
 
     t_PCB* pcb = crear_PCB();
-    log_info(g_logger,"Creando PCB para el proceso %d", g_contador_pid);
     
     sem_wait(&mutex_contador_pid);
     g_contador_pid++;
@@ -93,7 +96,6 @@ void iniciar_proceso(char* path){
     strcpy(pcb->path, path);
     
     sem_wait(&g_mutex_cola_new);
-    log_info(g_logger, "Encolando proceso %d en NEW, dentro de mutex", pcb->PID);
     queue_push(g_cola_new, pcb);
     sem_post(&g_mutex_cola_new);
 
@@ -101,9 +103,6 @@ void iniciar_proceso(char* path){
     sem_wait(&g_mutex_lista_procesos_gral);
     list_add(g_lista_procesos_gral, pcb);
     sem_post(&g_mutex_lista_procesos_gral);
-
-    log_info(g_logger, "Cantidad de procesos en NEW: %d", queue_size(g_cola_new));
-    log_info(g_logger, "Proceso %d encolado en NEW", pcb->PID);
 
     sem_wait(&g_tope_multiprogramacion);
     preparar_proceso_a_ready();
@@ -123,8 +122,8 @@ void preparar_proceso_a_ready(){
 }
 
 void enviar_proceso_a_ready(t_PCB* pcb){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
     
     pcb->quantum = g_quantum;
 
@@ -140,8 +139,6 @@ void enviar_proceso_a_ready(t_PCB* pcb){
 
     pcb-> estado = READY;
 
-    log_info(g_logger, "Cantidad de procesos en READY: %d", queue_size(g_cola_ready));
-    log_info(g_logger, "Proceso %d encolado en READY", pcb->PID);
 }
 
 
@@ -163,16 +160,19 @@ void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
 }
 
 void esperar_quantum(t_PCB* pcb){
-    sleep(pcb->quantum);
+    log_info(g_logger, "Esperando quantum %d ms", pcb->quantum );
+    usleep(pcb->quantum * 1000);
     if(g_exec != NULL && g_exec->PID == pcb->PID){
-    enviar_interrupcion(g_conexion_cpu_interrupt, pcb->PID);
+    enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID);
     }
 }
 
 void ejecutar_cpu_RR(t_PCB* pcb){
 
     int error;
+    log_info(g_logger, "Antes semaforo exec");
     sem_wait(&g_disponible_exec);
+    log_info(g_logger, "Despues semaforo exec");
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     g_exec = pcb;
 
@@ -212,28 +212,27 @@ void ejecutar_cpu_VRR(t_PCB* pcb){
 }
 
 void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
 
     t_PCB* pcb_recibido = recibir_pcb(g_conexion_cpu_dispatch);
     int motivo;
     if (pcb_recibido == NULL){
-        log_error(g_logger, "Error al recibir PCB de CPU");
+        log_error(g_logger, "Error al recibir DESALOJO");
         free(pcb_recibido);
     }else{
-        log_info(g_logger, "PCB recibido de CPU");
         actualizar_pcb(pcb_ejecutando, pcb_recibido);
         free(pcb_recibido);
         g_exec = NULL;
     }
 
     recv(g_conexion_cpu_dispatch, &motivo, sizeof(int), MSG_WAITALL);
-    log_info(g_logger, "Motivo de finalizacion: %d", motivo);
+    log_info(g_logger, "PID: %d - Motivo de desalojo: %d", pcb_ejecutando->PID ,motivo);
 
     t_desalojo* desalojo = malloc(sizeof(t_desalojo));
     desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
-
+    
     if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
         
         //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
@@ -247,16 +246,32 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
         buffer_destroy(buffer);
         free(recurso_leido);
     }
+    // Preguntar hilo desalojo
+    crear_hilo_test();
 
-    pthread_t hilo_desalojo;
-    pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
-    pthread_detach(hilo_desalojo);
+    pthread_t* hilo_desalojo = malloc(sizeof(pthread_t));
+    log_info(g_logger, "Creando hilo desalojo");
+    
+    int result = pthread_create(hilo_desalojo, NULL, (void*)&atender_desalojo, desalojo);
+    pthread_detach(*hilo_desalojo);
+
+    log_info(g_logger, "Hilo creado con resultado %d y numero %lu", result, *hilo_desalojo);
  
 }
 
+void test(){
+    sleep(60);
+}
+
+void crear_hilo_test(){
+    pthread_t* hilo_test = malloc(sizeof(pthread_t));
+    int result = pthread_create(hilo_test, NULL, (void*)&test, NULL);
+    pthread_detach(*hilo_test);
+}
+
 void planificador_exit(){
-    sem_wait(&g_notif_largo_plazo);
-    sem_post(&g_notif_largo_plazo);  
+    // sem_wait(&g_notif_largo_plazo);
+    // sem_post(&g_notif_largo_plazo);  
 
     while(1){
         sem_wait(&g_hay_elementos_en_exit);
@@ -270,33 +285,38 @@ void planificador_exit(){
 }
 
 void finalizar_proceso(t_PCB* pcb){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
     
     pcb->estado = EXIT;
     log_info(g_logger, "Proceso %d finalizado", pcb->PID);
-    sem_wait(&g_mutex_cola_exit);
-    queue_push(g_cola_exit, pcb);
-    sem_post(&g_mutex_cola_exit);
-    sem_post(&g_hay_elementos_en_exit);
+    
+    agregar_a_cola_exit(pcb);
+    
+    log_info(g_logger, "Finaliza el proceso %d - Motivo: %s", pcb->PID, "SUCCESS");
     sem_post(&g_tope_multiprogramacion);
 }
 
 void atender_desalojo(t_desalojo* desalojo){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
+    log_info(g_logger, "Atendiendo desalojo de proceso %d", desalojo->pcb->PID);
     desalojo->pcb->estado = BLOCKED;
     switch(desalojo->motivo){
         case FINALIZACION:
+        {
+            liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
-            break;
-
+            return;
+        }   
         case INTERRUPCION: //CLOCK
+        {
+            liberar_cola_exec();
             enviar_proceso_a_ready(desalojo->pcb);
-            break;
-
+            return;
+        }
         case IO_GEN_SLEEP:
-            //Abstraer a un case IO
+        {   //Abstraer a un case IO
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(g_ms_transcurridos < desalojo->pcb->quantum){
                     sem_wait(&g_tiempo_calculado);
@@ -311,6 +331,7 @@ void atender_desalojo(t_desalojo* desalojo){
             //Nombre
             char* nombreInterfaz = buffer_read_string(buffer, length);
             char* instruccion = string_new();
+            liberar_cola_exec();
             //instruccion que deba entender
             instruccion = "IO_GEN_SLEEP";
 
@@ -340,6 +361,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
+                
                 //agrega a la cola de bloquedos y ponerle estado bloqueado al pcb
 
             }else{
@@ -354,8 +376,9 @@ void atender_desalojo(t_desalojo* desalojo){
             free(instruccion);
 
             break;
-            
+        }
         case IO_STDIN_READ:
+        {   
             //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(g_ms_transcurridos < desalojo->pcb->quantum){
@@ -364,24 +387,24 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer_desalojo = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer_desalojo);
-            int tamanio = buffer_read_int(buffer_desalojo);
-            uint32_t* length1 = malloc(sizeof(uint32_t));
-            char* nombreInterfaz1 = buffer_read_string(buffer_desalojo, length1);
-            
-            char* instruccion1 = string_new();
+            int direccion_fisica = buffer_read_int(buffer);
+            int tamanio = buffer_read_int(buffer);
+            uint32_t* length = malloc(sizeof(uint32_t));
+            char* nombreInterfaz = buffer_read_string(buffer, length);
+            liberar_cola_exec();
+            char* instruccion = string_new();
             //instruccion que deba entender
-            instruccion1 = "IO_STDIN_READ";
+            instruccion = "IO_STDIN_READ";
 
             //TODO abstraer a una funcion, es todo igual menos el paquete t_instruccion_io
 
             sem_wait(&g_mutex_acceso_interfaces);
 
-            if(dictionary_has_key(g_interfaces, nombreInterfaz1)){
+            if(dictionary_has_key(g_interfaces, nombreInterfaz)){
 
-                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz1);
+                t_interfaz_conectada* interfaz = dictionary_get(g_interfaces, nombreInterfaz);
 
                 sem_post(&g_mutex_acceso_interfaces);
 
@@ -391,7 +414,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion1, NULL, NULL, tamanio, NULL, direccion_fisica);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
@@ -408,14 +431,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 finalizar_proceso(desalojo->pcb);
             }
 
-            buffer_destroy(buffer_desalojo);
-            free(length1);
-            free(nombreInterfaz1);
+            buffer_destroy(buffer);
+            free(length);
+            free(nombreInterfaz);
 
             break;
-
+        }
         case IO_STDOUT_WRITE:
-            //TODO Abstraer a un case IO 
+        {   //TODO Abstraer a un case IO 
             if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(g_ms_transcurridos < desalojo->pcb->quantum){
                 sem_wait(&g_tiempo_calculado);
@@ -423,14 +446,14 @@ void atender_desalojo(t_desalojo* desalojo){
                 desalojo->pcb->readyplus = 1;       
                 }
             }
-            t_buffer* buffer2 = recibir_buffer(g_conexion_cpu_dispatch);
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica1 = buffer_read_int(buffer2);
-            int tamanio1 = buffer_read_int(buffer2);
-            //uint32_t* length1 = malloc(sizeof(uint32_t));
-            nombreInterfaz = buffer_read_string(buffer2, length);
-            
-            //char* instruccion1 = string_new();
+            int direccion_fisica = buffer_read_int(buffer);
+            int tamanio = buffer_read_int(buffer);
+            uint32_t* length = malloc(sizeof(uint32_t));
+            char* nombreInterfaz = buffer_read_string(buffer, length);
+            liberar_cola_exec();
+            char* instruccion = string_new();
             //instruccion que deba entender
             instruccion = "IO_STDOUT_WRITE";
 
@@ -469,26 +492,39 @@ void atender_desalojo(t_desalojo* desalojo){
                 finalizar_proceso(desalojo->pcb);
             }
             break;
-
+        }
         case SIGNAL:
+        {
+            liberar_cola_exec();
             char * recurso_signal = string_duplicate(desalojo->recurso);
             manejar_recurso((int)SIGNAL, recurso_signal, desalojo->pcb);
             break;
-
+        }
         case WAIT:
+        {
+            liberar_cola_exec();
             char * recurso_wait = string_duplicate(desalojo->recurso);
             manejar_recurso((int)WAIT, recurso_wait, desalojo->pcb);
             break;
-
-    free(desalojo);
+        }
+        default:
+        {
+            log_error(g_logger, "Motivo de desalojo no reconocido");
+            liberar_cola_exec();
+            finalizar_proceso(desalojo->pcb);
+            break;
+        }
     }
-
-
-    sem_post(&g_disponible_exec);
 }
+
+void liberar_cola_exec(){
+    sem_post(&g_disponible_exec);
+    log_info(g_logger, "DISPONIBLE EXEC");
+}
+
 void planificador_fifo(){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
     
     while(1){
         sem_wait(&g_hay_elementos_en_ready);
@@ -501,13 +537,13 @@ void planificador_fifo(){
 }
 
 void planificador_RR(){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
     
-    while(1){  
+    while(1){
     sem_wait(&g_hay_elementos_en_ready);
-    log_info(g_logger, "Planificador RR");
     sem_wait(&g_mutex_cola_ready);
+    log_info(g_logger, "RR - Hay procesos en ready - %d", queue_size(g_cola_ready));
     t_PCB* pcb = queue_pop(g_cola_ready);
     sem_post(&g_mutex_cola_ready);
     ejecutar_cpu_RR(pcb);
@@ -515,8 +551,8 @@ void planificador_RR(){
 }
 
 void planificador_VRR(){
-    sem_wait(&g_notif_corto_plazo);
-    sem_post(&g_notif_corto_plazo);
+    // sem_wait(&g_notif_corto_plazo);
+    // sem_post(&g_notif_corto_plazo);
 
     while(1){
         sem_wait(&g_hay_elementos_para_ejecutar);
@@ -567,7 +603,7 @@ void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
     if (dictionary_has_key(g_diccionario_recursos, nombre_recurso))
     {
         t_recurso *recurso = dictionary_remove(g_diccionario_recursos, nombre_recurso);
-        int instancias_int = atoi(recurso->instancias);
+        int instancias_int = recurso->instancias;
 
         switch (operacion)
         {
@@ -575,7 +611,7 @@ void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
                 
                 if(instancias_int > 0){
                     instancias_int--;
-                    recurso->instancias = atoi(instancias_int);
+                    recurso->instancias = instancias_int;
                     dictionary_put(g_diccionario_recursos, nombre_recurso, recurso );   
                 }
                 else{
@@ -628,7 +664,7 @@ void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
 void eliminar_de_lista_blocked_gral(u_int32_t pid){
       
     sem_wait(&g_lista_blocked_gral);
-    if (!list_remove_element(g_lista_blocked_gral, pid));
+    if (!list_remove_element(g_lista_blocked_gral, &pid));
         printf("No se pudo eliminar el PID %d de la lista de bloqueados generales\n", pid);
     sem_post(&g_lista_blocked_gral);
 }

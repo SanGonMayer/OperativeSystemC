@@ -1,3 +1,4 @@
+#include "cola_exit.h"
 #include "consola_interactiva.h"
 #include "global_kernel.h"
 #include "kernel.h"
@@ -112,8 +113,10 @@ int main(void){
     sem_init(&g_mutex_cola_ready, 0,1);
     cola_exec = queue_create(); // No se usa
     sem_init(&g_disponible_exec, 0, 1);
-    g_cola_exit = queue_create();
-    sem_init(&g_mutex_cola_exit, 0, 1); 
+
+    init_cola_exit();
+    // g_cola_exit = queue_create();
+    // sem_init(&g_mutex_cola_exit, 0, 1); 
 
     g_cola_auxiliar = queue_create();
     sem_init(&g_mutex_cola_auxiliar, 0, 1);
@@ -156,9 +159,11 @@ int main(void){
     
     //PLANIFICACION
     //Crear Hilo para realizar la ejecucion, que sea bloqueante para esperar respuesta. 
-    pthread_t hilo_exit;
-    sem_init(&g_hay_elementos_en_exit, 0, 0);
-    hilo_exit = pthread_create(&hilo_exit, NULL, (void*)&planificador_exit, NULL);
+    // pthread_t hilo_exit;
+    // sem_init(&g_hay_elementos_en_exit, 0, 0);
+    // hilo_exit = pthread_create(&hilo_exit, NULL, (void*)&planificador_exit, NULL);
+
+    crear_hilo_cola_exit();
     
     pthread_t hilo_planificador;
     sem_init(&g_hay_elementos_en_ready, 0, 0);
