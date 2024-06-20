@@ -47,9 +47,9 @@ void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
 
     t_buffer* buffer_lectura = recibir_buffer(g_socket_memoria);
     
-    uint32_t length;
+    uint32_t* length = malloc(sizeof(uint32_t));
 
-    char *texto_leido = buffer_read_string(buffer_lectura, &length);
+    char *texto_leido = buffer_read_string(buffer_lectura, length);
     
     log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
 
