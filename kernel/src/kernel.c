@@ -330,10 +330,9 @@ void atender_desalojo(t_desalojo* desalojo){
             uint32_t* length = malloc(sizeof(uint32_t));
             //Nombre
             char* nombreInterfaz = buffer_read_string(buffer, length);
-            char* instruccion = string_new();
+            char instruccion[] = "IO_GEN_SLEEP";
             liberar_cola_exec();
             //instruccion que deba entender
-            instruccion = "IO_GEN_SLEEP";
 
             sem_wait(&g_mutex_acceso_interfaces);
 
@@ -355,10 +354,12 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->instruccion = instruccion_io;
                 queue_push(interfaz->cola, item);
 
+                /*
                 sem_wait(&g_lista_blocked_gral);
                 list_add(g_lista_blocked_gral, item->pcb);
                 sem_post(&g_lista_blocked_gral);
-
+                */
+               
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
                 
@@ -373,7 +374,6 @@ void atender_desalojo(t_desalojo* desalojo){
             buffer_destroy(buffer);
             free(length);
             free(nombreInterfaz);
-            free(instruccion);
 
             break;
         }
