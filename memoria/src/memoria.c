@@ -146,6 +146,8 @@ void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
 void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
     memcpy(direccion_fisica_real, buffer, tamanio);
+    log_info(g_logger, "Escribiendo en memoria en la dirección %d", direccion_fisica);
+    log_info(g_logger, "Contenido: %s", (char*) buffer);
 }
 
 

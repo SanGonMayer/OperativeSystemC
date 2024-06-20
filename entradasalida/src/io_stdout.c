@@ -53,7 +53,7 @@ void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
     
     log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
 
-    buffer_destroy(buffer);
+    buffer_destroy(buffer_lectura);
     
 }
 

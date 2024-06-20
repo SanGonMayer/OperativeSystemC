@@ -142,7 +142,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
+            int direccion_fisica = traducir_a_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
@@ -160,7 +160,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
+            int direccion_fisica = traducir_a_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
