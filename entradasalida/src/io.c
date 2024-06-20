@@ -53,11 +53,15 @@ int iniciar_conexion_kernel(char* tipo_interfaz, char* nombre_interfaz){
 
 int iniciar_conexion_memoria(){
 
-    return crear_conexion(
+    int conexion = crear_conexion(
     g_config_io->ip_memoria,
     g_config_io->puerto_memoria,
     "MEMORIA",
     g_logger);
+
+    handshake_cliente(conexion, g_logger);
+
+    return conexion;
 }
 
 
