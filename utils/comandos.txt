@@ -4,6 +4,27 @@ paths config io
 ../entradasalida/io_generica.config
 
 INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
-INICIAR_PROCESO ../memoria/scripts_memoria/io_a.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/io_b.dummy
+
+IO
+TECLADO
+MONITOR
+GENERICA
+
+EJECUTAR_SCRIPT ./scripts_kernel/PRUEBA_IO
 
 WAR NEVER CHANGES...
+
+Sistemas Operativos 2c2023
+
+Iniciar los módulos.
+Ejecutar los siguientes comandos en la consola del Kernel
+
+Esperar que los procesos IO_A e IO_C estén bloqueados esperando a la interfaz TECLADO
+Ingresar para IO_A el texto:  “WAR NEVER CHANGES...” (sin las comillas)
+Ingresar para IO_C el texto: “Sistemas Operativos 2c2023” (sin las comillas)
+Esperar a que finalicen 3 procesos.
+
+WAR, WAR NEVER CHANGES...
+
+

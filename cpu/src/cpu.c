@@ -238,6 +238,7 @@ void registros_cpu_dictionary(t_registrosCPU registros, t_dictionary* dictionary
     dictionary_put(dictionary, "AX", (void*)(registros.ax));
     dictionary_put(dictionary, "BX", (void*)(registros.bx));
     dictionary_put(dictionary, "CX", (void*)(registros.cx));
+    dictionary_put(dictionary, "DX", (void*)(registros.dx));
     dictionary_put(dictionary, "DI", (void*)(registros.di));
     dictionary_put(dictionary, "SI", (void*)(registros.si));
     dictionary_put(dictionary, "PC", (void*)(registros.pc));
@@ -253,6 +254,7 @@ t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
     registros.ax = (uint8_t)dictionary_get(dictionary, "AX");
     registros.bx = (uint8_t)dictionary_get(dictionary, "BX");
     registros.cx = (uint8_t)dictionary_get(dictionary, "CX");
+    registros.dx = (uint8_t)dictionary_get(dictionary, "DX");
     registros.di = (uint32_t)dictionary_get(dictionary, "DI");
     registros.si = (uint32_t)dictionary_get(dictionary, "SI");
     registros.pc = (uint32_t)dictionary_get(dictionary, "PC");

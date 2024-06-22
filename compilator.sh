@@ -16,7 +16,7 @@ sleep 2
 x-terminal-emulator -e "bash -c 'cd kernel && make memcheck; exec bash'" &
 
 # Esperar unos segundos para dar tiempo a que se abra la tercera terminal
-sleep 2
+sleep 3
 
 # (Parece que hay un duplicado, eliminé la segunda repetición para la carpeta 'io')
 # Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo

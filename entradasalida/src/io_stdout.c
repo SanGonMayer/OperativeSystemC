@@ -21,13 +21,9 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     
     int direccion = instruccion->puntero_archivo;
     int tamanio = instruccion->tamanio;
-    char *valor_a_mostrar = malloc(tamanio);
     
     leer_de_memoria_stdout(tamanio, direccion);
-
-    printf("%s\n", valor_a_mostrar); //esto es el putero archivo
     
-    free(valor_a_mostrar);
     responder_ok(fd);
 }
 
@@ -47,13 +43,15 @@ void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
 
     t_buffer* buffer_lectura = recibir_buffer(g_socket_memoria);
     
-    uint32_t* length = malloc(sizeof(uint32_t));
+    uint32_t length = 0;
 
-    char *texto_leido = buffer_read_string(buffer_lectura, length);
-    
+    char *texto_leido = buffer_read_string(buffer_lectura, &length);
+
+    texto_leido[length] = '\0';
+
     log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
 
-    buffer_destroy(buffer);
+    buffer_destroy(buffer_lectura);
     
 }
 
