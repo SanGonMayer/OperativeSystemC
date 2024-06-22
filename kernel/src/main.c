@@ -2,10 +2,12 @@
 #include "consola_interactiva.h"
 #include "global_kernel.h"
 #include "kernel.h"
+#include "recursos.h"
 #include "utils/buffer.h"
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
 #include <commons/collections/dictionary.h>
+#include <commons/collections/queue.h>
 #include <commons/string.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -46,12 +48,24 @@ void procesar_cliente(int* fd){
     };
     
     sem_init(&interfaz_conectada->semaforo, 0, 0);
+    sem_init(&interfaz_conectada->mutex, 0, 1);
+    
 
     dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
 
     while(1){
         sem_wait(&interfaz_conectada->semaforo);
+
+        
+        sem_wait(&interfaz_conectada->mutex);
+        if(queue_is_empty(interfaz_conectada->cola)){
+            sem_post(&interfaz_conectada->mutex);
+            continue;
+        }
         t_parametro_cola_interfaz* instruccion = queue_pop(interfaz_conectada->cola);
+        sem_post(&interfaz_conectada->mutex);
+
+        
         t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
         enviar_buffer(interfaz_conectada->fd, buffer, g_logger);
 
@@ -61,7 +75,7 @@ void procesar_cliente(int* fd){
 
         if(result){
             log_info(g_logger, "Se ejecuto correctamente la instrucción enviada a la interfaz %s", interfaz->nombre);
-            if(algoritmo_planificacion == "VRR"){
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
                 if(instruccion->pcb->readyplus == 1){
                     agregar_a_cola_auxiliar(instruccion->pcb);
                     sem_post(&g_hay_elementos_para_ejecutar);
@@ -88,7 +102,8 @@ int main(void){
     //semaforos para pausar o reanudar planificadores
     sem_init(&g_notif_corto_plazo,0,1); 
     sem_init(&g_notif_largo_plazo,0,1);
-
+    sem_init(&g_mutex_cola_signal, 0, 1);
+    g_cola_signal = queue_create();
     g_lista_blocked_gral = list_create();
     sem_init(&g_mutex_lista_blocked_gral, 0, 1);
 
@@ -132,10 +147,10 @@ int main(void){
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
-    recursos = config_get_array_value(config, "RECURSOS");
-    recursos_instancias = config_get_array_value(config, "INSTANCIAS_RECURSOS");
+    g_recursos = config_get_array_value(config, "RECURSOS");
+    g_recursos_instancias = config_get_array_value(config, "INSTANCIAS_RECURSOS");
 
-    iniciar_diccionario_y_listas_recursos(recursos, recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
+    init_recursos(g_recursos, g_recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
 
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
     sem_init(&g_tope_multiprogramacion, 0, g_grado_multiprogramacion);

@@ -27,10 +27,14 @@ char* recibir_instruccion(int socket){
     return instruccion;
 }
 
-uint32_t recibir_interrupcion(int socket){
+t_interrupcion_dispatch* recibir_interrupcion(int socket){
     t_buffer* buffer = recibir_buffer(socket);
 
-    uint32_t interrupcion = buffer_read_uint32(buffer);
+    t_interrupcion_dispatch* interrupcion = malloc(sizeof(t_interrupcion_dispatch));
+
+    interrupcion->pid = buffer_read_uint32(buffer);
+    interrupcion->motivo = buffer_read_uint32(buffer);
+
     return interrupcion;
 }
 
@@ -155,7 +159,8 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
         t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
         t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
         enviar_paquete(paquete, g_socket_memoria);
-        if(recibir_ok(g_socket_memoria)){
+        bool ok = recibir_ok(g_socket_memoria);
+        if(ok){
             log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
         } else {
             log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");

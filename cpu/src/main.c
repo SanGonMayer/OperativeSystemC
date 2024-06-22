@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include <commons/log.h>
+#include <readline/chardefs.h>
 #include <sys/socket.h>
 
 t_config* config;
@@ -71,19 +72,19 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-int check_interrupt(t_PCB* pcb, t_log* logger){
+t_interrupcion_dispatch* check_interrupt(t_PCB* pcb, t_log* logger){
     int hay_interrupcion = 0;
 
     while(queue_size(cola_interrupciones) > 0 && hay_interrupcion == 0){
         //Hacer mutex
         sem_wait(&mutex_cola_interrupciones);
-        uint32_t *pid = queue_pop(cola_interrupciones);
+        t_interrupcion_dispatch *interrupcion = queue_pop(cola_interrupciones);
         sem_post(&mutex_cola_interrupciones);
-        if(*pid == pcb->PID){
-            hay_interrupcion = 1;
+        if(interrupcion->pid == pcb->PID){
+            return interrupcion;
         }
     }
-    return hay_interrupcion;
+    return NULL;
 }
 
 void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
@@ -164,7 +165,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %d %d %d", dispositivo, registro_direccion, registro_tamanio);
+            log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %s %s", dispositivo, registro_direccion, registro_tamanio);
             buffer_destroy(buffer);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
@@ -176,7 +177,6 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             ejecutar_mov_in(pcb->PID,registro_datos, direccion_logica, diccionario);
             
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
             //(Registro Direccion, Registro Datos)
             char* registro_direccion = instruccion_separada[1];
@@ -187,14 +187,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
             //(Tamanio)
             int tamanio = atoi(instruccion_separada[1]);
 
             ejecutar_copy_string(tamanio, pcb->PID, diccionario);
 
-            return;
         } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
@@ -234,10 +232,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso)+ 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
+
+            return;
         }
         else if(string_equals_ignore_case(instruccion_separada[0], "WAIT")){
             char* recurso = string_duplicate(instruccion_separada[1]);
@@ -245,14 +245,18 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso) + 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
+            return;
         }
-        if(check_interrupt(pcb, logger) == 1){
+
+        t_interrupcion_dispatch* interrupcion = check_interrupt(pcb, logger);
+
+        if(interrupcion != NULL){
             log_info(g_logger, "Se detecto una interrupcion");
-            desalojar_pcb(socket_dispatch, pcb, (int)INTERRUPCION, logger, diccionario);
+            desalojar_pcb(socket_dispatch, pcb, (int)interrupcion->motivo, logger, diccionario);
             return;
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
@@ -308,9 +312,9 @@ void servidor_interrupt(){
         switch (cod_op)
         {
         case ENVIO_INTERRUPCION:
-            uint32_t pidInterrupcion = recibir_interrupcion(cliente_interrupt_fd);
+            t_interrupcion_dispatch* interrupcion = recibir_interrupcion(cliente_interrupt_fd);
             sem_wait(&mutex_cola_interrupciones);
-            queue_push(cola_interrupciones, &pidInterrupcion);
+            queue_push(cola_interrupciones, interrupcion);
             sem_post(&mutex_cola_interrupciones);
             break;
         case -1:

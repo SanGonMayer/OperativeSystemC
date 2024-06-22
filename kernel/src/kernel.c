@@ -1,17 +1,23 @@
 #include "kernel.h"
 #include "cola_exit.h"
+#include "recursos.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
 #include <commons/collections/dictionary.h>
+#include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
 #include <readline/readline.h>
 #include <stdio.h>
+#include <time.h>
 #include "global_kernel.h"
 #include "utils/instrucciones_io.h"
+#include "utils/procesos.h"
 #include "utils/server.h"
 
 void manejar_recurso(int, char*, t_PCB*);
@@ -142,11 +148,13 @@ void enviar_proceso_a_ready(t_PCB* pcb){
 }
 
 
-void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
+void ejecutar_cpu_FIFO(t_PCB* pcb){
     int error;
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "enviando PCB a CPU");
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+
+    pcb->estado = EXEC;
     g_exec = pcb;
 
     // if (error == -1){
@@ -163,7 +171,7 @@ void esperar_quantum(t_PCB* pcb){
     log_info(g_logger, "Esperando quantum %d ms", pcb->quantum );
     usleep(pcb->quantum * 1000);
     if(g_exec != NULL && g_exec->PID == pcb->PID){
-    enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID);
+        enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID, INTERRUPCION_QUANTUM);
     }
 }
 
@@ -174,15 +182,15 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "Despues semaforo exec");
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+    pcb->estado = EXEC;
     g_exec = pcb;
 
     pthread_t hilo_quantum;
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
-    pthread_detach(hilo_quantum);
-
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum, pcb);
+    
     recibir_pcb_desalojado(pcb);
     pthread_cancel(hilo_quantum);
-
+    pthread_join(hilo_quantum, NULL);
 }
 
 void agregar_a_cola_auxiliar(t_PCB* pcb){
@@ -196,18 +204,20 @@ void ejecutar_cpu_VRR(t_PCB* pcb){
     int error;
     sem_wait(&g_disponible_exec);
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
+    pcb->estado = EXEC;
     g_exec = pcb;
     
     pthread_t hilo_quantum;
     timer = temporal_create();
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
-    pthread_detach(hilo_quantum);
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum, pcb);
 
     recibir_pcb_desalojado(pcb);
     temporal_stop(timer);
     g_ms_transcurridos = temporal_gettime(timer);
     sem_post(&g_tiempo_calculado);
+
     pthread_cancel(hilo_quantum);
+    pthread_join(hilo_quantum, NULL);
     temporal_destroy(timer);
 }
 
@@ -223,6 +233,8 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     }else{
         actualizar_pcb(pcb_ejecutando, pcb_recibido);
         free(pcb_recibido);
+
+        // Posible condicion de carrera
         g_exec = NULL;
     }
 
@@ -233,41 +245,16 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
     
-    if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
-        
-        //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
-        //desde la funcion ciclo de ejecucion
-        //al struct t_desalojo se le agrega el campo char* recurso para no romper la firma de la funcion atender_desalojo
-        t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
-        uint32_t length;
-        char *recurso_leido = buffer_read_string(buffer, &length);
-        desalojo->recurso = string_duplicate(recurso_leido);
-
-        buffer_destroy(buffer);
-        free(recurso_leido);
-    }
-    // Preguntar hilo desalojo
-    crear_hilo_test();
-
-    pthread_t* hilo_desalojo = malloc(sizeof(pthread_t));
+    pthread_t hilo_desalojo;
     log_info(g_logger, "Creando hilo desalojo");
-    
-    int result = pthread_create(hilo_desalojo, NULL, (void*)&atender_desalojo, desalojo);
-    pthread_detach(*hilo_desalojo);
 
-    log_info(g_logger, "Hilo creado con resultado %d y numero %lu", result, *hilo_desalojo);
- 
+    if(desalojo->motivo == SIGNAL){
+        sem_wait(&g_mutex_cola_signal);
+    }
+    int result = pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
+    pthread_detach(hilo_desalojo);
 }
 
-void test(){
-    sleep(60);
-}
-
-void crear_hilo_test(){
-    pthread_t* hilo_test = malloc(sizeof(pthread_t));
-    int result = pthread_create(hilo_test, NULL, (void*)&test, NULL);
-    pthread_detach(*hilo_test);
-}
 
 void planificador_exit(){
     // sem_wait(&g_notif_largo_plazo);
@@ -309,10 +296,16 @@ void atender_desalojo(t_desalojo* desalojo){
             finalizar_proceso(desalojo->pcb);
             return;
         }   
-        case INTERRUPCION: //CLOCK
+        case INTERRUPCION_QUANTUM: //CLOCK
         {
             liberar_cola_exec();
             enviar_proceso_a_ready(desalojo->pcb);
+            return;
+        }
+        case INTERRUPCION_KILL:
+        {
+            liberar_cola_exec();
+            finalizar_proceso(desalojo->pcb);
             return;
         }
         case IO_GEN_SLEEP:
@@ -330,10 +323,9 @@ void atender_desalojo(t_desalojo* desalojo){
             uint32_t* length = malloc(sizeof(uint32_t));
             //Nombre
             char* nombreInterfaz = buffer_read_string(buffer, length);
-            char* instruccion = string_new();
+            char instruccion[] = "IO_GEN_SLEEP";
             liberar_cola_exec();
             //instruccion que deba entender
-            instruccion = "IO_GEN_SLEEP";
 
             sem_wait(&g_mutex_acceso_interfaces);
 
@@ -353,11 +345,14 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
-
+                sem_post(&interfaz->mutex);
+                /*
                 sem_wait(&g_lista_blocked_gral);
                 list_add(g_lista_blocked_gral, item->pcb);
                 sem_post(&g_lista_blocked_gral);
+                */
 
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
@@ -373,7 +368,6 @@ void atender_desalojo(t_desalojo* desalojo){
             buffer_destroy(buffer);
             free(length);
             free(nombreInterfaz);
-            free(instruccion);
 
             break;
         }
@@ -418,7 +412,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
+                sem_post(&interfaz->mutex);
 
                 list_add(g_lista_blocked_gral, item->pcb);
 
@@ -453,9 +449,8 @@ void atender_desalojo(t_desalojo* desalojo){
             uint32_t* length = malloc(sizeof(uint32_t));
             char* nombreInterfaz = buffer_read_string(buffer, length);
             liberar_cola_exec();
-            char* instruccion = string_new();
+            char instruccion[] = "IO_STDOUT_WRITE";
             //instruccion que deba entender
-            instruccion = "IO_STDOUT_WRITE";
 
             //TODO abstraer a una funcion, es todo igual menos el paquete t_instruccion_io
 
@@ -477,11 +472,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
-
-                sem_wait(&g_lista_blocked_gral);
-                list_add(g_lista_blocked_gral, item->pcb);
-                sem_post(&g_lista_blocked_gral);
+                sem_post(&interfaz->mutex);
 
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
@@ -495,16 +488,48 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case SIGNAL:
         {
+
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char *recurso_leido = buffer_read_string(buffer, length);
+            desalojo->recurso = string_duplicate(recurso_leido);
+            log_info(g_logger, "SIGNAL en atender desalojo del Recurso: %s", desalojo->recurso);
+
             liberar_cola_exec();
             char * recurso_signal = string_duplicate(desalojo->recurso);
-            manejar_recurso((int)SIGNAL, recurso_signal, desalojo->pcb);
+            
+            procesar_signal(recurso_signal);
+
+            desalojo->pcb->estado = READY;
+            queue_push(g_cola_signal, desalojo->pcb);
+            sem_post(&g_mutex_cola_signal);
+
+
+            buffer_destroy(buffer);
+            free(recurso_leido);
             break;
         }
         case WAIT:
         {
+
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char *recurso_leido = buffer_read_string(buffer, length);
+            desalojo->recurso = recurso_leido;
+            log_info(g_logger, "WAIT en atender desalojo del Recurso: %s", desalojo->recurso);
+            
+
             liberar_cola_exec();
             char * recurso_wait = string_duplicate(desalojo->recurso);
-            manejar_recurso((int)WAIT, recurso_wait, desalojo->pcb);
+            
+            bool continuar = procesar_wait(desalojo->pcb, recurso_wait);
+
+            if(continuar){
+                enviar_proceso_a_ready(desalojo->pcb);
+            }
+            
+            buffer_destroy(buffer);
+            free(recurso_leido);
             break;
         }
         default:
@@ -527,12 +552,23 @@ void planificador_fifo(){
     // sem_post(&g_notif_corto_plazo);
     
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_FIFO(pcb);
+            continue;
+        }
+
+        sem_post(&g_mutex_cola_signal);
+
         sem_wait(&g_hay_elementos_en_ready);
         log_info(g_logger, "Planificador FIFO");
         sem_wait(&g_mutex_cola_ready);
         t_PCB* pcb = queue_pop(g_cola_ready);
         sem_post(&g_mutex_cola_ready);
-        ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+        ejecutar_cpu_FIFO(pcb);
     }
 }
 
@@ -541,6 +577,17 @@ void planificador_RR(){
     // sem_post(&g_notif_corto_plazo);
     
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+        
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_RR(pcb);
+            continue;
+        }
+
+        sem_post(&g_mutex_cola_signal);
+
     sem_wait(&g_hay_elementos_en_ready);
     sem_wait(&g_mutex_cola_ready);
     log_info(g_logger, "RR - Hay procesos en ready - %d", queue_size(g_cola_ready));
@@ -555,6 +602,17 @@ void planificador_VRR(){
     // sem_post(&g_notif_corto_plazo);
 
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+        
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_VRR(pcb);
+            continue;
+        }
+
+        sem_post(&g_mutex_cola_signal);
+
         sem_wait(&g_hay_elementos_para_ejecutar);
         log_info(g_logger, "Planificador VRR");
         
@@ -572,96 +630,19 @@ void planificador_VRR(){
     }
 }
 
-void enviar_interrupcion(int socket_interrupt, uint32_t* PID){
+void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
 
-    t_buffer* buffer = buffer_create(sizeof(uint32_t));
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + sizeof(uint32_t));
     buffer_add_uint32(buffer, *PID);
+    buffer_add_uint32(buffer, motivo);
     
     t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
     enviar_paquete(paquete, socket_interrupt);
 }
 
-void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias){
-    g_diccionario_recursos = dictionary_create();
-    int i = 0;
-    
-    while(recursos[i] != NULL){
-        t_recurso *recurso = malloc(sizeof(t_recurso));
-        recurso->nombre = recursos[i];
-        recurso->instancias = atoi(recursos_instancias[i]);
-        recurso->cola = queue_create();
-        sem_init(&recurso->semafor_cola, 0, 0);
 
-        dictionary_put(g_diccionario_recursos, recursos[i], recurso);
-        
-        i++;
-    }
-}
 
-void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
-    
-    if (dictionary_has_key(g_diccionario_recursos, nombre_recurso))
-    {
-        t_recurso *recurso = dictionary_remove(g_diccionario_recursos, nombre_recurso);
-        int instancias_int = recurso->instancias;
-
-        switch (operacion)
-        {
-            case 17: //WAIT
-                
-                if(instancias_int > 0){
-                    instancias_int--;
-                    recurso->instancias = instancias_int;
-                    dictionary_put(g_diccionario_recursos, nombre_recurso, recurso );   
-                }
-                else{
-                    t_queue * cola = recurso->cola;
-                    
-                    sem_wait(&recurso->semafor_cola);
-                    queue_push(cola, pcb);
-                    sem_post(&recurso->semafor_cola);
-                    
-                    pcb->estado = BLOCKED;
-
-                    sem_wait(&g_mutex_lista_blocked_gral);
-                    list_add(g_lista_blocked_gral, pcb);
-                    sem_post(&g_mutex_lista_blocked_gral);
-
-                    free(cola);
-                }                
-                
-                break;
-
-            case 18: //SIGNAL
-                instancias_int++;
-                recurso->instancias = instancias_int;
-                dictionary_put(g_diccionario_recursos, nombre_recurso, recurso);
-                
-                t_queue * cola = recurso->cola;
-                
-                if(!queue_is_empty(cola)){
-                    sem_wait(&recurso->semafor_cola);
-                    t_PCB* pcb = queue_pop(cola);
-                    sem_post(&recurso->semafor_cola);
-
-                    pcb->estado = READY;
-                    enviar_proceso_a_ready(pcb);
-                    eliminar_de_lista_blocked_gral(pcb->PID);
-                }
-
-                free(cola);
-                
-                break;
-        }
-    }
-    else
-    {
-        log_error(g_logger, "El recurso: %s no existe", nombre_recurso);
-    }
-
-}
-
-void eliminar_de_lista_blocked_gral(u_int32_t pid){
+void eliminar_de_lista_blocked_gral(uint32_t pid){
       
     sem_wait(&g_lista_blocked_gral);
     if (!list_remove_element(g_lista_blocked_gral, &pid));
@@ -711,47 +692,61 @@ void listar_procesos(){
     list_iterator_destroy(iterador_blocked);
 }
 
+
+
 t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
+
     if (queue_is_empty(cola)) {
         return NULL;
     }
+    t_list* procesos = cola->elements;
 
-    // Crear una cola auxiliar para preservar el orden original
-    t_queue* cola_aux = queue_create();
-    t_PCB* pcb_encontrado = NULL;
-
-    // Recorrer la cola original
-    while (!queue_is_empty(cola)) {
-        t_PCB* pcb_actual = queue_pop(cola);
-        
-        if (pcb_actual->PID == pid) {
-            pcb_encontrado = pcb_actual;
-            // No agregamos el PCB encontrado a la cola auxiliar para eliminarlo de la original
-            continue;
-        }
-        
-        // Agregar el PCB actual a la cola auxiliar
-        queue_push(cola_aux, pcb_actual);
+    bool existePID(void* pcb) {
+        return ((t_PCB*)pcb)->PID == pid;
     }
 
-    // Restaurar los elementos en la cola original
-    cola = cola_aux;
+    t_PCB* pcb = (t_PCB*)list_find(procesos, &existePID);
+    if(pcb != NULL){
+        list_remove_by_condition(procesos, &existePID);
+    }
 
-    // Liberar la cola auxiliar
-    queue_destroy(cola_aux);
+    return pcb;
+}
 
-    return pcb_encontrado;
+t_PCB* buscar_y_eliminar_pid_en_cola_io(uint32_t pid,t_queue* cola) {
+
+    if (queue_is_empty(cola)) {
+        return NULL;
+    }
+    t_list* procesos = cola->elements;
+
+    bool existePID(t_parametro_cola_interfaz* parametro) {
+        return parametro->pcb->PID == pid;
+    }
+    
+    t_parametro_cola_interfaz* parametro = (t_PCB*)list_find(procesos, &existePID);
+    if(parametro != NULL){
+        list_remove_by_condition(procesos, &existePID);
+    }
+
+    return parametro->pcb;
 }
 
 t_PCB* buscar_en_diccionario_interfaces(uint32_t pid, t_dictionary* interfaces){
     t_PCB* pcb = NULL;
 
+    if(dictionary_is_empty(interfaces)){
+        return NULL;
+    }
+
     t_list* lista_interfaces = dictionary_elements(interfaces);
     t_list_iterator* iterator = list_iterator_create(lista_interfaces);
      while(list_iterator_has_next(iterator)){
-        t_interfaz_conectada* interfaz = list_iterator_next(lista_interfaces);
+        t_interfaz_conectada* interfaz = list_iterator_next(iterator);
         //TODO agregar semaforo para acceso
+        sem_wait(&interfaz->mutex);
         pcb = buscar_y_eliminar_pid_en_cola(pid, interfaz->cola);
+        sem_post(&interfaz->mutex);
         if(pcb != NULL){
             return pcb;
         }
@@ -767,9 +762,9 @@ t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos
     t_list* lista_recursos = dictionary_elements(colas_recursos);
     t_list_iterator* iterator = list_iterator_create(lista_recursos);
      while(list_iterator_has_next(iterator)){
-        t_queue* cola_recurso = list_iterator_next(lista_recursos);
+        t_recurso* recurso = list_iterator_next(iterator);
         //TODO agregar semaforo para acceso
-        pcb = buscar_y_eliminar_pid_en_cola(pid, cola_recurso);
+        pcb = buscar_y_eliminar_pid_en_cola(pid, recurso->cola);
         if(pcb != NULL){
             return pcb;
         }
@@ -784,46 +779,33 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
     sem_wait(&g_mutex_cola_new);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
     sem_post(&g_mutex_cola_new);
-    if(pcb != NULL){
-        return pcb; 
+
+
+    if(pcb == NULL){
+        sem_wait(&g_mutex_cola_ready);
+        pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
+        sem_post(&g_mutex_cola_ready);
     }
 
-    sem_wait(&g_mutex_cola_ready);
-    pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
-    sem_post(&g_mutex_cola_ready);
-    if(pcb != NULL){
-        return pcb; 
-    }
 
-    if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+    if(pcb == NULL && string_equals_ignore_case(algoritmo_planificacion, "VRR")){
         sem_wait(&g_mutex_cola_auxiliar);
         pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_auxiliar);
         sem_post(&g_mutex_cola_auxiliar);
     }
 
-    pcb = g_exec;
-    if(pcb != NULL){
-        //TODO enviar interrupcion y sacarlo de exec
-        return pcb; 
+
+    if(pcb == NULL && g_exec != NULL && g_exec->PID == pid){
+        pcb = g_exec;
+    }
+    
+    if(pcb == NULL){
+        pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
     }
 
-    //las io
-    pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
-
-    //los recursos
-    //pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);
-
-    //TODO hacer el de cola blocked
-    //wait(lista blocked general)
-    //-> Cola de la interfaz IO
-    //-> Semaforo propio
-    //-> sem wait(semaforo de la cola)
-    //Revisar si es necesario
-    /*pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_exit);
-    if(pcb != NULL){
-        return pcb; 
+    if(pcb == NULL){
+        pcb = quitar_proceso_bloqueado(pid);
     }
-    */
 
     return pcb;
 }

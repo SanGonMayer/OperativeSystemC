@@ -23,7 +23,7 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     int tamanio = instruccion->tamanio;
     char *valor_a_mostrar = malloc(tamanio);
     
-    leer_de_memoria_stdout( tamanio, direccion);
+    leer_de_memoria_stdout(tamanio, direccion);
 
     printf("%s\n", valor_a_mostrar); //esto es el putero archivo
     
@@ -32,8 +32,8 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
 }
 
 void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
-    t_peticion_acceso_usuario* peticion_escritura = crear_peticion_lectura(tamanio, direccion_fisica);
-    t_buffer* buffer = serializar_peticion_acceso_usuario(peticion_escritura);
+    t_peticion_acceso_usuario* peticion_lectura = crear_peticion_lectura(tamanio, direccion_fisica);
+    t_buffer* buffer = serializar_peticion_acceso_usuario(peticion_lectura);
     t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
 
     int err = enviar_paquete(paquete, g_socket_memoria);
@@ -43,13 +43,13 @@ void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
     }
 
     eliminar_paquete(paquete);
-    destruir_peticion_acceso_usuario(peticion_escritura);
+    destruir_peticion_acceso_usuario(peticion_lectura);
 
     t_buffer* buffer_lectura = recibir_buffer(g_socket_memoria);
     
-    uint32_t length;
+    uint32_t* length = malloc(sizeof(uint32_t));
 
-    char *texto_leido = buffer_read_string(buffer_lectura, &length);
+    char *texto_leido = buffer_read_string(buffer_lectura, length);
     
     log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
 
