@@ -1,4 +1,5 @@
 #include "mmu.h"
+#include "cpu.h"
 #include "global_cpu.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
@@ -28,7 +29,7 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
     int offset = direccion_logica % tamanio_pagina;
 
     uint32_t tamanio_disponible = tamanio_pagina - offset;
-    int direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
+    int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
     
     while(tamanio_total_lectura > 0){
         if(tamanio_disponible < tamanio_total_lectura){
@@ -39,7 +40,7 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
             pagina = direccion_logica / tamanio_pagina;
             offset = direccion_logica % tamanio_pagina;
             tamanio_disponible = tamanio_pagina - offset;
-            direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
+            direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
             //Calcular direccion logica siguiente
         } else {
             t_peticion_acceso_usuario* peticion = crear_peticion_lectura(tamanio_total_lectura, direccion_fisica);
@@ -65,7 +66,7 @@ t_list* obtener_direcciones_logicas_escritura(uint32_t pid, int direccion_logica
         uint32_t tamanio_escritura = tamanio_disponible < tamanio_restante ? tamanio_disponible : tamanio_restante;
 
         char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
-        int direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
+        int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
         t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, fragmento_valor);
 
         list_add(peticiones, peticion);
