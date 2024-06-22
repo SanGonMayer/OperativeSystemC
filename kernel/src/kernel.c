@@ -146,7 +146,7 @@ void enviar_proceso_a_ready(t_PCB* pcb){
 }
 
 
-void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger){
+void ejecutar_cpu_FIFO(t_PCB* pcb){
     int error;
     sem_wait(&g_disponible_exec);
     log_info(g_logger, "enviando PCB a CPU");
@@ -583,12 +583,14 @@ void planificador_fifo(){
     
     while(1){
         sem_wait(&g_mutex_cola_signal);
+
         if(!queue_is_empty(g_cola_signal)){
             t_PCB* pcb = queue_pop(g_cola_signal);
             sem_post(&g_mutex_cola_signal);
-            ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+            ejecutar_cpu_FIFO(pcb);
             continue;
         }
+
         sem_post(&g_mutex_cola_signal);
 
         sem_wait(&g_hay_elementos_en_ready);
@@ -596,7 +598,7 @@ void planificador_fifo(){
         sem_wait(&g_mutex_cola_ready);
         t_PCB* pcb = queue_pop(g_cola_ready);
         sem_post(&g_mutex_cola_ready);
-        ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+        ejecutar_cpu_FIFO(pcb);
     }
 }
 
@@ -605,6 +607,17 @@ void planificador_RR(){
     // sem_post(&g_notif_corto_plazo);
     
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+        
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_RR(pcb);
+            continue;
+        }
+
+        sem_post(&g_mutex_cola_signal);
+
     sem_wait(&g_hay_elementos_en_ready);
     sem_wait(&g_mutex_cola_ready);
     log_info(g_logger, "RR - Hay procesos en ready - %d", queue_size(g_cola_ready));
@@ -619,6 +632,17 @@ void planificador_VRR(){
     // sem_post(&g_notif_corto_plazo);
 
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+        
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_VRR(pcb);
+            continue;
+        }
+
+        sem_post(&g_mutex_cola_signal);
+
         sem_wait(&g_hay_elementos_para_ejecutar);
         log_info(g_logger, "Planificador VRR");
         

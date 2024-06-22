@@ -46,7 +46,7 @@ void preparar_proceso_a_ready();
 
 void enviar_proceso_a_ready(t_PCB* pcb);
 
-void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
+void ejecutar_cpu_FIFO(t_PCB* pcb);
    
 bool es_parametro_valido(char* parametro);
 
