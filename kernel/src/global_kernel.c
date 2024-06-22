@@ -54,3 +54,6 @@ sem_t g_mutex_lista_procesos_gral;
 
 char** g_recursos_instancias;
 char** g_recursos;
+
+t_queue* g_cola_signal;
+sem_t g_mutex_cola_signal;

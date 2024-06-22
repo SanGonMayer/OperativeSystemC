@@ -261,7 +261,14 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
 
     pthread_t* hilo_desalojo = malloc(sizeof(pthread_t));
     log_info(g_logger, "Creando hilo desalojo");
-    
+
+    // desalojo->motivo == SIGNAL 
+    // AGREGAR 
+
+    if(desalojo->motivo == SIGNAL){
+        sem_wait(&g_mutex_cola_signal);
+    }
+
     int result = pthread_create(hilo_desalojo, NULL, (void*)&atender_desalojo, desalojo);
     pthread_detach(*hilo_desalojo);
 
@@ -523,7 +530,10 @@ void atender_desalojo(t_desalojo* desalojo){
             
             procesar_signal(recurso_signal);
 
-            enviar_proceso_a_ready(desalojo->pcb);
+            desalojo->pcb->estado = READY;
+            queue_push(g_cola_signal, desalojo->pcb);
+            sem_post(&g_mutex_cola_signal);
+
 
             buffer_destroy(buffer);
             free(recurso_leido);
@@ -572,6 +582,15 @@ void planificador_fifo(){
     // sem_post(&g_notif_corto_plazo);
     
     while(1){
+        sem_wait(&g_mutex_cola_signal);
+        if(!queue_is_empty(g_cola_signal)){
+            t_PCB* pcb = queue_pop(g_cola_signal);
+            sem_post(&g_mutex_cola_signal);
+            ejecutar_cpu_FIFO(pcb, g_conexion_cpu_dispatch, g_logger);
+            continue;
+        }
+        sem_post(&g_mutex_cola_signal);
+
         sem_wait(&g_hay_elementos_en_ready);
         log_info(g_logger, "Planificador FIFO");
         sem_wait(&g_mutex_cola_ready);

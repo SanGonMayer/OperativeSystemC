@@ -64,4 +64,7 @@ extern sem_t g_mutex_lista_procesos_gral;
 
 extern char** g_recursos_instancias;
 extern char** g_recursos;
+
+extern t_queue* g_cola_signal;
+extern sem_t g_mutex_cola_signal;
 #endif

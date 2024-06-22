@@ -7,6 +7,7 @@
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
 #include <commons/collections/dictionary.h>
+#include <commons/collections/queue.h>
 #include <commons/string.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -48,6 +49,7 @@ void procesar_cliente(int* fd){
     
     sem_init(&interfaz_conectada->semaforo, 0, 0);
     sem_init(&interfaz_conectada->mutex, 0, 1);
+    
 
     dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
 
@@ -100,7 +102,8 @@ int main(void){
     //semaforos para pausar o reanudar planificadores
     sem_init(&g_notif_corto_plazo,0,1); 
     sem_init(&g_notif_largo_plazo,0,1);
-
+    sem_init(&g_mutex_cola_signal, 0, 1);
+    g_cola_signal = queue_create();
     g_lista_blocked_gral = list_create();
     sem_init(&g_mutex_lista_blocked_gral, 0, 1);
 
