@@ -60,4 +60,8 @@ extern sem_t g_mutex_lista_blocked_gral;
 
 extern t_list* g_lista_procesos_gral;
 extern sem_t g_mutex_lista_procesos_gral;
+
+
+extern char** g_recursos_instancias;
+extern char** g_recursos;
 #endif

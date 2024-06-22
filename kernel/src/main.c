@@ -2,6 +2,7 @@
 #include "consola_interactiva.h"
 #include "global_kernel.h"
 #include "kernel.h"
+#include "recursos.h"
 #include "utils/buffer.h"
 #include "utils/instrucciones_io.h"
 #include "utils/server.h"
@@ -46,12 +47,23 @@ void procesar_cliente(int* fd){
     };
     
     sem_init(&interfaz_conectada->semaforo, 0, 0);
+    sem_init(&interfaz_conectada->mutex, 0, 1);
 
     dictionary_put(g_interfaces, interfaz->nombre, interfaz_conectada);
 
     while(1){
         sem_wait(&interfaz_conectada->semaforo);
+
+        
+        sem_wait(&interfaz_conectada->mutex);
+        if(queue_is_empty(interfaz_conectada->cola)){
+            sem_post(&interfaz_conectada->mutex);
+            continue;
+        }
         t_parametro_cola_interfaz* instruccion = queue_pop(interfaz_conectada->cola);
+        sem_post(&interfaz_conectada->mutex);
+
+        
         t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
         enviar_buffer(interfaz_conectada->fd, buffer, g_logger);
 
@@ -132,10 +144,10 @@ int main(void){
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA" );
     ip_memoria = config_get_string_value(config, "IP_MEMORIA" );
     puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA" );
-    recursos = config_get_array_value(config, "RECURSOS");
-    recursos_instancias = config_get_array_value(config, "INSTANCIAS_RECURSOS");
+    g_recursos = config_get_array_value(config, "RECURSOS");
+    g_recursos_instancias = config_get_array_value(config, "INSTANCIAS_RECURSOS");
 
-    iniciar_diccionario_y_listas_recursos(recursos, recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
+    init_recursos(g_recursos, g_recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
 
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
     sem_init(&g_tope_multiprogramacion, 0, g_grado_multiprogramacion);

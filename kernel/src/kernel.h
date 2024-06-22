@@ -31,12 +31,7 @@ typedef struct {
     t_instruccion_io* instruccion;
 } t_parametro_cola_interfaz;
 
-typedef struct {
-    char* nombre;
-    int instancias;
-    t_queue* cola;
-    sem_t semafor_cola;
-} t_recurso;
+
 
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);

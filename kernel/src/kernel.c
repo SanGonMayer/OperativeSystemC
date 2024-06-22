@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "cola_exit.h"
+#include "recursos.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
 #include "utils/codigo_operacion.h"
@@ -367,8 +368,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
-
+                sem_post(&interfaz->mutex);
                 /*
                 sem_wait(&g_lista_blocked_gral);
                 list_add(g_lista_blocked_gral, item->pcb);
@@ -433,7 +435,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
+                sem_post(&interfaz->mutex);
 
                 list_add(g_lista_blocked_gral, item->pcb);
 
@@ -491,7 +495,9 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
+                sem_wait(&interfaz->mutex);
                 queue_push(interfaz->cola, item);
+                sem_post(&interfaz->mutex);
 
                 sem_post(&interfaz->semaforo);
                 log_info(g_logger, "Proceso %d bloqueado", desalojo->pcb->PID);
@@ -508,15 +514,19 @@ void atender_desalojo(t_desalojo* desalojo){
 
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
-            char *recurso_leido = buffer_read_string(buffer, &length);
+            char *recurso_leido = buffer_read_string(buffer, length);
             desalojo->recurso = string_duplicate(recurso_leido);
             log_info(g_logger, "SIGNAL en atender desalojo del Recurso: %s", desalojo->recurso);
-            buffer_destroy(buffer);
-            free(recurso_leido);
 
             liberar_cola_exec();
             char * recurso_signal = string_duplicate(desalojo->recurso);
-            manejar_recurso((int)SIGNAL, recurso_signal, desalojo->pcb);
+            
+            procesar_signal(recurso_signal);
+
+            enviar_proceso_a_ready(desalojo->pcb);
+
+            buffer_destroy(buffer);
+            free(recurso_leido);
             break;
         }
         case WAIT:
@@ -527,12 +537,19 @@ void atender_desalojo(t_desalojo* desalojo){
             char *recurso_leido = buffer_read_string(buffer, length);
             desalojo->recurso = recurso_leido;
             log_info(g_logger, "WAIT en atender desalojo del Recurso: %s", desalojo->recurso);
-            buffer_destroy(buffer);
-            free(recurso_leido);
+            
 
             liberar_cola_exec();
             char * recurso_wait = string_duplicate(desalojo->recurso);
-            manejar_recurso((int)WAIT, recurso_wait, desalojo->pcb);
+            
+            bool continuar = procesar_wait(desalojo->pcb, recurso_wait);
+
+            if(continuar){
+                enviar_proceso_a_ready(desalojo->pcb);
+            }
+            
+            buffer_destroy(buffer);
+            free(recurso_leido);
             break;
         }
         default:
@@ -610,85 +627,7 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
     enviar_paquete(paquete, socket_interrupt);
 }
 
-void iniciar_diccionario_y_listas_recursos(char** recursos, char** recursos_instancias){
-    g_diccionario_recursos = dictionary_create();
-    int i = 0;
-    
-    while(recursos[i] != NULL){
-        t_recurso *recurso = malloc(sizeof(t_recurso));
-        recurso->nombre = recursos[i];
-        recurso->instancias = atoi(recursos_instancias[i]);
-        recurso->cola = queue_create();
-        sem_init(&recurso->semafor_cola, 0, 0);
 
-        dictionary_put(g_diccionario_recursos, recursos[i], recurso);
-        
-        i++;
-    }
-}
-
-void manejar_recurso(int operacion, char* nombre_recurso, t_PCB* pcb){
-    
-    if (dictionary_has_key(g_diccionario_recursos, nombre_recurso))
-    {
-        t_recurso *recurso = dictionary_remove(g_diccionario_recursos, nombre_recurso);
-        int instancias_int = recurso->instancias;
-
-        switch (operacion)
-        {
-            case 17: //WAIT
-                
-                if(instancias_int > 0){
-                    instancias_int--;
-                    recurso->instancias = instancias_int;
-                    dictionary_put(g_diccionario_recursos, nombre_recurso, recurso );   
-                }
-                else{
-                    t_queue * cola = recurso->cola;
-                    
-                    sem_wait(&recurso->semafor_cola);
-                    queue_push(cola, pcb);
-                    sem_post(&recurso->semafor_cola);
-                    
-                    pcb->estado = BLOCKED;
-
-                    sem_wait(&g_mutex_lista_blocked_gral);
-                    list_add(g_lista_blocked_gral, pcb);
-                    sem_post(&g_mutex_lista_blocked_gral);
-
-                    free(cola);
-                }                
-                
-                break;
-
-            case 18: //SIGNAL
-                instancias_int++;
-                recurso->instancias = instancias_int;
-                dictionary_put(g_diccionario_recursos, nombre_recurso, recurso);
-                
-                t_queue * cola = recurso->cola;
-                
-                if(!queue_is_empty(cola)){
-                    sem_wait(&recurso->semafor_cola);
-                    t_PCB* pcb = queue_pop(cola);
-                    sem_post(&recurso->semafor_cola);
-
-                    pcb->estado = READY;
-                    enviar_proceso_a_ready(pcb);
-                    eliminar_de_lista_blocked_gral(pcb->PID);
-                }
-
-                free(cola);
-                
-                break;
-        }
-    }
-    else
-    {
-        log_error(g_logger, "El recurso: %s no existe", nombre_recurso);
-    }
-
-}
 
 void eliminar_de_lista_blocked_gral(uint32_t pid){
       
@@ -747,7 +686,6 @@ t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     if (queue_is_empty(cola)) {
         return NULL;
     }
-
     t_list* procesos = cola->elements;
 
     bool existePID(void* pcb) {
@@ -755,7 +693,6 @@ t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     }
 
     t_PCB* pcb = (t_PCB*)list_find(procesos, &existePID);
-
     if(pcb != NULL){
         list_remove_by_condition(procesos, &existePID);
     }
@@ -763,15 +700,40 @@ t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
     return pcb;
 }
 
+t_PCB* buscar_y_eliminar_pid_en_cola_io(uint32_t pid,t_queue* cola) {
+
+    if (queue_is_empty(cola)) {
+        return NULL;
+    }
+    t_list* procesos = cola->elements;
+
+    bool existePID(t_parametro_cola_interfaz* parametro) {
+        return parametro->pcb->PID == pid;
+    }
+    
+    t_parametro_cola_interfaz* parametro = (t_PCB*)list_find(procesos, &existePID);
+    if(parametro != NULL){
+        list_remove_by_condition(procesos, &existePID);
+    }
+
+    return parametro->pcb;
+}
+
 t_PCB* buscar_en_diccionario_interfaces(uint32_t pid, t_dictionary* interfaces){
     t_PCB* pcb = NULL;
+
+    if(dictionary_is_empty(interfaces)){
+        return NULL;
+    }
 
     t_list* lista_interfaces = dictionary_elements(interfaces);
     t_list_iterator* iterator = list_iterator_create(lista_interfaces);
      while(list_iterator_has_next(iterator)){
-        t_interfaz_conectada* interfaz = list_iterator_next(lista_interfaces);
+        t_interfaz_conectada* interfaz = list_iterator_next(iterator);
         //TODO agregar semaforo para acceso
+        sem_wait(&interfaz->mutex);
         pcb = buscar_y_eliminar_pid_en_cola(pid, interfaz->cola);
+        sem_post(&interfaz->mutex);
         if(pcb != NULL){
             return pcb;
         }
@@ -787,9 +749,9 @@ t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos
     t_list* lista_recursos = dictionary_elements(colas_recursos);
     t_list_iterator* iterator = list_iterator_create(lista_recursos);
      while(list_iterator_has_next(iterator)){
-        t_queue* cola_recurso = list_iterator_next(lista_recursos);
+        t_recurso* recurso = list_iterator_next(iterator);
         //TODO agregar semaforo para acceso
-        pcb = buscar_y_eliminar_pid_en_cola(pid, cola_recurso);
+        pcb = buscar_y_eliminar_pid_en_cola(pid, recurso->cola);
         if(pcb != NULL){
             return pcb;
         }
@@ -804,50 +766,33 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
     sem_wait(&g_mutex_cola_new);
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
     sem_post(&g_mutex_cola_new);
-    if(pcb != NULL){
-        return pcb; 
+
+
+    if(pcb == NULL){
+        sem_wait(&g_mutex_cola_ready);
+        pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
+        sem_post(&g_mutex_cola_ready);
     }
 
-    sem_wait(&g_mutex_cola_ready);
-    pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
-    sem_post(&g_mutex_cola_ready);
-    if(pcb != NULL){
-        return pcb; 
-    }
 
-    if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+    if(pcb == NULL && string_equals_ignore_case(algoritmo_planificacion, "VRR")){
         sem_wait(&g_mutex_cola_auxiliar);
         pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_auxiliar);
         sem_post(&g_mutex_cola_auxiliar);
     }
 
 
-    if(g_exec != NULL && g_exec->PID == pid){
+    if(pcb == NULL && g_exec != NULL && g_exec->PID == pid){
         pcb = g_exec;
     }
     
-    if(pcb != NULL){
-        //TODO enviar interrupcion y sacarlo de exec
-        return pcb;
+    if(pcb == NULL){
+        pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
     }
 
-    //las io
-    // pcb = buscar_en_diccionario_interfaces(pid, g_interfaces);
-
-    //los recursos
-    //pcb = buscar_en_diccionario_recursos(pid, g_diccionario_recursos_colas_blocked);
-
-    //TODO hacer el de cola blocked
-    //wait(lista blocked general)
-    //-> Cola de la interfaz IO
-    //-> Semaforo propio
-    //-> sem wait(semaforo de la cola)
-    //Revisar si es necesario
-    /*pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_exit);
-    if(pcb != NULL){
-        return pcb; 
+    if(pcb == NULL){
+        pcb = quitar_proceso_bloqueado(pid);
     }
-    */
 
     return pcb;
 }

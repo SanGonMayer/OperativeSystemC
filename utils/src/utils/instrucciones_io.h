@@ -24,6 +24,7 @@ typedef struct {
     t_queue *cola;
     t_interfaz* interfaz;
     sem_t semaforo;
+    sem_t mutex;
 } t_interfaz_conectada;
 
 t_instruccion_io* crear_instruccion_io(
