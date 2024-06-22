@@ -143,7 +143,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
+            int direccion_fisica = traducir_a_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
@@ -161,7 +161,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = obtener_direccion_fisica(pcb->PID, direccion_logica);
+            int direccion_fisica = traducir_a_direccion_fisica(pcb->PID, direccion_logica);
 
             t_buffer* buffer = ejecutar_io_stdout_write(dispositivo, direccion_fisica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
@@ -184,7 +184,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             uint32_t valor = (uint32_t)dictionary_get(diccionario, registro_datos);
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
-            
+
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
@@ -282,10 +282,8 @@ void servidor_dispatch(int* socket_memoria){
                 log_info(g_logger, "Listo para recibir un PCB de Kernel");
                 t_PCB* pcb = recibir_pcb(cliente_dispatch_fd);
                 log_info(g_logger, "Recibí el PCB con PID %d", pcb->PID);
-                log_info(g_logger, "Con un ax = %d", pcb->registrosCPU.ax);
                 t_dictionary* diccionario = dictionary_create();
                 registros_cpu_dictionary(pcb->registrosCPU ,diccionario);
-                log_info(g_logger, "Diccionario creado con ax = %d", dictionary_get(diccionario, "AX"));
                 ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, g_logger, diccionario);
                 
                 dictionary_destroy(diccionario);
