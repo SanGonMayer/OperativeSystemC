@@ -9,10 +9,12 @@
 #include <commons/collections/queue.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
 #include <readline/readline.h>
 #include <stdio.h>
+#include <time.h>
 #include "global_kernel.h"
 #include "utils/instrucciones_io.h"
 #include "utils/procesos.h"
@@ -184,12 +186,11 @@ void ejecutar_cpu_RR(t_PCB* pcb){
     g_exec = pcb;
 
     pthread_t hilo_quantum;
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
-    pthread_detach(hilo_quantum);
-
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum, pcb);
+    
     recibir_pcb_desalojado(pcb);
     pthread_cancel(hilo_quantum);
-
+    pthread_join(hilo_quantum, NULL);
 }
 
 void agregar_a_cola_auxiliar(t_PCB* pcb){
@@ -208,14 +209,15 @@ void ejecutar_cpu_VRR(t_PCB* pcb){
     
     pthread_t hilo_quantum;
     timer = temporal_create();
-    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum,pcb);
-    pthread_detach(hilo_quantum);
+    pthread_create(&hilo_quantum, NULL, (void*)esperar_quantum, pcb);
 
     recibir_pcb_desalojado(pcb);
     temporal_stop(timer);
     g_ms_transcurridos = temporal_gettime(timer);
     sem_post(&g_tiempo_calculado);
+
     pthread_cancel(hilo_quantum);
+    pthread_join(hilo_quantum, NULL);
     temporal_destroy(timer);
 }
 
@@ -243,48 +245,16 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     desalojo->pcb = pcb_ejecutando;
     desalojo->motivo = motivo;
     
-    // if (desalojo->motivo == SIGNAL || desalojo->motivo == WAIT){
-        
-    //     //en caso de que sea un signal o un wait va a recibir el buffer que se mando 
-    //     //desde la funcion ciclo de ejecucion
-    //     //al struct t_desalojo se le agrega el campo char* recurso para no romper la firma de la funcion atender_desalojo
-    //     t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
-    //     uint32_t length;
-    //     char *recurso_leido = buffer_read_string(buffer, &length);
-    //     desalojo->recurso = string_duplicate(recurso_leido);
-    //     log_info(g_logger, "Recibí en recibir_pcb_desalojado el Recurso: %s", desalojo->recurso);
-    //     buffer_destroy(buffer);
-    //     free(recurso_leido);
-    // }
-    // Preguntar hilo desalojo
-    //crear_hilo_test();
-
-    pthread_t* hilo_desalojo = malloc(sizeof(pthread_t));
+    pthread_t hilo_desalojo;
     log_info(g_logger, "Creando hilo desalojo");
-
-    // desalojo->motivo == SIGNAL 
-    // AGREGAR 
 
     if(desalojo->motivo == SIGNAL){
         sem_wait(&g_mutex_cola_signal);
     }
-
-    int result = pthread_create(hilo_desalojo, NULL, (void*)&atender_desalojo, desalojo);
-    pthread_detach(*hilo_desalojo);
-
-    log_info(g_logger, "Hilo creado con resultado %d y numero %lu", result, *hilo_desalojo);
- 
+    int result = pthread_create(&hilo_desalojo, NULL, (void*)atender_desalojo, desalojo);
+    pthread_detach(hilo_desalojo);
 }
 
-void test(){
-    sleep(60);
-}
-
-void crear_hilo_test(){
-    pthread_t* hilo_test = malloc(sizeof(pthread_t));
-    int result = pthread_create(hilo_test, NULL, (void*)&test, NULL);
-    pthread_detach(*hilo_test);
-}
 
 void planificador_exit(){
     // sem_wait(&g_notif_largo_plazo);
