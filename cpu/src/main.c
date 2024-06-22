@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include <commons/log.h>
+#include <readline/chardefs.h>
 #include <sys/socket.h>
 
 t_config* config;
@@ -231,10 +232,12 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso)+ 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
+
+            return;
         }
         else if(string_equals_ignore_case(instruccion_separada[0], "WAIT")){
             char* recurso = string_duplicate(instruccion_separada[1]);
@@ -242,10 +245,11 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
-            t_buffer* buffer = buffer_create(string_length(recurso));
+            t_buffer* buffer = buffer_create(string_length(recurso) + 1 + sizeof(uint32_t));
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
+            return;
         }
 
         t_interrupcion_dispatch* interrupcion = check_interrupt(pcb, logger);

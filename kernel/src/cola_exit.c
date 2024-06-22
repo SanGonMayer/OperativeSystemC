@@ -1,4 +1,5 @@
 #include "cola_exit.h"
+#include "recursos.h"
 #include "utils/procesos.h"
 #include "utils/peticiones_memoria.h"
 #include "utils/codigo_operacion.h"
@@ -60,7 +61,7 @@ void procesar_cola_exit(){
         t_PCB* pcb = queue_pop(cola_exit);
         sem_post(&mutex_cola_exit);
         quitar_proceso_de_memoria(pcb->PID);
-
+        liberar_recursos_proceso(pcb);
     }
 }
 

@@ -31,12 +31,7 @@ typedef struct {
     t_instruccion_io* instruccion;
 } t_parametro_cola_interfaz;
 
-typedef struct {
-    char* nombre;
-    int instancias;
-    t_queue* cola;
-    sem_t semafor_cola;
-} t_recurso;
+
 
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);
@@ -51,7 +46,7 @@ void preparar_proceso_a_ready();
 
 void enviar_proceso_a_ready(t_PCB* pcb);
 
-void ejecutar_cpu_FIFO(t_PCB* pcb, int conexion_cpu_dispatch, t_log* logger);
+void ejecutar_cpu_FIFO(t_PCB* pcb);
    
 bool es_parametro_valido(char* parametro);
 
