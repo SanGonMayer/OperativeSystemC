@@ -1,5 +1,5 @@
+#ifndef PETICIONES_MEMORIA_H_
 #define PETICIONES_MEMORIA_H_
-#ifdef  PETICIONES_MEMORIA_H_
 #include "utils/buffer.h"
 
 typedef struct {

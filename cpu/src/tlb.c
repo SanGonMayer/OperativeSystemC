@@ -40,7 +40,8 @@ t_tlb* tlb_create(int capacidad) {
 void tlb_replace_entry(t_tlb* tlb, int pid, int pagina, int marco) {
     int index = 0;
     if (string_equals_ignore_case(tlb->algoritmo, "FIFO")) {
-
+        int paginaf = ((t_tlb_entry*)list_get(tlb->entradas, index))->pagina;
+        log_info(g_logger, "PID: %d - TLB MISS - Pagina: %d - Reemplazando entrada %d", pid, pagina, paginaf);
         list_remove_and_destroy_element(tlb->entradas, 0, free);
     } else if (string_equals_ignore_case(tlb->algoritmo, "LRU")) {
 
@@ -52,6 +53,9 @@ void tlb_replace_entry(t_tlb* tlb, int pid, int pagina, int marco) {
                 index = i;
             }
         }
+        
+        int paginaMasAntigua = ((t_tlb_entry*)list_get(tlb->entradas, index))->pagina;
+        log_info(g_logger, "PID: %d - TLB MISS - Pagina: %d - Reemplazando entrada %d", pid, pagina, paginaMasAntigua);
         list_remove_and_destroy_element(tlb->entradas, index, &tlb_entry_destroyer);
     }else{
         log_error(g_logger, "Algoritmo de reemplazo de TLB no soportado: %s", tlb->algoritmo);
@@ -68,6 +72,7 @@ void tlb_add(int pid, int pagina, int marco) {
         new_entry->pagina = pagina;
         new_entry->marco = marco;
         new_entry->ultimo_uso = tlb->tiempo++;
+        list_add(tlb->entradas, new_entry);
     } else {
         tlb_replace_entry(tlb, pid, pagina, marco);
     }

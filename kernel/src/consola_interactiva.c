@@ -50,12 +50,12 @@ void consola_interactiva(){
         }
         
         linea_leida = readline(">");
-
-        free(funcion);
-        for(int i = 0; linea_leida_separada[i] != NULL; i++){
-            free(linea_leida_separada[i]);
-        }
-        free(linea_leida_separada);
+        // TODO liberar memoria
+        // free(funcion);
+        // for(int i = 0; linea_leida_separada[i] != NULL; i++){
+        //     free(linea_leida_separada[i]);
+        // }
+        // free(linea_leida_separada);
 	}
 
 	free(linea_leida);

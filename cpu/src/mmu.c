@@ -56,8 +56,11 @@ t_list* obtener_direcciones_logicas_escritura(uint32_t pid, int direccion_logica
     t_list* peticiones = list_create();
     int pagina = direccion_logica / tamanio_pagina;
     int offset = direccion_logica % tamanio_pagina;
-
     int tamanio = strlen(valor);
+    if(valor[0] == '\0'){
+        tamanio = 1;
+    }
+    
     int tamanio_restante = tamanio;
     char* ptr_valor = valor;
 

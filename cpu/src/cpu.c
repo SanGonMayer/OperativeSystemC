@@ -137,7 +137,9 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
 
     uint32_t mensaje_diccionario;
 
-    memcpy(&mensaje_diccionario, mensaje, sizeof(uint32_t));
+    uint32_t valor = (uint32_t)mensaje[0];
+
+    memcpy(&mensaje_diccionario, &valor, sizeof(uint32_t));
 
     dictionary_put(diccionario, registro_datos, (void*)mensaje_diccionario);
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
@@ -275,7 +277,7 @@ int obtener_direccion_fisica(int pid, int direccion_logica){
         tlb_hit = tlb_get_marco(pid, direccion_logica, &direccion_fisica);
 
     if(!tlb_hit){
-        tlb_hit = traducir_a_direccion_fisica(pid, direccion_logica);
+        direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
 
         if(tlb_enabled())
             tlb_add(pid, direccion_logica, direccion_fisica);

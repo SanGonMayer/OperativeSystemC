@@ -3,6 +3,7 @@
 #include "recursos.h"
 #include "utils/buffer.h"
 #include "utils/client.h"
+#include "utils/codigo_error.h"
 #include "utils/codigo_operacion.h"
 #include <commons/collections/dictionary.h>
 #include <commons/collections/list.h>
@@ -295,7 +296,13 @@ void atender_desalojo(t_desalojo* desalojo){
             liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
             return;
-        }   
+        }
+        case ERROR_OUT_OF_MEMORY:
+        {
+            liberar_cola_exec();
+            finalizar_proceso(desalojo->pcb);
+            return;
+        }
         case INTERRUPCION_QUANTUM: //CLOCK
         {
             liberar_cola_exec();
