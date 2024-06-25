@@ -1,4 +1,5 @@
 #include "global_io.h"
+#include "io_dialfs.h"
 #include <commons/bitarray.h>
 #include <commons/config.h>
 #include <stdio.h>
@@ -6,38 +7,123 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "global_io.h"
+#include "utils/buffer.h"
+#include "utils/codigo_operacion.h"
+#include "utils/peticiones_memoria.h"
+#include "utils/client.h"
+#include "utils/server.h"
+#include <commons/string.h>
+#include <readline/readline.h>
+#include <stdint.h>
 
 static int blocks_fd;
 static int bitmap_fd;
 static t_bitarray* bitmap;
 
+t_dictionary* get_comandos(){
+
+    t_dictionary* comandos = dictionary_create();
+
+    dictionary_put(comandos, "IO_FS_CREATE", (void*) IO_DIALFS_CREATE);
+    dictionary_put(comandos, "IO_FS_DELETE", (void*) IO_DIALFS_DELETE);
+    dictionary_put(comandos, "IO_FS_TRUNCATE", (void*) IO_DIALFS_TRUNCATE);
+    dictionary_put(comandos, "IO_FS_WRITE", (void*) IO_DIALFS_WRITE);
+    dictionary_put(comandos, "IO_FS_READ", (void*) IO_DIALFS_READ);
+
+    return comandos;
+}
+
+void ejecutar_instruccion(t_operacion_dialfs operacion, t_argumentos_instruccion* argumentos){
+    switch (operacion) {
+        case IO_DIALFS_CREATE:
+            io_fs_create();
+            break;
+        case IO_DIALFS_DELETE:
+            io_fs_delete();
+            break;
+        case IO_DIALFS_TRUNCATE:
+            io_fs_truncate();
+            break;
+        case IO_DIALFS_WRITE:
+            io_fs_write();
+            break;
+        case IO_DIALFS_READ:   
+            io_fs_read();
+            break;
+        default:
+            log_error(g_logger, "Instruccion no existente");
+            break;
+    }
+}
+
+void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
+    t_dictionary comandos = get_comandos();
+
+    if(dictionary_has_key(comandos, instruccion->instruccion)){
+
+        t_operacion_dialfs operacion = (t_operacion_dialfs) dictionary_get(comandos, instruccion->instruccion);
+        t_argumentos_instruccion* argumentos = NULL;
+        //TODO argumentos
+        ejecutar_instruccion(operacion, argumentos);
+    }else{
+        log_error(g_logger, "ingresaste una funcion no valida");
+    }
+
+}
 
 void initialize_fs() {
     char blocks_path[256];
     char bitmap_path[256];
     snprintf(blocks_path, sizeof(blocks_path), "%s/bloques.dat", g_config_io->path_base_dialfs);
     snprintf(bitmap_path, sizeof(bitmap_path), "%s/bitmap.dat", g_config_io->path_base_dialfs);
-
+    
     int block_size = g_config_io->block_size;
     int block_count = g_config_io->block_count;
+    int bitmap_size = block_count / 8;
 
     // Crear archivo de bloques
     blocks_fd = open(blocks_path, O_CREAT | O_RDWR, 0644);
+    if (blocks_fd == -1) {
+        log_error(logger, "Error al crear o abrir el archivo de bloques");
+        exit(EXIT_FAILURE);
+    }
     ftruncate(blocks_fd, block_size * block_count);
 
     // Crear archivo de bitmap
     bitmap_fd = open(bitmap_path, O_CREAT | O_RDWR, 0644);
-    ftruncate(bitmap_fd, block_count / 8);
+    if (bitmap_fd == -1) {
+        log_error(logger, "Error al crear o abrir el archivo de bitmap");
+        close(blocks_fd);
+        exit(EXIT_FAILURE);
+    }
+    ftruncate(bitmap_fd, bitmap_size);
 
     // Inicializar bitmap
-    char* bitmap_data = malloc(block_count / 8);
-    memset(bitmap_data, 0, block_count / 8);
-    write(bitmap_fd, bitmap_data, block_count / 8);
+    char* bitmap_data = malloc(bitmap_size);
+    if (bitmap_data == NULL) {
+        log_error(logger, "Error al asignar memoria para el bitmap");
+        close(blocks_fd);
+        close(bitmap_fd);
+        exit(EXIT_FAILURE);
+    }
+    
+    memset(bitmap_data, 0, bitmap_size);
+    write(bitmap_fd, bitmap_data, bitmap_size);
     lseek(bitmap_fd, 0, SEEK_SET);
 
-    bitmap = bitarray_create_with_mode(bitmap_data, block_count / 8, MSB_FIRST);
+    bitmap = bitarray_create_with_mode(bitmap_data, bitmap_size, MSB_FIRST);
 
-    free(bitmap_data);
+    // Verificar que el bitarray se haya creado correctamente
+    if (bitmap == NULL) {
+        log_error(logger, "Error al crear el bitarray");
+        free(bitmap_data);
+        close(blocks_fd);
+        close(bitmap_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    log_info(logger, "Sistema de archivos inicializado correctamente");
 }
 
 void finalize_fs() {

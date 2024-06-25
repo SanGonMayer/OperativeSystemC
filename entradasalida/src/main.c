@@ -9,6 +9,7 @@
 #include <commons/string.h>
 #include <readline/readline.h>
 #include <stdlib.h>
+#include "io_dialfs.h"
 
 
 t_config* config;
@@ -92,6 +93,13 @@ int main(int argc, char* argv[]){
     if(string_equals_ignore_case(tipo, "STDOUT")){
         g_socket_memoria = iniciar_conexion_memoria();
         estrategia_procesar_instruccion = &procesar_instruccion_stdout;
+    }
+
+    if(string_equals_ignore_case(tipo, "DIALFS")){
+        g_socket_memoria = iniciar_conexion_memoria();
+        //Inicializar FS con archivos si es necesario, o usar existentes
+        initialize_fs();
+        estrategia_procesar_instruccion = &procesar_instruccion_dialfs;
     }
 
     atender_instrucciones(conexion_kernel, estrategia_procesar_instruccion);

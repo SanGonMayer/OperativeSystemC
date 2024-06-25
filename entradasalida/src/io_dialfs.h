@@ -1,6 +1,23 @@
 #ifndef IO_DIALFS_H
 #define IO_DIALFS_H
+#include "utils/instrucciones_io.h"
 
+typedef enum {
+    IO_DIALFS_CREATE = 0,
+    IO_DIALFS_DELETE = 1,
+    IO_DIALFS_TRUNCATE = 2,
+    IO_DIALFS_WRITE = 3,
+    IO_DIALFS_READ = 4
+} t_operacion_dialfs;
+
+typedef struct {
+
+} t_argumentos_instruccion;
+
+void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion);
+void ejecutar_instruccion(t_operacion_dialfs operacion, t_argumentos_instruccion* argumentos);
+t_dictionary* get_comandos();
+//realizadas 
 void initialize_fs();
 void finalize_fs();
 void io_fs_create(const char* filename);
