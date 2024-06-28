@@ -88,4 +88,14 @@ t_PCB* buscar_en_diccionario_recursos(uint32_t pid, t_dictionary* colas_recursos
 
 void agregar_a_cola_auxiliar(t_PCB* pcb);
 
+void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb);
+
+void procesar_io_fs_delete(char* interfaz, char* nombre_archivo, t_PCB* pcb);
+
+void procesar_io_fs_truncate(char* interfaz, char* nombre_archivo, int tamanio, t_PCB* pcb);
+
+void procesar_io_fs_write(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb);
+
+void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb);
+
 #endif

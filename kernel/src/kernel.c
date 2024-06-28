@@ -879,3 +879,122 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
     return pcb;
 }
 
+void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if (dictionary_has_key(g_interfaces, interfaz)) {
+        t_interfaz_conectada* interfaz_conectada = dictionary_get(g_interfaces, interfaz);
+        sem_post(&g_mutex_acceso_interfaces);
+
+        t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+        item->pcb = pcb;
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_CREATE", 0, nombre_archivo, 0, NULL, 0);
+        item->instruccion = instruccion_io;
+
+        sem_wait(&interfaz_conectada->mutex);
+        queue_push(interfaz_conectada->cola, item);
+        sem_post(&interfaz_conectada->mutex);
+
+        sem_post(&interfaz_conectada->semaforo);
+        log_info(g_logger, "Proceso %d bloqueado en IO_FS_CREATE", pcb->PID);
+    } else {
+        sem_post(&g_mutex_acceso_interfaces);
+        finalizar_proceso(pcb);
+    }
+}
+
+void procesar_io_fs_delete(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if (dictionary_has_key(g_interfaces, interfaz)) {
+        t_interfaz_conectada* interfaz_conectada = dictionary_get(g_interfaces, interfaz);
+        sem_post(&g_mutex_acceso_interfaces);
+
+        t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+        item->pcb = pcb;
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_DELETE", 0, nombre_archivo, 0, NULL, 0);
+        item->instruccion = instruccion_io;
+
+        sem_wait(&interfaz_conectada->mutex);
+        queue_push(interfaz_conectada->cola, item);
+        sem_post(&interfaz_conectada->mutex);
+
+        sem_post(&interfaz_conectada->semaforo);
+        log_info(g_logger, "Proceso %d bloqueado en IO_FS_DELETE", pcb->PID);
+    } else {
+        sem_post(&g_mutex_acceso_interfaces);
+        finalizar_proceso(pcb);
+    }
+}
+
+void procesar_io_fs_truncate(char* interfaz, char* nombre_archivo, int tamanio, t_PCB* pcb) {
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if (dictionary_has_key(g_interfaces, interfaz)) {
+        t_interfaz_conectada* interfaz_conectada = dictionary_get(g_interfaces, interfaz);
+        sem_post(&g_mutex_acceso_interfaces);
+
+        t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+        item->pcb = pcb;
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_TRUNCATE", 0, nombre_archivo, tamanio, NULL, 0);
+        item->instruccion = instruccion_io;
+
+        sem_wait(&interfaz_conectada->mutex);
+        queue_push(interfaz_conectada->cola, item);
+        sem_post(&interfaz_conectada->mutex);
+
+        sem_post(&interfaz_conectada->semaforo);
+        log_info(g_logger, "Proceso %d bloqueado en IO_FS_TRUNCATE", pcb->PID);
+    } else {
+        sem_post(&g_mutex_acceso_interfaces);
+        finalizar_proceso(pcb);
+    }
+}
+
+void procesar_io_fs_write(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb) {
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if (dictionary_has_key(g_interfaces, interfaz)) {
+        t_interfaz_conectada* interfaz_conectada = dictionary_get(g_interfaces, interfaz);
+        sem_post(&g_mutex_acceso_interfaces);
+
+        t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+        item->pcb = pcb;
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_WRITE", direccion, nombre_archivo, tamanio, NULL, puntero_archivo);
+        item->instruccion = instruccion_io;
+
+        sem_wait(&interfaz_conectada->mutex);
+        queue_push(interfaz_conectada->cola, item);
+        sem_post(&interfaz_conectada->mutex);
+
+        sem_post(&interfaz_conectada->semaforo);
+        log_info(g_logger, "Proceso %d bloqueado en IO_FS_WRITE", pcb->PID);
+    } else {
+        sem_post(&g_mutex_acceso_interfaces);
+        finalizar_proceso(pcb);
+    }
+}
+
+void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb) {
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if (dictionary_has_key(g_interfaces, interfaz)) {
+        t_interfaz_conectada* interfaz_conectada = dictionary_get(g_interfaces, interfaz);
+        sem_post(&g_mutex_acceso_interfaces);
+
+        t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
+        item->pcb = pcb;
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_READ", direccion, nombre_archivo, tamanio, NULL, puntero_archivo);
+        item->instruccion = instruccion_io;
+
+        sem_wait(&interfaz_conectada->mutex);
+        queue_push(interfaz_conectada->cola, item);
+        sem_post(&interfaz_conectada->mutex);
+
+        sem_post(&interfaz_conectada->semaforo);
+        log_info(g_logger, "Proceso %d bloqueado en IO_FS_READ", pcb->PID);
+    } else {
+        sem_post(&g_mutex_acceso_interfaces);
+        finalizar_proceso(pcb);
+    }
+}
