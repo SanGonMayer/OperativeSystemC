@@ -20,10 +20,11 @@
 static int blocks_fd;
 static int bitmap_fd;
 static t_bitarray* bitmap;
+t_dictionary* comandos;
 
-t_dictionary* get_comandos(){
+void get_comandos(){
 
-    t_dictionary* comandos = dictionary_create();
+    comandos = dictionary_create();
 
     dictionary_put(comandos, "IO_FS_CREATE", (t_operacion_dialfs) IO_DIALFS_CREATE);
     dictionary_put(comandos, "IO_FS_DELETE", (t_operacion_dialfs) IO_DIALFS_DELETE);
@@ -31,25 +32,29 @@ t_dictionary* get_comandos(){
     dictionary_put(comandos, "IO_FS_WRITE", (t_operacion_dialfs) IO_DIALFS_WRITE);
     dictionary_put(comandos, "IO_FS_READ", (t_operacion_dialfs) IO_DIALFS_READ);
 
-    return comandos;
 }
 
 void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion){
     switch (operacion) {
         case IO_DIALFS_CREATE:
-            io_fs_create();
+            io_fs_create(instruccion->nombre_archivo);
+            responder_ok(fd);
             break;
         case IO_DIALFS_DELETE:
-            io_fs_delete();
+            io_fs_delete(instruccion->nombre_archivo);
+            responder_ok(fd);
             break;
         case IO_DIALFS_TRUNCATE:
             io_fs_truncate();
+            responder_ok(fd);
             break;
         case IO_DIALFS_WRITE:
             io_fs_write();
+            responder_ok(fd);
             break;
         case IO_DIALFS_READ:   
             io_fs_read();
+            responder_ok(fd);
             break;
         default:
             log_error(g_logger, "Instruccion no existente");
@@ -58,8 +63,6 @@ void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io
 }
 
 void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
-    //TODO liberar diccionario cuando termino el fs
-    t_dictionary comandos = get_comandos();
 
     if(dictionary_has_key(comandos, instruccion->instruccion)){
         t_operacion_dialfs operacion = (t_operacion_dialfs) dictionary_get(comandos, instruccion->instruccion);
@@ -76,6 +79,9 @@ void initialize_fs() {
     snprintf(blocks_path, sizeof(blocks_path), "%s/bloques.dat", g_config_io->path_base_dialfs);
     snprintf(bitmap_path, sizeof(bitmap_path), "%s/bitmap.dat", g_config_io->path_base_dialfs);
     
+    //Inicia diccionario
+    get_comandos();
+
     int block_size = g_config_io->block_size;
     int block_count = g_config_io->block_count;
     int bitmap_size = block_count / 8;
@@ -83,7 +89,7 @@ void initialize_fs() {
     // Crear archivo de bloques
     blocks_fd = open(blocks_path, O_CREAT | O_RDWR, 0644);
     if (blocks_fd == -1) {
-        log_error(logger, "Error al crear o abrir el archivo de bloques");
+        log_error(g_logger, "Error al crear o abrir el archivo de bloques");
         exit(EXIT_FAILURE);
     }
     ftruncate(blocks_fd, block_size * block_count);
@@ -91,7 +97,7 @@ void initialize_fs() {
     // Crear archivo de bitmap
     bitmap_fd = open(bitmap_path, O_CREAT | O_RDWR, 0644);
     if (bitmap_fd == -1) {
-        log_error(logger, "Error al crear o abrir el archivo de bitmap");
+        log_error(g_logger, "Error al crear o abrir el archivo de bitmap");
         close(blocks_fd);
         exit(EXIT_FAILURE);
     }
@@ -100,7 +106,7 @@ void initialize_fs() {
     // Inicializar bitmap
     char* bitmap_data = malloc(bitmap_size);
     if (bitmap_data == NULL) {
-        log_error(logger, "Error al asignar memoria para el bitmap");
+        log_error(g_logger, "Error al asignar memoria para el bitmap");
         close(blocks_fd);
         close(bitmap_fd);
         exit(EXIT_FAILURE);
@@ -114,17 +120,18 @@ void initialize_fs() {
 
     // Verificar que el bitarray se haya creado correctamente
     if (bitmap == NULL) {
-        log_error(logger, "Error al crear el bitarray");
+        log_error(g_logger, "Error al crear el bitarray");
         free(bitmap_data);
         close(blocks_fd);
         close(bitmap_fd);
         exit(EXIT_FAILURE);
     }
 
-    log_info(logger, "Sistema de archivos inicializado correctamente");
+    log_info(g_logger, "FS inicializado correctamente");
 }
 
 void finalize_fs() {
+    dictionary_destroy(comandos);
     bitarray_destroy(bitmap);
     close(bitmap_fd);
     close(blocks_fd);
@@ -165,7 +172,7 @@ static void save_metadata(const char* filename, int initial_block, int file_size
     config_destroy(metadata);
 }
 
-void io_fs_create(const char* filename) {
+void io_fs_create(char* filename) {
     if (access(filename, F_OK) == 0) {
         printf("El archivo ya existe\n");
         return;
@@ -188,7 +195,7 @@ void io_fs_create(const char* filename) {
     save_metadata(filename, initial_block, 0);
 }
 
-void io_fs_delete(const char* filename) {
+void io_fs_delete(char* filename) {
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
