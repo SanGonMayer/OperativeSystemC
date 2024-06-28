@@ -19,39 +19,36 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
         return;
     }
     
-    int direccion = instruccion->puntero_archivo;
     int tamanio = instruccion->tamanio;
     
-    leer_de_memoria_stdout(tamanio, direccion);
+    leer_de_memoria_stdout(tamanio, instruccion->peticionesMemoria);
     
     responder_ok(fd);
 }
 
-void leer_de_memoria_stdout(int tamanio, int direccion_fisica) {
-    t_peticion_acceso_usuario* peticion_lectura = crear_peticion_lectura(tamanio, direccion_fisica);
-    t_buffer* buffer = serializar_peticion_acceso_usuario(peticion_lectura);
-    t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+void leer_de_memoria_stdout(int tamanio, t_list* peticionesMemoria) {
 
-    int err = enviar_paquete(paquete, g_socket_memoria);
+    char* mensaje = string_new();
+    for(int i = 0; i < list_size(peticionesMemoria); i++){
+        t_peticion_acceso_usuario * peticion = list_get(peticionesMemoria, i);
+        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        string_append(&mensaje, respuesta);
 
-    if(err == -1){
-        log_error(g_logger, "Error al enviar paquete a memoria");
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
     }
 
-    eliminar_paquete(paquete);
-    destruir_peticion_acceso_usuario(peticion_lectura);
-
-    t_buffer* buffer_lectura = recibir_buffer(g_socket_memoria);
-    
-    uint32_t length = 0;
-
-    char *texto_leido = buffer_read_string(buffer_lectura, &length);
+    uitn32_t length = string_length(mensaje);
 
     texto_leido[length] = '\0';
 
-    log_info(g_logger, "Texto leido de memoria: %s", texto_leido);
-
-    buffer_destroy(buffer_lectura);
+    log_info(g_logger, "Texto leido de memoria: %s", mensaje);
     
 }
 

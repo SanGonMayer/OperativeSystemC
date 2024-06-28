@@ -418,8 +418,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
                 
-                //TODO Agregar devuelta la direccion fisica. La necesita ??
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, lista);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, lista);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
@@ -455,9 +454,12 @@ void atender_desalojo(t_desalojo* desalojo){
             }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer);
             int tamanio = buffer_read_int(buffer);
+            int sizeLista = buffer_read_int(buffer);
+            t_list* lista = list_create();
+            buffer_read_lista(buffer, sizeLista, lista);
             uint32_t* length = malloc(sizeof(uint32_t));
+
             char* nombreInterfaz = buffer_read_string(buffer, length);
             liberar_cola_exec();
             char instruccion[] = "IO_STDOUT_WRITE";
@@ -479,7 +481,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, lista);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;

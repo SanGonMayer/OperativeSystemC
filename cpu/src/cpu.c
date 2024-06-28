@@ -118,8 +118,8 @@ uint32_t length = strlen(dispositivo) + 1;
     t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeLista * sizeof(t_peticion_acceso_usuario) + sizeof(uint32_t) + length);
 
     buffer_add_int(buffer, registro_tamanio);
+
     buffer_add_lista(buffer,sizeLista,peticiones);
-    
     buffer_add_string(buffer, length, dispositivo);
 
     return buffer;
