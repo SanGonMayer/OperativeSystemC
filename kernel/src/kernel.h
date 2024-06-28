@@ -29,7 +29,6 @@ typedef struct {
 typedef struct {
     t_PCB* pcb;
     t_instruccion_io* instruccion;
-    t_list* peticionesMemoria;
 } t_parametro_cola_interfaz;
 
 t_paquete* crear_contexto_memoria(t_PCB* pcb);

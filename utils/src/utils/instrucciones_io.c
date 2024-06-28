@@ -15,7 +15,7 @@ t_instruccion_io* crear_instruccion_io(
     char* direccion,
     int tamanio,
     char* nombre_archivo,
-    int puntero_archivo){
+    t_list* peticionesMemoria){
 
     t_instruccion_io* instruccion_io = malloc(sizeof(t_instruccion_io));
 
@@ -43,13 +43,13 @@ t_instruccion_io* crear_instruccion_io(
         instruccion_io->nombre_archivo = "1";
     }
 
-    instruccion_io->puntero_archivo = puntero_archivo;
+    instruccion_io->peticionesMemoria = peticionesMemoria;
 
     return instruccion_io;
 }
 
-t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* peticionesMemoria){
-    int listaSize = list_size(peticionesMemoria);
+t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
+    int listaSize = list_size(instruccion_io->peticionesMemoria);
     //TODO reciba lo mismo que
     t_buffer* buffer = buffer_create(
     sizeof(int) 
@@ -71,7 +71,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* pe
     buffer_add_string(buffer, strlen(instruccion_io->nombre_archivo) + 1, instruccion_io->nombre_archivo);
     buffer_add_int(buffer, instruccion_io->puntero_archivo);
 
-    buffer_add_lista(buffer, listaSize, peticionesMemoria);
+    buffer_add_lista(buffer, listaSize, instruccion_io->peticionesMemoria);
 
     return buffer;
 }
@@ -79,14 +79,20 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* pe
 t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
     uint32_t unidades_trabajo = buffer_read_int(buffer);
     uint32_t length;
+
     char* instruccion = buffer_read_string(buffer, &length);
     char* direccion = buffer_read_string(buffer, &length);
     int tamanio = buffer_read_int(buffer);
     char* nombre_archivo = buffer_read_string(buffer, &length);
     int puntero_archivo = buffer_read_int(buffer);
 
+    int listaSize = buffer_read_int(buffer);
+    t_list* peticionesMemoria = list_create();
+
+    buffer_read_lista(buffer, listaSize, peticionesMemoria);
+
     buffer_destroy(buffer);
-    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo);
+    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, peticionesMemoria);
 
     free(instruccion);
     free(direccion);

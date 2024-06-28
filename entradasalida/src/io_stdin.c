@@ -30,7 +30,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         responder_error(fd, ERROR_TAMANIO_PALABRA);
         return;
     }
-    guardar_en_memoria(texto, instruccion->puntero_archivo);
+    
+    guardar_en_memoria(texto, instruccion->peticionesMemoria);
 
     responder_ok(fd);
 }
@@ -40,25 +41,22 @@ char* stdin_leer_texto() {
     return texto;
 }
 
-void guardar_en_memoria(char* texto, int direccion_fisica) {
-    t_peticion_acceso_usuario* peticion_escritura = crear_peticion_escritura(direccion_fisica, texto);
-    t_buffer* buffer = serializar_peticion_acceso_usuario(peticion_escritura);
-    t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+void guardar_en_memoria(char* texto, t_list* peticionesMemoria) {
 
-    int err = enviar_paquete(paquete, g_socket_memoria);
-
-    if(err == -1){
-        log_error(g_logger, "Error al enviar paquete a memoria");
+    for(int i = 0; i < list_size(peticionesMemoria); i++){
+        t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
+        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        bool ok = recibir_ok(g_socket_memoria);
+        if(ok){
+            log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
+        } else {
+            log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");
+        }
+        eliminar_paquete(paquete);
     }
 
-    eliminar_paquete(paquete);
-    destruir_peticion_acceso_usuario(peticion_escritura);
-
-    bool ok = recibir_ok(g_socket_memoria);
-
-    if(!ok){
-        log_error(g_logger, "Error al guardar texto en memoria");
-    }
 }
 
 bool stdin_soporta_instruccion(char* instruccion){
