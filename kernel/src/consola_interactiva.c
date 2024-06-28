@@ -139,22 +139,20 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
         case DETENER_PLANIFICACION:
             printf("Opción Detener planificacion\n");
             
-            // sem_wait(&g_notif_corto_plazo);
-            // sem_wait(&g_notif_largo_plazo);
+            sem_wait(&g_notif_corto_plazo);
+            sem_wait(&g_notif_largo_plazo);
             g_planificacion_pausada = 1;
             break;
         
         case INICIAR_PLANIFIACION:
-            printf("Opción no válida\n");
+            printf("Iniciando planificacion\n");
 
-            if (g_planificacion_pausada == 0){
-                printf("No es posible detener planificacion");
-                break;
-            }
-
-            g_planificacion_pausada = 1;
-            // sem_post(&g_notif_corto_plazo);
-            // sem_post(&g_notif_largo_plazo);
+            g_planificacion_pausada = 0;
+            sem_post(&g_notif_corto_plazo);
+            sem_post(&g_notif_corto_plazo);
+            sem_post(&g_notif_largo_plazo);
+            sem_post(&g_notif_largo_plazo);
+            
             break;
         
         case MULTIPROGRAMACION:
