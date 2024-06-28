@@ -25,16 +25,16 @@ t_dictionary* get_comandos(){
 
     t_dictionary* comandos = dictionary_create();
 
-    dictionary_put(comandos, "IO_FS_CREATE", (void*) IO_DIALFS_CREATE);
-    dictionary_put(comandos, "IO_FS_DELETE", (void*) IO_DIALFS_DELETE);
-    dictionary_put(comandos, "IO_FS_TRUNCATE", (void*) IO_DIALFS_TRUNCATE);
-    dictionary_put(comandos, "IO_FS_WRITE", (void*) IO_DIALFS_WRITE);
-    dictionary_put(comandos, "IO_FS_READ", (void*) IO_DIALFS_READ);
+    dictionary_put(comandos, "IO_FS_CREATE", (t_operacion_dialfs) IO_DIALFS_CREATE);
+    dictionary_put(comandos, "IO_FS_DELETE", (t_operacion_dialfs) IO_DIALFS_DELETE);
+    dictionary_put(comandos, "IO_FS_TRUNCATE", (t_operacion_dialfs) IO_DIALFS_TRUNCATE);
+    dictionary_put(comandos, "IO_FS_WRITE", (t_operacion_dialfs) IO_DIALFS_WRITE);
+    dictionary_put(comandos, "IO_FS_READ", (t_operacion_dialfs) IO_DIALFS_READ);
 
     return comandos;
 }
 
-void ejecutar_instruccion(t_operacion_dialfs operacion, t_argumentos_instruccion* argumentos){
+void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion){
     switch (operacion) {
         case IO_DIALFS_CREATE:
             io_fs_create();
@@ -58,14 +58,12 @@ void ejecutar_instruccion(t_operacion_dialfs operacion, t_argumentos_instruccion
 }
 
 void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
+    //TODO liberar diccionario cuando termino el fs
     t_dictionary comandos = get_comandos();
 
     if(dictionary_has_key(comandos, instruccion->instruccion)){
-
         t_operacion_dialfs operacion = (t_operacion_dialfs) dictionary_get(comandos, instruccion->instruccion);
-        t_argumentos_instruccion* argumentos = NULL;
-        //TODO argumentos
-        ejecutar_instruccion(operacion, argumentos);
+        ejecutar_instruccion(fd, operacion, instruccion);
     }else{
         log_error(g_logger, "ingresaste una funcion no valida");
     }

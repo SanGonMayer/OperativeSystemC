@@ -10,12 +10,8 @@ typedef enum {
     IO_DIALFS_READ = 4
 } t_operacion_dialfs;
 
-typedef struct {
-
-} t_argumentos_instruccion;
-
 void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion);
-void ejecutar_instruccion(t_operacion_dialfs operacion, t_argumentos_instruccion* argumentos);
+void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion);
 t_dictionary* get_comandos();
 //realizadas 
 void initialize_fs();
