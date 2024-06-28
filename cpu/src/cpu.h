@@ -70,9 +70,9 @@ t_buffer* ejecutar_io_fs_delete(char* interfaz, char* nombre_archivo);
 
 t_buffer* ejecutar_io_fs_truncate(char* interfaz, char* nombre_archivo, int registro_tamanio);
 
-t_buffer* ejecutar_io_fs_write(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
+t_buffer* ejecutar_io_fs_write(uint32_t pid, char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
 
-t_buffer* ejecutar_io_fs_read(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
+t_buffer* ejecutar_io_fs_read(uint32_t pid,char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
 
 int obtener_direccion_fisica(int pid, int direccion_logica);
 

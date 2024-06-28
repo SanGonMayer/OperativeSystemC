@@ -293,11 +293,11 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_WRITE, logger, diccionario);
 
-            int direccion = (int)dictionary_get(diccionario, registro_direccion);
+            int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             int puntero_archivo = (int)dictionary_get(diccionario, registro_puntero_archivo);
 
-            t_buffer* buffer = ejecutar_io_fs_write(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
+            t_buffer* buffer = ejecutar_io_fs_write(pcb->PID,interfaz, nombre_archivo, direccion_logica, tamanio, puntero_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "Se ejecutó IO_FS_WRITE %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
             buffer_destroy(buffer);
@@ -315,7 +315,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             int puntero_archivo = (int)dictionary_get(diccionario, registro_puntero_archivo);
 
-            t_buffer* buffer = ejecutar_io_fs_read(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
+            t_buffer* buffer = ejecutar_io_fs_read(pcb->PID,interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "Se ejecutó IO_FS_READ %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
             buffer_destroy(buffer);

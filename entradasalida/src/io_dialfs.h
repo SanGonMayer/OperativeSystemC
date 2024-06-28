@@ -19,7 +19,7 @@ void finalize_fs();
 void io_fs_create(char* filename);
 void io_fs_delete(char* filename);
 void io_fs_truncate(const char* filename, int new_size);
-void io_fs_write(const char* filename, const char* data, int size, int offset);
-void io_fs_read(const char* filename, char* buffer, int size, int offset);
+void io_fs_write(t_instruccion_io* instruccion);
+void io_fs_read(t_instruccion_io* instruccion);
 
 #endif // IO_DIALFS_H

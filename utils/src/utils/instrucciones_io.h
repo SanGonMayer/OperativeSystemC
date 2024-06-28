@@ -11,7 +11,7 @@ typedef struct {
     char* direccion;
     int tamanio;
     char* nombre_archivo;
-    int puntero_archivo; //REVISAR hay que sacarlo para mi, siempre se pasa desde cpu de donde hasta donde escribir o leer
+    int puntero_archivo; 
     t_list* peticionesMemoria;
 } t_instruccion_io;
 
@@ -39,6 +39,7 @@ t_instruccion_io* crear_instruccion_io(
     char* direccion,
     int tamanio,
     char* nombre_archivo,
+    int puntero_archivo,
     t_list* peticionesMemoria);
 
 void destruir_instruccion_io(t_instruccion_io* instruccion_io);

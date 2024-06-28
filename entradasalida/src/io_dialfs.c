@@ -16,6 +16,7 @@
 #include <commons/string.h>
 #include <readline/readline.h>
 #include <stdint.h>
+#include "io_stdin.h"
 
 static int blocks_fd;
 static int bitmap_fd;
@@ -45,15 +46,15 @@ void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io
             responder_ok(fd);
             break;
         case IO_DIALFS_TRUNCATE:
-            io_fs_truncate();
+            io_fs_truncate(instruccion->nombre_archivo, instruccion->tamanio);
             responder_ok(fd);
             break;
         case IO_DIALFS_WRITE:
-            io_fs_write();
+            io_fs_write(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_READ:   
-            io_fs_read();
+            io_fs_read(instruccion);
             responder_ok(fd);
             break;
         default:
@@ -255,7 +256,31 @@ void io_fs_truncate(const char* filename, int new_size) {
     config_destroy(metadata);
 }
 
-void io_fs_write(const char* filename, const char* data, int size, int offset) {
+void io_fs_write(t_instruccion_io* instruccion) {
+    
+    char* filename = instruccion->nombre_archivo;
+    int size = instruccion->tamanio;
+    int offset = instruccion->puntero_archivo;
+    char* data = string_new();
+
+    for(int i = 0; i < list_size(instruccion->peticionesMemoria); i++){
+        t_peticion_acceso_usuario * peticion = list_get(instruccion->peticionesMemoria, i);
+        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
+        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
+        enviar_paquete(paquete, g_socket_memoria);
+        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
+        uint32_t length;
+        char* respuesta = buffer_read_string(buffer_respuesta, &length);
+        string_append(&data, respuesta);
+
+        free(respuesta);
+        eliminar_paquete(paquete);
+        buffer_destroy(buffer_respuesta);
+    }
+
+    uint32_t length = string_length(data);
+    texto_leido[length] = '\0';
+    
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
@@ -293,10 +318,16 @@ void io_fs_write(const char* filename, const char* data, int size, int offset) {
     config_destroy(metadata);
 }
 
-void io_fs_read(const char* filename, char* buffer, int size, int offset) {
+void io_fs_read(t_instruccion_io* instruccion) {
+    char* filename = instruccion->nombre_archivo;
+    int size = instruccion->tamanio;
+    int offset = instruccion->puntero_archivo;  // Usar puntero_archivo como offset
+    char* data = malloc(size);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
+        free(data);
         return;
     }
 
@@ -304,7 +335,8 @@ void io_fs_read(const char* filename, char* buffer, int size, int offset) {
     int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
 
     if (offset + size > file_size) {
-        printf("Lectura fuera de los límites del archivo\n");
+        printf("Error: Intento de lectura fuera del tamaño del archivo\n");
+        free(data);
         config_destroy(metadata);
         return;
     }
@@ -320,10 +352,14 @@ void io_fs_read(const char* filename, char* buffer, int size, int offset) {
         }
 
         lseek(blocks_fd, (initial_block + i) * g_config_io->block_size + block_offset, SEEK_SET);
-        read(blocks_fd, buffer, read_size);
-        buffer += read_size;
+        read(blocks_fd, data, read_size);
+        data += read_size;
         block_offset = 0;
     }
 
     config_destroy(metadata);
+
+    // Escribir en la memoria
+    guardar_en_memoria(data, instruccion->peticionesMemoria);
+
 }

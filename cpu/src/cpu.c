@@ -250,7 +250,6 @@ t_buffer* ejecutar_io_fs_create(char* interfaz, char* nombre_archivo) {
     buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
     return buffer;
 }
-
 t_buffer* ejecutar_io_fs_delete(char* interfaz, char* nombre_archivo) {
     uint32_t length_interfaz = strlen(interfaz) + 1;
     uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
@@ -270,27 +269,53 @@ t_buffer* ejecutar_io_fs_truncate(char* interfaz, char* nombre_archivo, int regi
     return buffer;
 }
 
-t_buffer* ejecutar_io_fs_write(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo) {
+t_buffer* ejecutar_io_fs_write(uint32_t pid, char* interfaz, char* nombre_archivo, int direccion_logica, int registro_tamanio, int registro_puntero_archivo) {
     uint32_t length_interfaz = strlen(interfaz) + 1;
     uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
-    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo + 3 * sizeof(int));
+
+    t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, registro_tamanio);
+    int listaSize = list_size(peticiones);
+
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) 
+    + length_interfaz 
+    + sizeof(uint32_t) 
+    + length_nombre_archivo 
+    + 3 * sizeof(int)
+    + sizeof(int) 
+    + listaSize * sizeof(t_peticion_acceso_usuario));
+
     buffer_add_string(buffer, length_interfaz, interfaz);
     buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
-    buffer_add_int(buffer, registro_direccion);
+    buffer_add_int(buffer, direccion_logica);
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_int(buffer, registro_puntero_archivo);
+    buffer_add_lista(buffer, listaSize, peticiones);
+
     return buffer;
 }
 
-t_buffer* ejecutar_io_fs_read(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo) {
+t_buffer* ejecutar_io_fs_read(uint32_t pid,char* interfaz, char* nombre_archivo, int direccion_logica, int registro_tamanio, int registro_puntero_archivo) {
     uint32_t length_interfaz = strlen(interfaz) + 1;
     uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
-    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo + 3 * sizeof(int));
+
+    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, registro_tamanio);
+    int listaSize = list_size(peticiones);
+
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) 
+    + length_interfaz 
+    + sizeof(uint32_t) 
+    + length_nombre_archivo 
+    + 3 * sizeof(int)
+    + sizeof(int) 
+    + listaSize * sizeof(t_peticion_acceso_usuario));
+
     buffer_add_string(buffer, length_interfaz, interfaz);
-    buffer_add_string(buffer, length_nombre_archivo);
-    buffer_add_int(buffer, registro_direccion);
+    buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
+    buffer_add_int(buffer, direccion_logica);
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_int(buffer, registro_puntero_archivo);
+    buffer_add_lista(buffer, listaSize, peticiones);
+
     return buffer;
 }
 

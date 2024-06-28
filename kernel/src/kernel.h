@@ -91,8 +91,8 @@ void procesar_io_fs_delete(char* interfaz, char* nombre_archivo, t_PCB* pcb);
 
 void procesar_io_fs_truncate(char* interfaz, char* nombre_archivo, int tamanio, t_PCB* pcb);
 
-void procesar_io_fs_write(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb);
+void procesar_io_fs_write(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb, t_list* peticiones);
 
-void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb);
+void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb, t_list* peticiones);
 
 #endif

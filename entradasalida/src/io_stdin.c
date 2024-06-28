@@ -50,9 +50,9 @@ void guardar_en_memoria(char* texto, t_list* peticionesMemoria) {
         enviar_paquete(paquete, g_socket_memoria);
         bool ok = recibir_ok(g_socket_memoria);
         if(ok){
-            log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
+            log_info(g_logger, "Se escribio correctamente en memoria");
         } else {
-            log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");
+            log_error(g_logger, "No se pudo escribir en memoria");
         }
         eliminar_paquete(paquete);
     }
