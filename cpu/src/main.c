@@ -143,9 +143,9 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
             //Obtener direccion logicas
-            int direccion_fisica = traducir_a_direccion_fisica(pcb->PID, direccion_logica);
+            
 
-            t_buffer* buffer = ejecutar_io_stdin_read(dispositivo, direccion_fisica, tamanio);
+            t_buffer* buffer = ejecutar_io_stdin_read(pcb->PID, dispositivo, direccion_logica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "Se ejecuto IO_STDIN_READ %s %s %s", dispositivo, registro_direccion, registro_tamanio);
 
@@ -266,7 +266,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             char* nombre_archivo = instruccion_separada[2];
 
             desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_DELETE, logger, diccionario);
-            
+
             t_buffer* buffer = ejecutar_io_fs_delete(interfaz, nombre_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "Se ejecutó IO_FS_DELETE %s %s", interfaz, nombre_archivo);

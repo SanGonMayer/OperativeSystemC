@@ -37,7 +37,7 @@ t_instruccion_io* crear_instruccion_io(
 
 void destruir_instruccion_io(t_instruccion_io* instruccion_io);
 
-t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io);
+t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* peticionesMemoria);
 
 t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer);
 

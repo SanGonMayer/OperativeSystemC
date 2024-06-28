@@ -390,8 +390,11 @@ void atender_desalojo(t_desalojo* desalojo){
             }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             //Parametros
-            int direccion_fisica = buffer_read_int(buffer);
             int tamanio = buffer_read_int(buffer);
+            int sizeLista = buffer_read_int(buffer);
+            t_list* lista = list_create();
+            buffer_read_lista(buffer, sizeLista, lista);
+
             uint32_t* length = malloc(sizeof(uint32_t));
             char* nombreInterfaz = buffer_read_string(buffer, length);
             liberar_cola_exec();
@@ -414,6 +417,7 @@ void atender_desalojo(t_desalojo* desalojo){
                 t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
 
                 item->pcb = desalojo->pcb;
+                item->peticionesMemoria;
 
                 t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
 

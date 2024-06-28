@@ -49,6 +49,10 @@ void buffer_add_string(t_buffer *buffer, uint32_t length, char *string);
 // Lee un string y su longitud del buffer y avanza el offset
 char *buffer_read_string(t_buffer *buffer, uint32_t *length);
 
+void buffer_add_lista(t_buffer *buffer, int size ,t_list* lista);
+
+void buffer_read_lista(t_buffer *buffer, int size, t_list* lista)
+
 void buffer_add_int(t_buffer* buffer, int data);
 
 int buffer_read_int(t_buffer* buffer);

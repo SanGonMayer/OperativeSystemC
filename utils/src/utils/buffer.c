@@ -84,6 +84,21 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length){
     return string;
 }
 
+void buffer_add_lista(t_buffer *buffer, int size ,t_list* lista){
+    for(int i = 0; i < size; i++){
+        void* data = list_get(lista, i);
+        buffer_add(buffer, data, sizeof(data));
+    }
+}
+
+void buffer_read_lista(t_buffer *buffer, int size, t_list* lista){
+    for(int i = 0; i < size; i++){
+        void* data = malloc(sizeof(data));
+        buffer_read(buffer, data, sizeof(data));
+        list_add(lista, data);
+    }
+}
+
 
 void enviar_buffer(int socket, t_buffer* buffer, t_log* logger){
     void* a_enviar = malloc(buffer->size + sizeof(uint32_t));

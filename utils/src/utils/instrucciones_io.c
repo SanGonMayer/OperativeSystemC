@@ -2,7 +2,7 @@
 #include "utils/buffer.h"
 #include <commons/string.h>
 #include <stdint.h>
-
+#include <utils/peticiones_memoria.h>
 // unidades de trabajo
 // registro direccion
 // registro tamaño
@@ -48,7 +48,9 @@ t_instruccion_io* crear_instruccion_io(
     return instruccion_io;
 }
 
-t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
+t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* peticionesMemoria){
+    int listaSize = list_size(peticionesMemoria);
+    
     t_buffer* buffer = buffer_create(
     sizeof(int) 
     + sizeof(uint32_t) 
@@ -59,6 +61,8 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     + sizeof(uint32_t) 
     + strlen(instruccion_io->nombre_archivo) + 1
     + sizeof(int)
+    + sizeof(int)
+    + listaSize * sizeof(t_peticion_acceso_usuario)
     );
     buffer_add_int(buffer, instruccion_io->unidades_trabajo);
     buffer_add_string(buffer, strlen(instruccion_io->instruccion) + 1, instruccion_io->instruccion);
@@ -67,6 +71,8 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     buffer_add_string(buffer, strlen(instruccion_io->nombre_archivo) + 1, instruccion_io->nombre_archivo);
     buffer_add_int(buffer, instruccion_io->puntero_archivo);
 
+    buffer_add_lista(buffer, listaSize, peticionesMemoria);
+    
     return buffer;
 }
 

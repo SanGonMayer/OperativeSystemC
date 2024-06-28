@@ -93,21 +93,35 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
     return buffer;
 }
 
-t_buffer* ejecutar_io_stdin_read(char* dispositivo, int direccion_fisica, int registro_tamanio){
+t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
     uint32_t length = strlen(dispositivo) + 1;
-    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeof(uint32_t) + length);
-    buffer_add_int(buffer, direccion_fisica); //Direccion fisica
+    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, registro_tamanio);
+
+    int sizeLista = list_size(peticiones);
+
+    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeLista * sizeof(t_peticion_acceso_usuario) + sizeof(uint32_t) + length);
+
     buffer_add_int(buffer, registro_tamanio);
+    buffer_add_lista(buffer,sizeLista,peticiones);
+
     buffer_add_string(buffer, length, dispositivo);
+
     return buffer;
 }
 
-t_buffer* ejecutar_io_stdout_write(char* dispositivo, int direccion_fisica, int registro_tamanio){
-    uint32_t length = strlen(dispositivo) + 1;
-    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeof(uint32_t) + length);
-    buffer_add_int(buffer, direccion_fisica); //Direccion fisica
+t_buffer* ejecutar_io_stdout_write(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
+uint32_t length = strlen(dispositivo) + 1;
+    t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, registro_tamanio);
+
+    int sizeLista = list_size(peticiones);
+
+    t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeLista * sizeof(t_peticion_acceso_usuario) + sizeof(uint32_t) + length);
+
     buffer_add_int(buffer, registro_tamanio);
+    buffer_add_lista(buffer,sizeLista,peticiones);
+    
     buffer_add_string(buffer, length, dispositivo);
+
     return buffer;
 }
 
