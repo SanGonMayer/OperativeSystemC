@@ -64,9 +64,8 @@ void procesar_cliente(int* fd){
         }
         t_parametro_cola_interfaz* instruccion = queue_pop(interfaz_conectada->cola);
         sem_post(&interfaz_conectada->mutex);
-        t_list* peticiones = instruccion->peticionesMemoria;
         
-        t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion, peticiones);
+        t_buffer* buffer = serializar_instruccion_io(instruccion->instruccion);
  
         enviar_buffer(interfaz_conectada->fd, buffer, g_logger);
 

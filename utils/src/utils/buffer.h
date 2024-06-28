@@ -51,7 +51,7 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length);
 
 void buffer_add_lista(t_buffer *buffer, int size ,t_list* lista);
 
-void buffer_read_lista(t_buffer *buffer, int size, t_list* lista)
+void buffer_read_lista(t_buffer *buffer, int size, t_list* lista);
 
 void buffer_add_int(t_buffer* buffer, int data);
 
