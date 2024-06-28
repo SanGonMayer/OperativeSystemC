@@ -84,8 +84,9 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 }
 
 void iniciar_proceso(char* path){
-    sem_wait(&g_notif_largo_plazo);
-    sem_post(&g_notif_largo_plazo); 
+    if(g_planificacion_pausada == 1){
+        sem_wait(&g_notif_largo_plazo);
+    } 
 
     t_PCB* pcb = crear_PCB();
     
