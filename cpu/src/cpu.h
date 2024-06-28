@@ -64,6 +64,16 @@ void ejecutar_mov_out(uint32_t pid,int direccion_logica, uint32_t valor,t_dictio
 
 void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario);
 
+t_buffer* ejecutar_io_fs_create(char* interfaz, char* nombre_archivo);
+
+t_buffer* ejecutar_io_fs_delete(char* interfaz, char* nombre_archivo);
+
+t_buffer* ejecutar_io_fs_truncate(char* interfaz, char* nombre_archivo, int registro_tamanio);
+
+t_buffer* ejecutar_io_fs_write(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
+
+t_buffer* ejecutar_io_fs_read(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo);
+
 int obtener_direccion_fisica(int pid, int direccion_logica);
 
 #endif

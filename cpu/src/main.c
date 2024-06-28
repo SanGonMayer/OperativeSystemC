@@ -250,6 +250,78 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             enviar_buffer(socket_dispatch, buffer, logger);
             return;
+        } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_CREATE")) {
+            char* interfaz = instruccion_separada[1];
+            char* nombre_archivo = instruccion_separada[2];
+
+            desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_CREATE, logger, diccionario);
+
+            t_buffer* buffer = ejecutar_io_fs_create(interfaz, nombre_archivo);
+            enviar_buffer(socket_dispatch, buffer, logger);
+            log_info(logger, "Se ejecutó IO_FS_CREATE %s %s", interfaz, nombre_archivo);
+            buffer_destroy(buffer);
+            return;
+        } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_DELETE")) {
+            char* interfaz = instruccion_separada[1];
+            char* nombre_archivo = instruccion_separada[2];
+
+            desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_DELETE, logger, diccionario);
+
+            t_buffer* buffer = ejecutar_io_fs_delete(interfaz, nombre_archivo);
+            enviar_buffer(socket_dispatch, buffer, logger);
+            log_info(logger, "Se ejecutó IO_FS_DELETE %s %s", interfaz, nombre_archivo);
+            buffer_destroy(buffer);
+            return;
+        } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_TRUNCATE")) {
+            char* interfaz = instruccion_separada[1];
+            char* nombre_archivo = instruccion_separada[2];
+            char* registro_tamanio = instruccion_separada[3];
+
+            desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_TRUNCATE, logger, diccionario);
+
+            int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
+
+            t_buffer* buffer = ejecutar_io_fs_truncate(interfaz, nombre_archivo, tamanio);
+            enviar_buffer(socket_dispatch, buffer, logger);
+            log_info(logger, "Se ejecutó IO_FS_TRUNCATE %s %s %s", interfaz, nombre_archivo, registro_tamanio);
+            buffer_destroy(buffer);
+            return;
+        } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_WRITE")) {
+            char* interfaz = instruccion_separada[1];
+            char* nombre_archivo = instruccion_separada[2];
+            char* registro_direccion = instruccion_separada[3];
+            char* registro_tamanio = instruccion_separada[4];
+            char* registro_puntero_archivo = instruccion_separada[5];
+
+            desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_WRITE, logger, diccionario);
+
+            int direccion = (int)dictionary_get(diccionario, registro_direccion);
+            int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
+            int puntero_archivo = (int)dictionary_get(diccionario, registro_puntero_archivo);
+
+            t_buffer* buffer = ejecutar_io_fs_write(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
+            enviar_buffer(socket_dispatch, buffer, logger);
+            log_info(logger, "Se ejecutó IO_FS_WRITE %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
+            buffer_destroy(buffer);
+        return;
+        } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_READ")) {
+            char* interfaz = instruccion_separada[1];
+            char* nombre_archivo = instruccion_separada[2];
+            char* registro_direccion = instruccion_separada[3];
+            char* registro_tamanio = instruccion_separada[4];
+            char* registro_puntero_archivo = instruccion_separada[5];
+
+            desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_READ, logger, diccionario);
+
+            int direccion = (int)dictionary_get(diccionario, registro_direccion);
+            int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
+            int puntero_archivo = (int)dictionary_get(diccionario, registro_puntero_archivo);
+
+            t_buffer* buffer = ejecutar_io_fs_read(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
+            enviar_buffer(socket_dispatch, buffer, logger);
+            log_info(logger, "Se ejecutó IO_FS_READ %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
+            buffer_destroy(buffer);
+            return;
         }
 
         t_interrupcion_dispatch* interrupcion = check_interrupt(pcb, logger);

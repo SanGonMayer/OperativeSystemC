@@ -228,6 +228,57 @@ void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario){
 
     free(buffer_lectura);
 }
+t_buffer* ejecutar_io_fs_create(char* interfaz, char* nombre_archivo) {
+    uint32_t length_interfaz = strlen(interfaz) + 1;
+    uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo);
+    buffer_add_string(buffer, length_interfaz, interfaz);
+    buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
+    return buffer;
+}
+
+t_buffer* ejecutar_io_fs_delete(char* interfaz, char* nombre_archivo) {
+    uint32_t length_interfaz = strlen(interfaz) + 1;
+    uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo);
+    buffer_add_string(buffer, length_interfaz, interfaz);
+    buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
+    return buffer;
+}
+
+t_buffer* ejecutar_io_fs_truncate(char* interfaz, char* nombre_archivo, int registro_tamanio) {
+    uint32_t length_interfaz = strlen(interfaz) + 1;
+    uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo + sizeof(int));
+    buffer_add_string(buffer, length_interfaz, interfaz);
+    buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
+    buffer_add_int(buffer, registro_tamanio);
+    return buffer;
+}
+
+t_buffer* ejecutar_io_fs_write(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo) {
+    uint32_t length_interfaz = strlen(interfaz) + 1;
+    uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo + 3 * sizeof(int));
+    buffer_add_string(buffer, length_interfaz, interfaz);
+    buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
+    buffer_add_int(buffer, registro_direccion);
+    buffer_add_int(buffer, registro_tamanio);
+    buffer_add_int(buffer, registro_puntero_archivo);
+    return buffer;
+}
+
+t_buffer* ejecutar_io_fs_read(char* interfaz, char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo) {
+    uint32_t length_interfaz = strlen(interfaz) + 1;
+    uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
+    t_buffer* buffer = buffer_create(sizeof(uint32_t) + length_interfaz + sizeof(uint32_t) + length_nombre_archivo + 3 * sizeof(int));
+    buffer_add_string(buffer, length_interfaz, interfaz);
+    buffer_add_string(buffer, length_nombre_archivo);
+    buffer_add_int(buffer, registro_direccion);
+    buffer_add_int(buffer, registro_tamanio);
+    buffer_add_int(buffer, registro_puntero_archivo);
+    return buffer;
+}
 
 
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){

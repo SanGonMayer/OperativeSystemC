@@ -23,7 +23,12 @@ typedef enum
     //estas son las dos señales que se mandan con el desalojo para el manejo de recursos
     WAIT = 17, 
     SIGNAL = 18,
-    INTERRUPCION_KILL = 19
+    INTERRUPCION_KILL = 19,
+    IO_FS_CREATE = 20,
+    IO_FS_DELETE = 21,
+    IO_FS_READ = 22,
+    IO_FS_WRITE = 23,
+    IO_FS_TRUNCATE = 24
 } t_codigo_operacion;
 
 #endif

@@ -539,6 +539,68 @@ void atender_desalojo(t_desalojo* desalojo){
             free(recurso_leido);
             break;
         }
+        case IO_FS_CREATE:
+        {
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char* interfaz = buffer_read_string(buffer, length);
+            char* nombre_archivo = buffer_read_string(buffer, length);
+            procesar_io_fs_create(interfaz, nombre_archivo, desalojo->pcb);
+            free(interfaz);
+            free(nombre_archivo);
+            break;
+        }
+        case IO_FS_DELETE:
+        {
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char* interfaz = buffer_read_string(buffer, length);
+            char* nombre_archivo = buffer_read_string(buffer, length);
+            procesar_io_fs_delete(interfaz, nombre_archivo, desalojo->pcb);
+            free(interfaz);
+            free(nombre_archivo);
+            break;
+        }
+        case IO_FS_TRUNCATE:
+        {
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char* interfaz = buffer_read_string(buffer, length);
+            char* nombre_archivo = buffer_read_string(buffer, length);
+            int tamanio = buffer_read_int(buffer);
+            procesar_io_fs_truncate(interfaz, nombre_archivo, tamanio, desalojo->pcb);
+            free(interfaz);
+            free(nombre_archivo);
+            break;
+        }
+        case IO_FS_WRITE:
+        {
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char* interfaz = buffer_read_string(buffer, length);
+            char* nombre_archivo = buffer_read_string(buffer, length);
+            int direccion = buffer_read_int(buffer);
+            int tamanio = buffer_read_int(buffer);
+            int puntero_archivo = buffer_read_int(buffer);
+            procesar_io_fs_write(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb);
+            free(interfaz);
+            free(nombre_archivo);
+            break;
+        }
+        case IO_FS_READ:
+        {
+            t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
+            uint32_t *length = malloc(sizeof(uint32_t));
+            char* interfaz = buffer_read_string(buffer, length);
+            char* nombre_archivo = buffer_read_string(buffer, length);
+            int direccion = buffer_read_int(buffer);
+            int tamanio = buffer_read_int(buffer);
+            int puntero_archivo = buffer_read_int(buffer);
+            procesar_io_fs_read(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb);
+            free(interfaz);
+            free(nombre_archivo);
+            break;
+        }
         default:
         {
             log_error(g_logger, "Motivo de desalojo no reconocido");
