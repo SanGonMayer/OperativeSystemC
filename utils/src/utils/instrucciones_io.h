@@ -27,6 +27,11 @@ typedef struct {
     sem_t mutex;
 } t_interfaz_conectada;
 
+typedef struct{
+    t_instruccion_io* instruccion;
+    t_list* peticionesMemoria;
+} t_instruccion_stdin;
+
 t_instruccion_io* crear_instruccion_io(
     char* instruccion,
     int unidades_trabajo,

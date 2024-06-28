@@ -50,7 +50,7 @@ t_instruccion_io* crear_instruccion_io(
 
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* peticionesMemoria){
     int listaSize = list_size(peticionesMemoria);
-    
+    //TODO reciba lo mismo que
     t_buffer* buffer = buffer_create(
     sizeof(int) 
     + sizeof(uint32_t) 
@@ -72,7 +72,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io, t_list* pe
     buffer_add_int(buffer, instruccion_io->puntero_archivo);
 
     buffer_add_lista(buffer, listaSize, peticionesMemoria);
-    
+
     return buffer;
 }
 

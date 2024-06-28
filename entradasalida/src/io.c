@@ -6,7 +6,7 @@
 #include "utils/instrucciones_io.h"
 
 t_instruccion_io* recibir_instruccion_io(int conexion_kernel){
-
+    //TODO recibir tambien la parte de la lista. Que ya se la estoy mandando
     t_buffer* buffer = recibir_buffer(conexion_kernel);
     t_instruccion_io* instruccion = deserializar_instruccion_io(buffer);
 

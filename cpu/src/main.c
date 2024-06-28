@@ -142,8 +142,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             // Valores de direcciones
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             int tamanio = (int)dictionary_get(diccionario, registro_tamanio);
-            //Obtener direccion logicas
-            
+            //Obtener direccion logicas        
 
             t_buffer* buffer = ejecutar_io_stdin_read(pcb->PID, dispositivo, direccion_logica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);

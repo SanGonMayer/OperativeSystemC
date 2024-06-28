@@ -417,8 +417,8 @@ void atender_desalojo(t_desalojo* desalojo){
                 t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
 
                 item->pcb = desalojo->pcb;
-                item->peticionesMemoria;
-
+                item->peticionesMemoria = lista;
+                //TODO Agregar devuelta la direccion fisica. La necesita ??
                 t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, NULL, NULL, tamanio, NULL, direccion_fisica);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
