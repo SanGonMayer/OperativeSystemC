@@ -84,8 +84,8 @@ void enviar_proceso_a_memoria(t_PCB* pcb, int socketMemoria, t_log* logger){
 }
 
 void iniciar_proceso(char* path){
-    // sem_wait(&g_notif_largo_plazo);
-    // sem_post(&g_notif_largo_plazo); 
+    sem_wait(&g_notif_largo_plazo);
+    sem_post(&g_notif_largo_plazo); 
 
     t_PCB* pcb = crear_PCB();
     
@@ -257,9 +257,7 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
 }
 
 
-void planificador_exit(){
-    // sem_wait(&g_notif_largo_plazo);
-    // sem_post(&g_notif_largo_plazo);  
+void planificador_exit(){ 
 
     while(1){
         sem_wait(&g_hay_elementos_en_exit);
@@ -273,9 +271,7 @@ void planificador_exit(){
 }
 
 void finalizar_proceso(t_PCB* pcb){
-    // sem_wait(&g_notif_corto_plazo);
-    // sem_post(&g_notif_corto_plazo);
-    
+
     pcb->estado = EXIT;
     log_info(g_logger, "Proceso %d finalizado", pcb->PID);
     
@@ -286,8 +282,10 @@ void finalizar_proceso(t_PCB* pcb){
 }
 
 void atender_desalojo(t_desalojo* desalojo){
-    // sem_wait(&g_notif_corto_plazo);
-    // sem_post(&g_notif_corto_plazo);
+    if (g_planificacion_pausada == 1){
+        sem_wait(&g_notif_largo_plazo);
+    }
+    
     log_info(g_logger, "Atendiendo desalojo de proceso %d", desalojo->pcb->PID);
     desalojo->pcb->estado = BLOCKED;
     switch(desalojo->motivo){
@@ -621,10 +619,13 @@ void liberar_cola_exec(){
 }
 
 void planificador_fifo(){
-    // sem_wait(&g_notif_corto_plazo);
-    // sem_post(&g_notif_corto_plazo);
     
     while(1){
+
+        if(g_planificacion_pausada == 1){
+        sem_wait(&g_notif_corto_plazo);
+    }
+
         sem_wait(&g_mutex_cola_signal);
 
         if(!queue_is_empty(g_cola_signal)){
@@ -646,10 +647,13 @@ void planificador_fifo(){
 }
 
 void planificador_RR(){
-    // sem_wait(&g_notif_corto_plazo);
-    // sem_post(&g_notif_corto_plazo);
-    
+
     while(1){
+        
+        if(g_planificacion_pausada == 1){
+        sem_wait(&g_notif_corto_plazo);
+    }
+
         sem_wait(&g_mutex_cola_signal);
         
         if(!queue_is_empty(g_cola_signal)){
@@ -671,10 +675,13 @@ void planificador_RR(){
 }
 
 void planificador_VRR(){
-    // sem_wait(&g_notif_corto_plazo);
-    // sem_post(&g_notif_corto_plazo);
 
     while(1){
+
+        if(g_planificacion_pausada == 1){
+        sem_wait(&g_notif_corto_plazo);
+    }
+
         sem_wait(&g_mutex_cola_signal);
         
         if(!queue_is_empty(g_cola_signal)){
