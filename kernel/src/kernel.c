@@ -888,7 +888,7 @@ void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
 
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
-        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_CREATE", 0, nombre_archivo, 0, NULL, 0);
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_CREATE", 0, NULL, 0, nombre_archivo, 0);
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);
@@ -912,7 +912,7 @@ void procesar_io_fs_delete(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
 
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
-        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_DELETE", 0, nombre_archivo, 0, NULL, 0);
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_DELETE", 0, NULL, 0, nombre_archivo, 0);
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);

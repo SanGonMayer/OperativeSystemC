@@ -266,7 +266,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             char* nombre_archivo = instruccion_separada[2];
 
             desalojar_pcb(socket_dispatch, pcb, (int)IO_FS_DELETE, logger, diccionario);
-
+            
             t_buffer* buffer = ejecutar_io_fs_delete(interfaz, nombre_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "Se ejecutó IO_FS_DELETE %s %s", interfaz, nombre_archivo);
