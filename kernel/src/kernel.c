@@ -260,6 +260,9 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
 void planificador_exit(){ 
 
     while(1){
+        if(g_planificacion_pausada == 1){
+            sem_wait(&g_notif_largo_plazo);
+        }
         sem_wait(&g_hay_elementos_en_exit);
         sem_wait(&g_mutex_cola_exit);
         t_PCB* pcb = queue_pop(g_cola_exit);
