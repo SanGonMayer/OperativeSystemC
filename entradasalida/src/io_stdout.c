@@ -6,7 +6,7 @@
 #include <commons/string.h>
 #include <readline/readline.h>
 
-void leer_de_memoria_stdout(int tamanio, int direccion_fisica);
+void leer_de_memoria_stdout(int tamanio, t_list* peticionesMemoria);
 bool stdout_soporta_instruccion(char* instruccion);
 
 char instruccion_soportada_stdout[15] = "IO_STDOUT_WRITE";
@@ -44,9 +44,9 @@ void leer_de_memoria_stdout(int tamanio, t_list* peticionesMemoria) {
         buffer_destroy(buffer_respuesta);
     }
 
-    uitn32_t length = string_length(mensaje);
+    uint32_t length = string_length(mensaje);
 
-    texto_leido[length] = '\0';
+    mensaje[length] = '\0';
 
     log_info(g_logger, "Texto leido de memoria: %s", mensaje);
     

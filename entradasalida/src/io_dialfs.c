@@ -27,11 +27,11 @@ void get_comandos(){
 
     comandos = dictionary_create();
 
-    dictionary_put(comandos, "IO_FS_CREATE", (t_operacion_dialfs) IO_DIALFS_CREATE);
-    dictionary_put(comandos, "IO_FS_DELETE", (t_operacion_dialfs) IO_DIALFS_DELETE);
-    dictionary_put(comandos, "IO_FS_TRUNCATE", (t_operacion_dialfs) IO_DIALFS_TRUNCATE);
-    dictionary_put(comandos, "IO_FS_WRITE", (t_operacion_dialfs) IO_DIALFS_WRITE);
-    dictionary_put(comandos, "IO_FS_READ", (t_operacion_dialfs) IO_DIALFS_READ);
+    dictionary_put(comandos, "IO_FS_CREATE", IO_DIALFS_CREATE);
+    dictionary_put(comandos, "IO_FS_DELETE", IO_DIALFS_DELETE);
+    dictionary_put(comandos, "IO_FS_TRUNCATE", IO_DIALFS_TRUNCATE);
+    dictionary_put(comandos, "IO_FS_WRITE", IO_DIALFS_WRITE);
+    dictionary_put(comandos, "IO_FS_READ", IO_DIALFS_READ);
 
 }
 
@@ -279,7 +279,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
     }
 
     uint32_t length = string_length(data);
-    texto_leido[length] = '\0';
+    data[length] = '\0';
     
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {

@@ -15,6 +15,7 @@ t_instruccion_io* crear_instruccion_io(
     char* direccion,
     int tamanio,
     char* nombre_archivo,
+    int puntero_archivo,
     t_list* peticionesMemoria){
 
     t_instruccion_io* instruccion_io = malloc(sizeof(t_instruccion_io));
@@ -42,6 +43,7 @@ t_instruccion_io* crear_instruccion_io(
         instruccion_io->nombre_archivo = malloc(sizeof("1"));
         instruccion_io->nombre_archivo = "1";
     }
+    instruccion_io->puntero_archivo = puntero_archivo;
 
     instruccion_io->peticionesMemoria = peticionesMemoria;
 
@@ -92,7 +94,7 @@ t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
     buffer_read_lista(buffer, listaSize, peticionesMemoria);
 
     buffer_destroy(buffer);
-    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, peticionesMemoria);
+    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo,peticionesMemoria);
 
     free(instruccion);
     free(direccion);

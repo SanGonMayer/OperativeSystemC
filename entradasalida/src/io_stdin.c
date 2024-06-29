@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 char* stdin_leer_texto();
-void guardar_en_memoria(char* texto, int direccion_fisica);
+void guardar_en_memoria(char* texto, t_list* peticionesMemoria);
 bool stdin_soporta_instruccion(char* instruccion);
 
 char instruccion_soportada_stdin[14] = "IO_STDIN_READ";
