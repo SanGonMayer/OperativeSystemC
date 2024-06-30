@@ -339,8 +339,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int offset = instruccion->puntero_archivo;
     char* data = string_new();
 
-    //Si no funciona pasarle como parametro el socket
-    char* data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria);
+    data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria);
     
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {

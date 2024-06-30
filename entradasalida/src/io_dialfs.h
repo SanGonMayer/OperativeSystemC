@@ -40,7 +40,7 @@ void save_metadata(const char* filename, int initial_block, int file_size);
 t_bitarray* load_bitmap();
 void save_bitmap(t_bitarray* bitmap);
 void compactar_fs();
-void io_fs_truncate(const char* filename, int new_size);
+void io_fs_truncate(char* filename, int new_size);
 void io_fs_write(t_instruccion_io* instruccion);
 void io_fs_read(t_instruccion_io* instruccion);
 
