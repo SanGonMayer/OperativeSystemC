@@ -10,7 +10,6 @@
 #include <stdint.h>
 
 char* stdin_leer_texto();
-void guardar_en_memoria(char* texto, t_list* peticionesMemoria);
 bool stdin_soporta_instruccion(char* instruccion);
 
 char instruccion_soportada_stdin[14] = "IO_STDIN_READ";
@@ -31,7 +30,7 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         return;
     }
     
-    guardar_en_memoria(texto, instruccion->peticionesMemoria);
+    guardar_en_memoria(g_socket_memoria,texto, instruccion->peticionesMemoria);
 
     responder_ok(fd);
 }
@@ -39,24 +38,6 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
 char* stdin_leer_texto() {
     char* texto = readline("Ingrese texto: ");
     return texto;
-}
-
-void guardar_en_memoria(char* texto, t_list* peticionesMemoria) {
-
-    for(int i = 0; i < list_size(peticionesMemoria); i++){
-        t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
-        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
-        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
-        enviar_paquete(paquete, g_socket_memoria);
-        bool ok = recibir_ok(g_socket_memoria);
-        if(ok){
-            log_info(g_logger, "Se escribio correctamente en memoria");
-        } else {
-            log_error(g_logger, "No se pudo escribir en memoria");
-        }
-        eliminar_paquete(paquete);
-    }
-
 }
 
 bool stdin_soporta_instruccion(char* instruccion){
