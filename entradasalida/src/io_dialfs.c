@@ -328,7 +328,7 @@ void io_fs_truncate(char* filename, int new_size) {
         save_bitmap(bitmap);
     }
 
-    save_metadata(metadata, initial_block, new_size);
+    save_metadata(filename, initial_block, new_size);
     config_destroy(metadata);
 }
 
