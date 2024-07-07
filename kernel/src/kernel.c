@@ -743,7 +743,7 @@ void eliminar_de_lista_blocked_gral(uint32_t pid){
 }
 
 void listar_procesos(){
-    printf("%-25s%-25s\n", "NEW", g_exec->PID);
+    printf("%-25s%-25s\n", "EXEC", g_exec->PID);
 
     t_list_iterator* iterador_gral = list_iterator_create(g_lista_procesos_gral);
     
@@ -767,21 +767,13 @@ void listar_procesos(){
             case READYPLUS:
                 printf("%-25s%-25s\n", "READYPLUS", pcb->PID);
                 break;
+
+            case BLOCKED:
+                printf("%-25s%-25s\n", "BLOCKED", pcb->PID);
+                break;
         }
             
     }
-        
-
-    //BLOCKED
-    t_list_iterator* iterador_blocked = list_iterator_create(g_lista_blocked_gral);
-    
-    while(list_iterator_has_next(iterador_blocked)){
-        uint32_t pid = (uint32_t)list_iterator_next(iterador_blocked);
-        printf("%-25s%-25s\n", "BLOCKED", pid);
-    }
-
-    list_iterator_destroy(iterador_gral);
-    list_iterator_destroy(iterador_blocked);
 }
 
 
