@@ -218,7 +218,7 @@ void save_bitmap(t_bitarray* bitmap) {
         perror("Error al abrir el archivo de bitmap");
         return;
     }
-
+    //Revisar
     fwrite(bitmap->bitarray, 1, bitarray_get_max_bit(bitmap) / 8, bitmap_file);
     fclose(bitmap_file);
 }
