@@ -93,9 +93,10 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
     return buffer;
 }
 
+
 t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
     uint32_t length = strlen(dispositivo) + 1;
-    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, registro_tamanio);
+    t_list* peticiones = obtener_direcciones_logicas_escritura_stdin(pid, direccion_logica, registro_tamanio);
 
     int sizeLista = list_size(peticiones);
 

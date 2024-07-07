@@ -14,6 +14,17 @@ bool stdin_soporta_instruccion(char* instruccion);
 
 char instruccion_soportada_stdin[14] = "IO_STDIN_READ";
 
+actualizar_peticiones_con_valor(t_list* peticionesMemoria, char* valor){
+    int tamanioCopiado = 0;
+    for(int i = 0; i < list_size(peticionesMemoria); i++){
+        t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
+        for(int j = 0; j < peticion->tamanio_a_leer; j++){
+            peticion->string[tamanioCopiado] = valor[tamanioCopiado];
+            tamanioCopiado++;
+        }
+    }
+}
+
 void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
 
     if(!stdin_soporta_instruccion(instruccion->instruccion)){
@@ -30,6 +41,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         return;
     }
     
+    actualizar_peticiones_con_valor(instruccion->peticionesMemoria, texto);
+
     guardar_en_memoria(g_socket_memoria,texto, instruccion->peticionesMemoria);
 
     responder_ok(fd);

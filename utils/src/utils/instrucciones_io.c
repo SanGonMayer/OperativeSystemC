@@ -67,7 +67,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     if(instruccion_io->peticionesMemoria == NULL){
         listaSize = 0;
     }else {
-        list_size(instruccion_io->peticionesMemoria);
+        listaSize = list_size(instruccion_io->peticionesMemoria);
     }
     //TODO reciba lo mismo que
     t_buffer* buffer = buffer_create(

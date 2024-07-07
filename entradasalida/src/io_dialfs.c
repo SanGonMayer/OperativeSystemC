@@ -290,7 +290,7 @@ void io_fs_truncate(char* filename, int new_size) {
 
         if (free_blocks < (new_blocks - old_blocks)) {
             compactar_fs();
-
+            
             free_blocks = 0;
             start_block = -1;
             for (int i = 0; i < g_config_io->block_count; i++) {
@@ -325,7 +325,7 @@ void io_fs_truncate(char* filename, int new_size) {
         }
         save_bitmap(bitmap);
     }
-
+    log_debug(g_logger, "Truncando archivo %s de %d a %d bytes", filename, old_size, new_size);
     save_metadata(filename, initial_block, new_size);
     config_destroy(metadata);
 }
