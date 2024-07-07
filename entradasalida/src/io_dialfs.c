@@ -60,9 +60,6 @@ void initialize_fs() {
     char *blocks_path = string_from_format("%s/blocks.dat", g_config_io->path_base_dialfs);
     char *bitmap_path = string_from_format("%s/bitmap.dat", g_config_io->path_base_dialfs);
 
-    //Inicia diccionario
-    string_append(&blocks_path, "/blocks.dat");
-    string_append(&bitmap_path, "/bitmap.dat");
     get_comandos();
 
     int block_size = g_config_io->block_size;

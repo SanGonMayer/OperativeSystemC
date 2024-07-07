@@ -85,6 +85,7 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length){
 }
 
 void buffer_add_lista(t_buffer *buffer, int size ,t_list* lista){
+    buffer_add_int(buffer, size);
     for(int i = 0; i < size; i++){
         void* data = list_get(lista, i);
         buffer_add(buffer, data, sizeof(data));

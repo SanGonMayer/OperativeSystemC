@@ -50,8 +50,25 @@ t_instruccion_io* crear_instruccion_io(
     return instruccion_io;
 }
 
+/*
+typedef struct {
+    int unidades_trabajo;
+    char* instruccion;
+    char* direccion;
+    int tamanio;
+    char* nombre_archivo;
+    int puntero_archivo; 
+    t_list* peticionesMemoria;
+} t_instruccion_io;
+*/
+
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
-    int listaSize = list_size(instruccion_io->peticionesMemoria);
+    int listaSize;
+    if(instruccion_io->peticionesMemoria == NULL){
+        listaSize = 0;
+    }else {
+        list_size(instruccion_io->peticionesMemoria);
+    }
     //TODO reciba lo mismo que
     t_buffer* buffer = buffer_create(
     sizeof(int) 

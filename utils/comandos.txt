@@ -6,6 +6,7 @@ paths config io
 
 INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
 INICIAR_PROCESO ../memoria/scripts_memoria/io_b.dummy
+INICIAR_PROCESO ../memoria/scripts_memoria/FS_1
 
 IO
 TECLADO
