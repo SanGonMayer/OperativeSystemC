@@ -553,6 +553,7 @@ void atender_desalojo(t_desalojo* desalojo){
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
             char* nombre_archivo = buffer_read_string(buffer, length);
+            liberar_cola_exec();
             procesar_io_fs_create(interfaz, nombre_archivo, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
@@ -564,6 +565,7 @@ void atender_desalojo(t_desalojo* desalojo){
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
             char* nombre_archivo = buffer_read_string(buffer, length);
+            liberar_cola_exec();
             procesar_io_fs_delete(interfaz, nombre_archivo, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
@@ -576,6 +578,7 @@ void atender_desalojo(t_desalojo* desalojo){
             char* interfaz = buffer_read_string(buffer, length);
             char* nombre_archivo = buffer_read_string(buffer, length);
             int tamanio = buffer_read_int(buffer);
+            liberar_cola_exec();
             procesar_io_fs_truncate(interfaz, nombre_archivo, tamanio, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
@@ -593,6 +596,7 @@ void atender_desalojo(t_desalojo* desalojo){
             t_list* peticiones = list_create();
             int listaSize = buffer_read_int(buffer);
             buffer_read_lista(buffer, listaSize, peticiones);
+            liberar_cola_exec();
             procesar_io_fs_write(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb, peticiones);
             free(interfaz);
             free(nombre_archivo);
@@ -610,6 +614,7 @@ void atender_desalojo(t_desalojo* desalojo){
             t_list* peticiones = list_create();
             int listaSize = buffer_read_int(buffer);
             buffer_read_lista(buffer, listaSize, peticiones);
+            liberar_cola_exec();
             procesar_io_fs_read(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb, peticiones);
             free(interfaz);
             free(nombre_archivo);
