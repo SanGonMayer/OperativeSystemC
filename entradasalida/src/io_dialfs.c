@@ -166,6 +166,7 @@ void io_fs_create(char* filename) {
         return;
     }
 
+    log_info(g_logger, "Creando archivo %s en el bloque %d", filename, initial_block);
     save_metadata(filename, initial_block, 0);
 }
 
