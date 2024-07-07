@@ -19,6 +19,7 @@
 #include <readline/readline.h>
 #include <stdint.h>
 #include "io_memoria.h"
+#include <errno.h>
 typedef enum {
     IO_DIALFS_CREATE = 0,
     IO_DIALFS_DELETE = 1,

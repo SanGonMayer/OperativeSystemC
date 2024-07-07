@@ -57,12 +57,12 @@ void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
 }
 
 void initialize_fs() {
-    char blocks_path[256];
-    char bitmap_path[256];
-    snprintf(blocks_path, sizeof(blocks_path), "%s/bloques.dat", g_config_io->path_base_dialfs);
-    snprintf(bitmap_path, sizeof(bitmap_path), "%s/bitmap.dat", g_config_io->path_base_dialfs);
-    
+    char *blocks_path = string_from_format("%s/blocks.dat", g_config_io->path_base_dialfs);
+    char *bitmap_path = string_from_format("%s/bitmap.dat", g_config_io->path_base_dialfs);
+
     //Inicia diccionario
+    string_append(&blocks_path, "/blocks.dat");
+    string_append(&bitmap_path, "/bitmap.dat");
     get_comandos();
 
     int block_size = g_config_io->block_size;
@@ -72,7 +72,7 @@ void initialize_fs() {
     // Crear archivo de bloques
     blocks_fd = open(blocks_path, O_CREAT | O_RDWR, 0644);
     if (blocks_fd == -1) {
-        log_error(g_logger, "Error al crear o abrir el archivo de bloques");
+        log_error(g_logger, "Error al crear o abrir el archivo de bloques: %s", strerror(errno));
         exit(EXIT_FAILURE);
     }
     ftruncate(blocks_fd, block_size * block_count);

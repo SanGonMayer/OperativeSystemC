@@ -2,6 +2,7 @@ paths config io
 ../entradasalida/io_stdin.config
 ../entradasalida/io_stdout.config
 ../entradasalida/io_generica.config
+../entradasalida/io_dialfs.config
 
 INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
 INICIAR_PROCESO ../memoria/scripts_memoria/io_b.dummy
