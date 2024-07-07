@@ -11,7 +11,6 @@ extern int g_contador_pid;
 
 extern t_queue* g_cola_new;
 extern t_queue* g_cola_ready;
-extern t_queue* g_cola_exit;
 extern t_queue* g_cola_auxiliar;
 
 extern t_log* g_logger;

@@ -53,7 +53,6 @@ void finalizar_proceso(t_PCB* pcb);
 
 void atender_desalojo(t_desalojo* desalojo);
 
-void planificador_exit();
 
 void planificador_RR();
 
