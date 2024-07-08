@@ -199,7 +199,7 @@ void procesar_acceso_espacio_usuario(int socket){
     }
 
     if(peticion->tipo_acceso == ESCRITURA){
-        escribir_en_memoria(peticion->direccion_fisica, strlen(peticion->string), peticion->string);
+        escribir_en_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, peticion->string);
         responder_ok(socket);
     }
 

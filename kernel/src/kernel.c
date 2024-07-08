@@ -20,7 +20,7 @@
 #include "utils/instrucciones_io.h"
 #include "utils/procesos.h"
 #include "utils/server.h"
-
+#include "utils/peticiones_memoria.h"
 void manejar_recurso(int, char*, t_PCB*);
 void liberar_cola_exec();
 void crear_hilo_test();
@@ -421,6 +421,10 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->pcb = desalojo->pcb;
                 
                 t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, NULL,lista);
+                for(int i = 0; i < list_size(lista); i++){
+                    t_peticion_acceso_usuario* peticion = list_get(lista, i);
+                    log_info(g_logger, "Peticion de acceso a memoria: %d", peticion);
+                }
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;

@@ -1,6 +1,6 @@
 #include "buffer.h"
 #include <sys/socket.h>
-
+#include "peticiones_memoria.h"
 
 // Crea un buffer vacío de tamaño size y offset 0
 t_buffer *buffer_create(uint32_t size){
@@ -84,19 +84,34 @@ char *buffer_read_string(t_buffer *buffer, uint32_t *length){
     return string;
 }
 
+void buffer_add_peticion_acceso(t_buffer* buffer, t_peticion_acceso_usuario* peticion){
+    buffer_add_uint32(buffer, peticion->tamanio_a_leer);
+    buffer_add_int(buffer, peticion->tipo_acceso);
+    buffer_add_int(buffer, peticion->direccion_fisica);
+    buffer_add_string(buffer, peticion->tamanio_a_leer, peticion->string);
+}
+
+t_peticion_acceso_usuario* buffer_read_peticion_acceso(t_buffer* buffer){
+    t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
+    peticion->tamanio_a_leer = buffer_read_uint32(buffer);
+    peticion->tipo_acceso = buffer_read_int(buffer);
+    peticion->direccion_fisica = buffer_read_int(buffer);
+    peticion->string = buffer_read_string(buffer, &peticion->tamanio_a_leer);
+    return peticion;
+}
+
 void buffer_add_lista(t_buffer *buffer, int size ,t_list* lista){
     buffer_add_int(buffer, size);
     for(int i = 0; i < size; i++){
-        void* data = list_get(lista, i);
-        buffer_add(buffer, data, sizeof(data));
+        t_peticion_acceso_usuario* peticion = list_get(lista, i);
+        buffer_add_peticion_acceso(buffer, peticion);
     }
 }
 
 void buffer_read_lista(t_buffer *buffer, int size, t_list* lista){
     for(int i = 0; i < size; i++){
-        void* data = malloc(sizeof(data));
-        buffer_read(buffer, data, sizeof(data));
-        list_add(lista, data);
+        t_peticion_acceso_usuario* peticion = buffer_read_peticion_acceso(buffer);
+        list_add(lista, peticion);
     }
 }
 
