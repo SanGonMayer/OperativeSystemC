@@ -88,7 +88,7 @@ void buffer_add_peticion_acceso(t_buffer* buffer, t_peticion_acceso_usuario* pet
     buffer_add_uint32(buffer, peticion->tamanio_a_leer);
     buffer_add_int(buffer, peticion->tipo_acceso);
     buffer_add_int(buffer, peticion->direccion_fisica);
-    buffer_add_string(buffer, peticion->tamanio_a_leer, peticion->string);
+    buffer_add_string(buffer, string_length(peticion->string), peticion->string);
 }
 
 t_peticion_acceso_usuario* buffer_read_peticion_acceso(t_buffer* buffer){

@@ -82,7 +82,7 @@ t_peticion_acceso_usuario* crear_peticion_escritura(int direccion_fisica, char* 
     peticion->tamanio_a_leer = string_length(string);
     peticion->tipo_acceso = ESCRITURA;
     peticion->direccion_fisica = direccion_fisica;
-    peticion->string = NULL;
+    peticion->string = string_new();
 
     return peticion;
 }

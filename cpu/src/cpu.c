@@ -102,6 +102,10 @@ t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_l
 
     t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeLista * sizeof(t_peticion_acceso_usuario) + sizeof(uint32_t) + length);
 
+    log_info(g_logger, "Tamanio de peticion de acceso usuario: %d", sizeof(t_peticion_acceso_usuario));
+    log_info(g_logger, "Tamanio de tipo acceso: %d", sizeof(t_tipo_acceso));
+    log_info(g_logger, "Tamanio de lista de peticiones: %d", sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(char*));
+
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_lista(buffer,sizeLista,peticiones);
 
