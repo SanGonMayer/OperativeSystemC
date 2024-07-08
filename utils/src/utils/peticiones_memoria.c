@@ -125,7 +125,7 @@ t_peticion_acceso_usuario* deserializar_peticion_acceso_usuario(t_buffer* buffer
         uint32_t size;
         peticion->string = buffer_read_string(buffer, &size);
     }else{
-        peticion->string = NULL;
+        peticion->string = string_new();
     }
 
     return peticion;

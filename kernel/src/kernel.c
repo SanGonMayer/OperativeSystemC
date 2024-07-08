@@ -420,7 +420,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
                 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, NULL,lista);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, 0, tamanio, NULL, NULL,lista);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
@@ -483,7 +483,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
                 item->pcb = desalojo->pcb;
 
-                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, NULL,lista);
+                t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, 0, tamanio, NULL, NULL,lista);
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
@@ -916,7 +916,7 @@ void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
 
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
-        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_CREATE", 0, NULL, 0, nombre_archivo, 0,NULL);
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_CREATE", 0, 0, 0, nombre_archivo, 0,NULL);
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);
@@ -940,7 +940,7 @@ void procesar_io_fs_delete(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
 
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
-        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_DELETE", 0, NULL, 0, nombre_archivo, 0,NULL);
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_DELETE", 0, 0, 0, nombre_archivo, 0,NULL);
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);
@@ -964,7 +964,7 @@ void procesar_io_fs_truncate(char* interfaz, char* nombre_archivo, int tamanio, 
 
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
-        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_TRUNCATE", 0, NULL , tamanio, nombre_archivo, 0,NULL);
+        t_instruccion_io* instruccion_io = crear_instruccion_io("IO_FS_TRUNCATE", 0, 0 , tamanio, nombre_archivo, 0,NULL);
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);

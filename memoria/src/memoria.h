@@ -86,7 +86,7 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio);
  * @param tamanio Tamaño de los datos a leer.
  * @param buffer Puntero al buffer donde se almacenarán los datos leídos.
  */
-void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
+void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, char* buffer);
 
 /**
  * @brief Escribe datos en la memoria.
@@ -95,7 +95,7 @@ void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
  * @param tamanio Tamaño de los datos a escribir.
  * @param buffer Puntero al buffer que contiene los datos a escribir.
  */
-void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer);
+void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, char* buffer);
 
 void loggear_tabla_paginas(t_list* tabla_paginas);
 void procesar_pedido_marco(int socket);

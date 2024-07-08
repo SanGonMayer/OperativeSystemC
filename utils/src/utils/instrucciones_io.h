@@ -8,7 +8,7 @@
 typedef struct {
     int unidades_trabajo;
     char* instruccion;
-    char* direccion;
+    int direccion;
     int tamanio;
     char* nombre_archivo;
     int puntero_archivo; 
@@ -36,7 +36,7 @@ typedef struct{
 t_instruccion_io* crear_instruccion_io(
     char* instruccion,
     int unidades_trabajo,
-    char* direccion,
+    int direccion,
     int tamanio,
     char* nombre_archivo,
     int puntero_archivo,

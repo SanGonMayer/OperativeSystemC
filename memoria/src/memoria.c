@@ -138,12 +138,21 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     return true;
 }
 
-void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
+void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, char* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
-    memcpy(buffer, direccion_fisica_real, tamanio);
+    
+    for (int i = 0; i < tamanio; i++) {
+        char c = *(char*)(direccion_fisica_real + i);
+        if (c == '\0') {
+            c = ' ';
+        }
+        buffer[i] = c;
+    }
+    buffer[tamanio] = '\0';
+    // Asegurarse de que el buffer sea una cadena terminada en '\0'
 }
 
-void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, void* buffer){
+void escribir_en_memoria(uint32_t direccion_fisica, uint32_t tamanio, char* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
     memcpy(direccion_fisica_real, buffer, tamanio);
 }
@@ -189,7 +198,7 @@ void procesar_acceso_espacio_usuario(int socket){
     // log_info(g_logger, "PID: %d - Accion: %s - Direccion fisica: %d - Tamaño: %d", peticion->pid, peticion->tipo_acceso == LECTURA ? "LEER" : "ESCRIBIR", peticion->direccion_fisica, peticion->tamanio_a_leer);
 
     if(peticion->tipo_acceso == LECTURA){
-        char* valor = malloc(peticion->tamanio_a_leer);
+        char valor [peticion->tamanio_a_leer + 1];
         leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
         uint32_t tamanio_respuesta = peticion->tamanio_a_leer;
         t_buffer* respuesta = buffer_create(tamanio_respuesta + sizeof(uint32_t));
