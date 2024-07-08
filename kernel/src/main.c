@@ -151,6 +151,7 @@ int main(void){
     init_recursos(g_recursos, g_recursos_instancias); //carga en la variable global g_diccionario_recursos un diccionarios con los recursos y sus instancias
 
     g_grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
+    g_grado_multiprogramacion_inicial = g_grado_multiprogramacion;
     sem_init(&g_tope_multiprogramacion, 0, g_grado_multiprogramacion);
 
 
