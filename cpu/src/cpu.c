@@ -101,10 +101,15 @@ int sizeTotalDeLista(t_list *peticiones){
     int sizeTotal =  sizeof(int) 
         + sizeLista * size_por_peticion;
 
+    for (int i = 0; i < sizeLista; i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+        sizeTotal += string_length(peticion->string);
+    }
+
     return sizeTotal;
 }
 
-int sizeTotalIo(int length_dispositivo, t_list* peticiones){
+int sizeTotalIo(uint32_t length_dispositivo, t_list* peticiones){
     int sizeLista = sizeTotalDeLista(peticiones);
 
     int sizeTotal =  sizeof(int)
@@ -112,13 +117,8 @@ int sizeTotalIo(int length_dispositivo, t_list* peticiones){
         + sizeof(uint32_t) 
         + length_dispositivo;
 
-    for (int i = 0; i < sizeLista; i++) {
-        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
-        sizeTotal += string_length(peticion->string);
-    }
     return sizeTotal;
 }
-
 t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
     uint32_t length = strlen(dispositivo) + 1;
     t_list* peticiones = obtener_direcciones_logicas_escritura_stdin(pid, direccion_logica, registro_tamanio);
@@ -129,13 +129,13 @@ t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_l
     t_buffer* buffer = buffer_create(sizeTotal);
 
     buffer_add_int(buffer, registro_tamanio);
-    buffer_add_int(buffer, sizeLista);
 
     buffer_add_lista(buffer, sizeLista, peticiones);
     
     buffer_add_string(buffer, length, dispositivo);
 
     return buffer;
+
 }
 
 t_buffer* ejecutar_io_stdout_write(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
