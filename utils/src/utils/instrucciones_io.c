@@ -61,13 +61,31 @@ typedef struct {
     t_list* peticionesMemoria;
 } t_instruccion_io;
 */
+int sizeTotalDeLista(t_list *peticiones){
+    int sizeLista = list_size(peticiones);
+
+    int size_por_peticion = sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(uint32_t);
+
+    int sizeTotal =  sizeof(int) 
+        + sizeLista * size_por_peticion;
+
+    for (int i = 0; i < sizeLista; i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+        sizeTotal += string_length(peticion->string);
+    }
+
+    return sizeTotal;
+}
 
 t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     int listaSize;
+    int sizeTotalLista;
     if(instruccion_io->peticionesMemoria == NULL){
         listaSize = 0;
+        sizeTotalLista = sizeof(int);
     }else {
         listaSize = list_size(instruccion_io->peticionesMemoria);
+        sizeTotalLista = sizeTotalDeLista(instruccion_io->peticionesMemoria);
     }
     //TODO reciba lo mismo que
     t_buffer* buffer = buffer_create(
@@ -80,8 +98,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     + sizeof(uint32_t) 
     + strlen(instruccion_io->nombre_archivo) + 1
     + sizeof(int)
-    + sizeof(int)
-    + listaSize * sizeof(t_peticion_acceso_usuario)
+    + sizeTotalLista
     );
     buffer_add_int(buffer, instruccion_io->unidades_trabajo);
     buffer_add_string(buffer, strlen(instruccion_io->instruccion) + 1, instruccion_io->instruccion);

@@ -151,6 +151,7 @@ uint32_t length = strlen(dispositivo) + 1;
     buffer_add_int(buffer, registro_tamanio);
 
     buffer_add_lista(buffer,sizeLista,peticiones);
+
     buffer_add_string(buffer, length, dispositivo);
 
     return buffer;
@@ -305,21 +306,21 @@ t_buffer* ejecutar_io_fs_write(uint32_t pid, char* interfaz, char* nombre_archiv
     uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
 
     t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, registro_tamanio);
-    int listaSize = sizeTotalDeLista(peticiones);
-
+    int sizeTotalLista = sizeTotalDeLista(peticiones);
+    int sizeLista = list_size(peticiones);
     t_buffer* buffer = buffer_create(sizeof(uint32_t) 
     + length_interfaz 
     + sizeof(uint32_t) 
     + length_nombre_archivo 
     + 3 * sizeof(int)
-    + listaSize);
+    + sizeTotalLista);
 
     buffer_add_string(buffer, length_interfaz, interfaz);
     buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);
     buffer_add_int(buffer, direccion_logica);
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_int(buffer, registro_puntero_archivo);
-    buffer_add_lista(buffer, listaSize, peticiones);
+    buffer_add_lista(buffer, sizeLista, peticiones);
 
     return buffer;
 }
@@ -328,15 +329,16 @@ t_buffer* ejecutar_io_fs_read(uint32_t pid,char* interfaz, char* nombre_archivo,
     uint32_t length_interfaz = strlen(interfaz) + 1;
     uint32_t length_nombre_archivo = strlen(nombre_archivo) + 1;
 
-    t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, registro_tamanio);
-    int listaSize = sizeTotalDeLista(peticiones);
+    t_list* peticiones = obtener_direcciones_logicas_escritura_stdin(pid, direccion_logica, registro_tamanio);
+    int listaSizeTotal = sizeTotalDeLista(peticiones);
+    int listaSize = list_size(peticiones);
 
     t_buffer* buffer = buffer_create(sizeof(uint32_t) 
     + length_interfaz 
     + sizeof(uint32_t) 
     + length_nombre_archivo 
     + 3 * sizeof(int)
-    + listaSize);
+    + listaSizeTotal);
 
     buffer_add_string(buffer, length_interfaz, interfaz);
     buffer_add_string(buffer, length_nombre_archivo, nombre_archivo);

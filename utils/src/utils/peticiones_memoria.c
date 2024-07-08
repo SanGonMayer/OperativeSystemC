@@ -71,7 +71,7 @@ t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int d
     peticion->tamanio_a_leer = tamanio_a_leer;
     peticion->tipo_acceso = LECTURA;
     peticion->direccion_fisica = direccion_fisica;
-    peticion->string = NULL;
+    peticion->string = string_new();
 
     return peticion;
 }

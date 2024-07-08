@@ -14,16 +14,6 @@ bool stdin_soporta_instruccion(char* instruccion);
 
 char instruccion_soportada_stdin[14] = "IO_STDIN_READ";
 
-actualizar_peticiones_con_valor(t_list* peticionesMemoria, char* valor){
-    int tamanioCopiado = 0;
-    for(int i = 0; i < list_size(peticionesMemoria); i++){
-        t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
-        peticion->string = string_substring(valor, tamanioCopiado, peticion->tamanio_a_leer);
-        tamanioCopiado+= peticion->tamanio_a_leer;
-        log_info(g_logger, "Valor copiado: %s", peticion->string);
-    }
-}
-
 void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
 
     if(!stdin_soporta_instruccion(instruccion->instruccion)){

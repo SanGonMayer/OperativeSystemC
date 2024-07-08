@@ -421,10 +421,6 @@ void atender_desalojo(t_desalojo* desalojo){
                 item->pcb = desalojo->pcb;
                 
                 t_instruccion_io* instruccion_io = crear_instruccion_io(instruccion, 0, NULL, tamanio, NULL, NULL,lista);
-                for(int i = 0; i < list_size(lista); i++){
-                    t_peticion_acceso_usuario* peticion = list_get(lista, i);
-                    log_info(g_logger, "Peticion de acceso a memoria: %d", peticion);
-                }
 
                 item->instruccion = malloc(sizeof(t_instruccion_io));
                 item->instruccion = instruccion_io;
