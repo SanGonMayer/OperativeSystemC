@@ -43,3 +43,12 @@ char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria
 
     return mensaje;
 }
+
+void actualizar_peticiones_con_valor(t_list* peticionesMemoria, char* valor){
+    int tamanioCopiado = 0;
+    for(int i = 0; i < list_size(peticionesMemoria); i++){
+        t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
+        peticion->string = string_substring(valor, tamanioCopiado, peticion->tamanio_a_leer);
+        tamanioCopiado+= peticion->tamanio_a_leer;
+    }
+}

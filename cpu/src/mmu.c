@@ -52,11 +52,50 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
     return peticiones;
 }
 
+char* crear_string_de_tamanio(int tamanio){
+    char* valor = malloc(tamanio);
+    for(int i = 0; i < tamanio; i++){
+        valor[i] = 'a';
+    }
+    return valor;
+}
+
+t_list* obtener_direcciones_logicas_escritura_stdin(uint32_t pid, int direccion_logica, int tamanio){
+    t_list* peticiones = list_create();
+    int pagina = direccion_logica / tamanio_pagina;
+    int offset = direccion_logica % tamanio_pagina;
+    char* valor = crear_string_de_tamanio(tamanio); 
+    
+    int tamanio_restante = tamanio;
+    char* ptr_valor = valor;
+
+    while (tamanio_restante > 0) {
+        uint32_t tamanio_disponible = tamanio_pagina - offset;
+        uint32_t tamanio_escritura = tamanio_disponible < tamanio_restante ? tamanio_disponible : tamanio_restante;
+
+        char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
+        int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
+        t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, fragmento_valor);
+
+        list_add(peticiones, peticion);
+
+        free(fragmento_valor);
+
+        tamanio_restante -= tamanio_escritura;
+        ptr_valor += tamanio_escritura;
+        direccion_logica += tamanio_escritura;
+        pagina = direccion_logica / tamanio_pagina;
+        offset = direccion_logica % tamanio_pagina;
+    }
+
+    return peticiones;
+}
+
 t_list* obtener_direcciones_logicas_escritura(uint32_t pid, int direccion_logica, char* valor) {
     t_list* peticiones = list_create();
     int pagina = direccion_logica / tamanio_pagina;
     int offset = direccion_logica % tamanio_pagina;
-    int tamanio = strlen(valor);
+    int tamanio = string_length(valor);
     if(valor[0] == '\0'){
         tamanio = 1;
     }

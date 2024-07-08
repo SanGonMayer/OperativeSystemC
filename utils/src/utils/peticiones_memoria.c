@@ -71,7 +71,7 @@ t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int d
     peticion->tamanio_a_leer = tamanio_a_leer;
     peticion->tipo_acceso = LECTURA;
     peticion->direccion_fisica = direccion_fisica;
-    peticion->string = NULL;
+    peticion->string = string_new();
 
     return peticion;
 }
@@ -79,10 +79,10 @@ t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int d
 t_peticion_acceso_usuario* crear_peticion_escritura(int direccion_fisica, char* string){
     t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
 
-    peticion->tamanio_a_leer = 0;
+    peticion->tamanio_a_leer = string_length(string);
     peticion->tipo_acceso = ESCRITURA;
     peticion->direccion_fisica = direccion_fisica;
-    peticion->string = string_duplicate(string);
+    peticion->string = string_new();
 
     return peticion;
 }
@@ -125,7 +125,7 @@ t_peticion_acceso_usuario* deserializar_peticion_acceso_usuario(t_buffer* buffer
         uint32_t size;
         peticion->string = buffer_read_string(buffer, &size);
     }else{
-        peticion->string = NULL;
+        peticion->string = string_new();
     }
 
     return peticion;

@@ -12,5 +12,6 @@
 
 char* leer_de_memoria(int socket_memoria,int tamanio, t_list* peticionesMemoria);
 void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemoria);
+void actualizar_peticiones_con_valor(t_list* peticionesMemoria, char* valor);
 
 #endif

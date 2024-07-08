@@ -30,6 +30,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         return;
     }
     
+    actualizar_peticiones_con_valor(instruccion->peticionesMemoria, texto);
+
     guardar_en_memoria(g_socket_memoria,texto, instruccion->peticionesMemoria);
 
     responder_ok(fd);

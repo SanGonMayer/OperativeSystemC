@@ -4,6 +4,9 @@ static int blocks_fd;
 static int bitmap_fd;
 static t_bitarray* bitmap;
 t_dictionary* comandos;
+char* blocks_path;
+char* bitmap_path;
+
 
 void get_comandos(){
 
@@ -57,8 +60,8 @@ void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
 }
 
 void initialize_fs() {
-    char *blocks_path = string_from_format("%s/blocks.dat", g_config_io->path_base_dialfs);
-    char *bitmap_path = string_from_format("%s/bitmap.dat", g_config_io->path_base_dialfs);
+    blocks_path = string_from_format("%s/blocks.dat", g_config_io->path_base_dialfs);
+    bitmap_path = string_from_format("%s/bitmap.dat", g_config_io->path_base_dialfs);
 
     get_comandos();
 
@@ -113,19 +116,18 @@ void initialize_fs() {
 void finalize_fs() {
     dictionary_destroy(comandos);
     bitarray_destroy(bitmap);
+    //free de path?
     close(bitmap_fd);
     close(blocks_fd);
 }
 
 t_config* load_metadata(const char* filename) {
-    char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
+    char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
     return config_create(metadata_path);
 }
 
 void save_metadata(const char* filename, int initial_block, int file_size) {
-    char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
+    char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
 
     t_config* metadata = config_create(metadata_path);
 
@@ -143,50 +145,6 @@ void save_metadata(const char* filename, int initial_block, int file_size) {
     config_set_value(metadata, "BLOQUE_INICIAL", initial_block_str);
     config_set_value(metadata, "TAMANIO_ARCHIVO", file_size_str);
     config_save(metadata);
-    config_destroy(metadata);
-}
-
-void io_fs_create(char* filename) {
-    if (access(filename, F_OK) == 0) {
-        printf("El archivo ya existe\n");
-        return;
-    }
-
-    int initial_block = -1;
-    for (int i = 0; i < g_config_io->block_count; i++) {
-        if (!bitarray_test_bit(bitmap, i)) {
-            initial_block = i;
-            bitarray_set_bit(bitmap, i);
-            break;
-        }
-    }
-
-    if (initial_block == -1) {
-        printf("No hay bloques disponibles\n");
-        return;
-    }
-
-    save_metadata(filename, initial_block, 0);
-}
-
-void io_fs_delete(char* filename) {
-    t_config* metadata = load_metadata(filename);
-    if (metadata == NULL) {
-        printf("El archivo no existe\n");
-        return;
-    }
-
-    int initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
-    int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
-
-    int blocks_to_free = (file_size + g_config_io->block_size - 1) / g_config_io->block_size;
-    for (int i = 0; i < blocks_to_free; i++) {
-        bitarray_clean_bit(bitmap, initial_block + i);
-    }
-
-    char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
-    remove(metadata_path);
     config_destroy(metadata);
 }
 
@@ -218,6 +176,54 @@ void save_bitmap(t_bitarray* bitmap) {
     //Revisar
     fwrite(bitmap->bitarray, 1, bitarray_get_max_bit(bitmap) / 8, bitmap_file);
     fclose(bitmap_file);
+}
+
+
+void io_fs_create(char* filename) {
+    if (access(filename, F_OK) == 0) {
+        printf("El archivo ya existe\n");
+        return;
+    }
+
+    int initial_block = -1;
+    for (int i = 0; i < g_config_io->block_count; i++) {
+        if (!bitarray_test_bit(bitmap, i)) {
+            initial_block = i;
+            bitarray_set_bit(bitmap, i);
+            break;
+        }
+    }
+    //Guardar Bitmap
+    save_bitmap(bitmap);
+
+    if (initial_block == -1) {
+        printf("No hay bloques disponibles\n");
+        return;
+    }
+
+    log_info(g_logger, "Creando archivo %s en el bloque %d", filename, initial_block);
+    save_metadata(filename, initial_block, 0);
+}
+
+void io_fs_delete(char* filename) {
+    t_config* metadata = load_metadata(filename);
+    if (metadata == NULL) {
+        printf("El archivo no existe\n");
+        return;
+    }
+
+    int initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
+    int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
+
+    int blocks_to_free = (file_size + g_config_io->block_size - 1) / g_config_io->block_size;
+    for (int i = 0; i < blocks_to_free; i++) {
+        bitarray_clean_bit(bitmap, initial_block + i);
+    }
+
+    char metadata_path[256];
+    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
+    remove(metadata_path);
+    config_destroy(metadata);
 }
 
 void compactar_fs() {
@@ -289,7 +295,7 @@ void io_fs_truncate(char* filename, int new_size) {
 
         if (free_blocks < (new_blocks - old_blocks)) {
             compactar_fs();
-
+            
             free_blocks = 0;
             start_block = -1;
             for (int i = 0; i < g_config_io->block_count; i++) {
@@ -308,7 +314,7 @@ void io_fs_truncate(char* filename, int new_size) {
             }
 
             if (free_blocks < (new_blocks - old_blocks)) {
-                printf("No hay suficiente espacio libre después de la compactación\n");
+                log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
                 return;
             }
         }
@@ -324,7 +330,7 @@ void io_fs_truncate(char* filename, int new_size) {
         }
         save_bitmap(bitmap);
     }
-
+    log_info(g_logger, "Truncando archivo %s de %d a %d bytes", filename, old_size, new_size);
     save_metadata(filename, initial_block, new_size);
     config_destroy(metadata);
 }
@@ -420,6 +426,9 @@ void io_fs_read(t_instruccion_io* instruccion) {
     config_destroy(metadata);
 
     // Escribir en la memoria
+    actualizar_peticiones_con_valor(instruccion->peticionesMemoria, data);
+
+    
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
     guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria);
 
