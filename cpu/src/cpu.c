@@ -93,7 +93,7 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
     return buffer;
 }
 
-
+/*
 t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
     uint32_t length = strlen(dispositivo) + 1;
     t_list* peticiones = obtener_direcciones_logicas_escritura_stdin(pid, direccion_logica, registro_tamanio);
@@ -102,12 +102,46 @@ t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_l
 
     t_buffer* buffer = buffer_create(sizeof(int) + sizeof(int) + sizeLista * sizeof(t_peticion_acceso_usuario) + sizeof(uint32_t) + length);
 
-    log_info(g_logger, "Tamanio de peticion de acceso usuario: %d", sizeof(t_peticion_acceso_usuario));
-    log_info(g_logger, "Tamanio de tipo acceso: %d", sizeof(t_tipo_acceso));
-    log_info(g_logger, "Tamanio de lista de peticiones: %d", sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(char*));
-
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_lista(buffer,sizeLista,peticiones);
+
+    buffer_add_string(buffer, length, dispositivo);
+
+    return buffer;
+}
+*/
+t_buffer* ejecutar_io_stdin_read(uint32_t pid,char* dispositivo, int direccion_logica, int registro_tamanio){
+    uint32_t length = strlen(dispositivo) + 1;
+    t_list* peticiones = obtener_direcciones_logicas_escritura_stdin(pid, direccion_logica, registro_tamanio);
+
+    int sizeLista = list_size(peticiones);
+
+    int size_por_peticion = sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(uint32_t);
+
+    int sizeTotal = sizeof(int) + 
+        sizeof(int) + 
+        sizeLista * size_por_peticion + 
+        sizeof(uint32_t) + length;
+
+    for (int i = 0; i < sizeLista; i++) {
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+        sizeTotal += string_length(peticion->string);
+    }
+
+    t_buffer* buffer = buffer_create(sizeTotal);
+
+    buffer_add_int(buffer, registro_tamanio);
+    buffer_add_int(buffer, sizeLista);
+
+    for (int i = 0; i < sizeLista; i++) {
+
+        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
+
+        buffer_add_uint32(buffer, peticion->tamanio_a_leer);
+        buffer_add_int(buffer, peticion->tipo_acceso);
+        buffer_add_int(buffer, peticion->direccion_fisica);
+        buffer_add_string(buffer, string_length(peticion->string), peticion->string);
+    }
 
     buffer_add_string(buffer, length, dispositivo);
 

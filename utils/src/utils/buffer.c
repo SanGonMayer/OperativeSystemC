@@ -96,7 +96,8 @@ t_peticion_acceso_usuario* buffer_read_peticion_acceso(t_buffer* buffer){
     peticion->tamanio_a_leer = buffer_read_uint32(buffer);
     peticion->tipo_acceso = buffer_read_int(buffer);
     peticion->direccion_fisica = buffer_read_int(buffer);
-    peticion->string = buffer_read_string(buffer, &peticion->tamanio_a_leer);
+    uint32_t length;
+    peticion->string = buffer_read_string(buffer, &length);
     return peticion;
 }
 
