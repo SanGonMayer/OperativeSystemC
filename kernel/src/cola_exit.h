@@ -8,4 +8,5 @@ bool esta_en_cola_exit(int pid);
 t_PCB* obtener_de_cola_exit(int pid);
 void procesar_cola_exit();
 void crear_hilo_cola_exit();
+t_list* pids_exit();
 #endif

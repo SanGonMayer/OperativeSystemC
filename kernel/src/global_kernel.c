@@ -8,9 +8,10 @@
 int g_contador_pid = 0;
 t_queue* g_cola_new;
 t_queue* g_cola_ready;
-t_queue* g_cola_exit;
 t_log* g_logger;
 int g_grado_multiprogramacion;
+int g_grado_multiprogramacion_inicial;
+int g_post_a_saltear_multiprogramacion = 0;
 sem_t g_mutex_multiprogramacion;
 int g_socket_memoria;
 int g_conexion_cpu_dispatch;

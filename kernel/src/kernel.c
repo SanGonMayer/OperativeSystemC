@@ -257,23 +257,6 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     pthread_detach(hilo_desalojo);
 }
 
-
-void planificador_exit(){ 
-
-    while(1){
-        if(g_planificacion_pausada == 1){
-            sem_wait(&g_notif_largo_plazo);
-        }
-        sem_wait(&g_hay_elementos_en_exit);
-        sem_wait(&g_mutex_cola_exit);
-        t_PCB* pcb = queue_pop(g_cola_exit);
-        sem_post(&g_mutex_cola_exit);
-        log_info(g_logger, "Proceso %d finalizado", pcb->PID);
-        //TODO Liberarlo de memoria (entrega 3)
-        free(pcb);
-    }
-}
-
 void finalizar_proceso(t_PCB* pcb){
 
     pcb->estado = EXIT;
@@ -283,6 +266,14 @@ void finalizar_proceso(t_PCB* pcb){
     
     log_info(g_logger, "Finaliza el proceso %d - Motivo: %s", pcb->PID, "SUCCESS");
     sem_post(&g_tope_multiprogramacion);
+    if(g_post_a_saltear_multiprogramacion > 0){
+        g_post_a_saltear_multiprogramacion--;
+        g_grado_multiprogramacion--;
+    }else{
+        sem_post(&g_tope_multiprogramacion);
+    }
+
+
 }
 
 void atender_desalojo(t_desalojo* desalojo){
@@ -748,49 +739,132 @@ void eliminar_de_lista_blocked_gral(uint32_t pid){
 }
 
 void listar_procesos(){
-    printf("%-25s%-25s\n", "NEW", g_exec->PID);
 
-    t_list_iterator* iterador_gral = list_iterator_create(g_lista_procesos_gral);
-    
-    while(list_iterator_has_next(iterador_gral)){
-        t_PCB* pcb = list_iterator_next(iterador_gral);
-        
-        switch (pcb->estado)
-        {
-            case NEW:
-                printf("%-25s%-25s\n", "NEW", pcb->PID);
-                break;
-            
-            case READY:
-                printf("%-25s%-25s\n", "READY", pcb->PID);
-                break;
-            
-            case EXIT:
-                printf("%-25s%-25s\n", "EXIT", pcb->PID);
-                break;
-            
-            case READYPLUS:
-                printf("%-25s%-25s\n", "READYPLUS", pcb->PID);
-                break;
+    // estados posibles NEW, READY, READY-PLUS, EXEC, BLOCKED, EXIT
+
+    // listo Procesos en NEW
+    sem_wait(&g_mutex_cola_new);
+    t_list* procesos_new = g_cola_new->elements;
+
+    if(list_is_empty(procesos_new)){
+        log_info(g_logger, "No hay procesos en NEW");
+    }else{
+        log_info(g_logger, "Procesos en NEW");
+        t_list_iterator* new_iterator = list_iterator_create(procesos_new);
+        while(list_iterator_has_next(new_iterator)){
+            t_PCB* pcb = list_iterator_next(new_iterator);
+            log_info(g_logger, "PID: %d - Estado: NEW", pcb->PID);
         }
-            
+
+        list_iterator_destroy(new_iterator);
     }
-        
+    sem_post(&g_mutex_cola_new);
 
-    //BLOCKED
-    t_list_iterator* iterador_blocked = list_iterator_create(g_lista_blocked_gral);
-    
-    while(list_iterator_has_next(iterador_blocked)){
-        uint32_t pid = (uint32_t)list_iterator_next(iterador_blocked);
-        printf("%-25s%-25s\n", "BLOCKED", pid);
+    // listo Procesos en READY
+    sem_wait(&g_mutex_cola_ready);
+    t_list* procesos_ready = g_cola_ready->elements;
+
+    if(list_is_empty(procesos_ready)){
+        log_info(g_logger, "No hay procesos en READY");
+
+    }else{
+        log_info(g_logger, "Procesos en READY");
+        t_list_iterator* ready_iterator = list_iterator_create(procesos_ready);
+        while(list_iterator_has_next(ready_iterator)){
+            t_PCB* pcb = list_iterator_next(ready_iterator);
+            log_info(g_logger, "PID: %d - Estado: READY", pcb->PID);
+        }
+
+        list_iterator_destroy(ready_iterator);
+    }
+    sem_post(&g_mutex_cola_ready);
+
+    // listo Procesos en READY-PLUS
+
+    sem_wait(&g_mutex_cola_auxiliar);
+    t_list* procesos_auxiliar = g_cola_auxiliar->elements;
+
+    if(list_is_empty(procesos_auxiliar)){
+        log_info(g_logger, "No hay procesos en READY-PLUS");
+    }else{
+        log_info(g_logger, "Procesos en READY-PLUS");
+        t_list_iterator* ready_plus_iterator = list_iterator_create(procesos_auxiliar);
+        while(list_iterator_has_next(ready_plus_iterator)){
+            t_PCB* pcb = list_iterator_next(ready_plus_iterator);
+            log_info(g_logger, "PID: %d - Estado: READY-PLUS", pcb->PID);
+        }
+    }
+    sem_post(&g_mutex_cola_auxiliar);
+
+    // listo Procesos en EXEC
+    if(g_exec != NULL){
+        log_info(g_logger, "Proceso en EXEC");
+        log_info(g_logger, "PID: %d - Estado: EXEC", g_exec->PID);
+    }else{
+        log_info(g_logger, "No hay procesos en EXEC");
     }
 
-    list_iterator_destroy(iterador_gral);
-    list_iterator_destroy(iterador_blocked);
-}
+    // listo Procesos en BLOCKED
+
+    // bloqueados por Recursos
+
+    t_list* procesos_bloqueados_recursos = get_procesos_bloqueados_recursos();
+    if(!list_is_empty(procesos_bloqueados_recursos)){
+        log_info(g_logger, "Procesos bloqueados por Recursos");
+        t_list_iterator* blocked_iterator = list_iterator_create(procesos_bloqueados_recursos);
+        while(list_iterator_has_next(blocked_iterator)){
+            t_PCB* pcb = list_iterator_next(blocked_iterator);
+            log_info(g_logger, "PID: %d - Estado: BLOCKED", pcb->PID);
+        }
+        list_iterator_destroy(blocked_iterator);
+    }
+
+    // bloqueados por IO
+
+    sem_wait(&g_mutex_acceso_interfaces);
+
+    if(!dictionary_is_empty(g_interfaces)){
+        t_list* lista_interfaces = dictionary_elements(g_interfaces);
+        t_list_iterator* iterator = list_iterator_create(lista_interfaces);
+        while(list_iterator_has_next(iterator)){
+            t_interfaz_conectada* interfaz = list_iterator_next(iterator);
+            sem_wait(&interfaz->mutex);
+            if(!queue_is_empty(interfaz->cola)){
+                log_info(g_logger, "Procesos bloqueados en interfaz %s", interfaz->interfaz->nombre);
+                t_list_iterator* blocked_iterator = list_iterator_create(interfaz->cola->elements);
+                while(list_iterator_has_next(blocked_iterator)){
+                    t_parametro_cola_interfaz* parametro = list_iterator_next(blocked_iterator);
+                    log_info(g_logger, "PID: %d - Estado: BLOCKED", parametro->pcb->PID);
+                }
+                list_iterator_destroy(blocked_iterator);
+            }
+            sem_post(&interfaz->mutex);
+        }
+        list_iterator_destroy(iterator);
+    }
+
+    sem_post(&g_mutex_acceso_interfaces);
 
 
+    // listo Procesos en EXIT
 
+    t_list* procesos_exit = pids_exit(); // lista de ints
+
+    if(list_is_empty(procesos_exit)){
+        log_info(g_logger, "No hay procesos en EXIT");
+    }else{
+        log_info(g_logger, "Procesos en EXIT");
+        t_list_iterator* exit_iterator = list_iterator_create(procesos_exit);
+        while(list_iterator_has_next(exit_iterator)){
+            uint32_t pid = (uint32_t)list_iterator_next(exit_iterator);
+            log_info(g_logger, "PID: %d - Estado: EXIT", pid);
+        }
+        list_iterator_destroy(exit_iterator);
+    }
+    list_destroy(procesos_exit);
+
+    }
+     
 t_PCB* buscar_y_eliminar_pid_en_cola(uint32_t pid,t_queue* cola) {
 
     if (queue_is_empty(cola)) {
@@ -1024,5 +1098,21 @@ void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, in
     } else {
         sem_post(&g_mutex_acceso_interfaces);
         finalizar_proceso(pcb);
+    }
+}
+
+void modificar_grado_multiprogramacion(int nuevo_grado){
+
+    if(g_grado_multiprogramacion > nuevo_grado){
+
+        g_post_a_saltear_multiprogramacion = g_grado_multiprogramacion - nuevo_grado;
+    }
+    
+    if(g_grado_multiprogramacion < nuevo_grado){
+
+        int diferencia = nuevo_grado - g_grado_multiprogramacion;
+        for(int i = 0; i < diferencia; i++){
+            sem_post(&g_tope_multiprogramacion);
+        }
     }
 }

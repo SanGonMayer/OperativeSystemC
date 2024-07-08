@@ -24,4 +24,5 @@ bool procesar_wait(t_PCB* pcb, char* nombre_recurso);
 t_PCB* procesar_signal(char* nombre_recurso);
 void liberar_recursos_proceso(t_PCB* pcb);
 t_PCB* quitar_proceso_bloqueado(int pid);
+t_list* get_procesos_bloqueados_recursos();
 #endif

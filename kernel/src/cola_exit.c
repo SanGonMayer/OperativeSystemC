@@ -4,15 +4,19 @@
 #include "utils/peticiones_memoria.h"
 #include "utils/codigo_operacion.h"
 #include "global_kernel.h"
+#include <commons/collections/list.h>
 #include <semaphore.h>
 
 static t_queue* cola_exit;
 static sem_t mutex_cola_exit;
 static sem_t hay_elementos_en_exit;
+static t_list* procesos_finalizados;
+
 
 void quitar_proceso_de_memoria(int pid);
 
 void init_cola_exit(){
+    procesos_finalizados = list_create();
     cola_exit = queue_create();
     sem_init(&mutex_cola_exit, 0, 1);
     sem_init(&hay_elementos_en_exit, 0, 0);
@@ -59,6 +63,7 @@ void procesar_cola_exit(){
         sem_wait(&hay_elementos_en_exit);
         sem_wait(&mutex_cola_exit);
         t_PCB* pcb = queue_pop(cola_exit);
+        list_add(procesos_finalizados, pcb);
         sem_post(&mutex_cola_exit);
         quitar_proceso_de_memoria(pcb->PID);
         liberar_recursos_proceso(pcb);
@@ -88,4 +93,33 @@ void quitar_proceso_de_memoria(int pid){
     } else {
         log_error(g_logger, "Error al eliminar proceso %d de memoria", pid);
     }
+}
+
+
+t_list* pids_exit(){
+    // retorna una lista de ints con los pids de los procesos en la cola de exit y los finalizados
+    // sin hacer pop de la cola
+
+    t_list* pids = list_create();
+    sem_wait(&mutex_cola_exit);
+    if(!queue_is_empty(cola_exit)){
+        t_list_iterator* iterator = list_iterator_create(cola_exit->elements);
+        while(list_iterator_has_next(iterator)){
+            t_PCB* pcb = list_iterator_next(iterator);
+            list_add(pids, (void*)pcb->PID);
+        }
+        list_iterator_destroy(iterator);
+    }
+    sem_post(&mutex_cola_exit);
+
+    if(!list_is_empty(procesos_finalizados)){
+        t_list_iterator* iterator = list_iterator_create(procesos_finalizados);
+        while(list_iterator_has_next(iterator)){
+            t_PCB* pcb = list_iterator_next(iterator);
+            list_add(pids, (void*)pcb->PID);
+        }
+        list_iterator_destroy(iterator);
+    }
+
+    return pids;
 }

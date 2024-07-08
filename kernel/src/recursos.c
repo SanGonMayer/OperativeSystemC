@@ -140,3 +140,7 @@ t_PCB* quitar_proceso_bloqueado(int pid){
     t_PCB* pcb = list_remove_by_condition(procesos_bloqueados, esProcesoAeliminar);
     return pcb;
 }
+
+t_list* get_procesos_bloqueados_recursos(){
+    return procesos_bloqueados;
+}
