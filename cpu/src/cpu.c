@@ -164,21 +164,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
         tamanio = sizeof(uint8_t);
     }
     t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, tamanio);
-    char* mensaje = string_new();
-    for(int i = 0; i < list_size(peticiones); i++){
-        t_peticion_acceso_usuario * peticion = list_get(peticiones, i);
-        t_buffer* buffer =  serializar_peticion_acceso_usuario(peticion);
-        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
-        enviar_paquete(paquete, g_socket_memoria);
-        t_buffer* buffer_respuesta = recibir_buffer(g_socket_memoria);
-        uint32_t length;
-        char* respuesta = buffer_read_string(buffer_respuesta, &length);
-        string_append(&mensaje, respuesta);
-
-        free(respuesta);
-        eliminar_paquete(paquete);
-        buffer_destroy(buffer_respuesta);
-    }
+    char* mensaje = leer_de_memoria(g_socket_memoria, tamanio, peticiones, g_logger);
 
     uint32_t mensaje_diccionario;
 
@@ -187,6 +173,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
     memcpy(&mensaje_diccionario, &valor, sizeof(uint32_t));
 
     dictionary_put(diccionario, registro_datos, (void*)mensaje_diccionario);
+    
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
 
     return;
@@ -201,19 +188,8 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
 
     t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, valor_string);
 
-    for(int i = 0; i < list_size(peticiones); i++){
-        t_peticion_acceso_usuario* peticion = list_get(peticiones, i);
-        t_buffer* buffer = serializar_peticion_acceso_usuario(peticion);
-        t_paquete* paquete = crear_paquete(ACCEDER_ESPACIO_DE_USUARIO_MEMORIA, buffer);
-        enviar_paquete(paquete, g_socket_memoria);
-        bool ok = recibir_ok(g_socket_memoria);
-        if(ok){
-            log_info(g_logger, "Se escribio correctamente en memoria con MOV_OUT");
-        } else {
-            log_error(g_logger, "No se pudo escribir en memoria con MOV_OUT");
-        }
-        eliminar_paquete(paquete);
-    }
+    guardar_en_memoria(g_socket_memoria, valor_string, peticiones, g_logger);
+
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
     return;
 }   
@@ -315,7 +291,6 @@ t_buffer* ejecutar_io_fs_read(uint32_t pid,char* interfaz, char* nombre_archivo,
     return buffer;
 }
 
-
 void desalojar_pcb(int socket_dispatch, t_PCB* pcb, int motivo, t_log* logger, t_dictionary* diccionario){
     pcb->registrosCPU = registros_cpu_from_dictionary(diccionario);
     responder_pcb(socket_dispatch, pcb, logger);
@@ -353,7 +328,6 @@ t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
 
     return registros;
 }
-
 
 int obtener_direccion_fisica(int pid, int direccion_logica){
     bool tlb_hit = false;
