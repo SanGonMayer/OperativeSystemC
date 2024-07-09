@@ -1,7 +1,7 @@
-#include "io_memoria.h"
+#include "instrucciones_memoria.h"
 
 
-void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemoria) {
+void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemoria, t_log* g_logger) {
 
     for(int i = 0; i < list_size(peticionesMemoria); i++){
         t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
@@ -19,7 +19,7 @@ void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemor
 
 }
 
-char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria) {
+char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria, t_log* logger) {
 
     char* mensaje = string_new();
     for(int i = 0; i < list_size(peticionesMemoria); i++){

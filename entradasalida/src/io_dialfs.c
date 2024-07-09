@@ -353,7 +353,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int offset = instruccion->puntero_archivo;
     char* data = string_new();
 
-    data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria);
+    data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria, g_logger);
     
     log_info(g_logger, "String leido en memoria: %s", data);
 
@@ -443,6 +443,6 @@ void io_fs_read(t_instruccion_io* instruccion) {
 
     
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
-    guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria);
+    guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
 
 }

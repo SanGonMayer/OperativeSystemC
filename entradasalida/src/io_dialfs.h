@@ -18,7 +18,7 @@
 #include <commons/string.h>
 #include <readline/readline.h>
 #include <stdint.h>
-#include "io_memoria.h"
+#include <utils/instrucciones_memoria.h>
 #include <errno.h>
 typedef enum {
     IO_DIALFS_CREATE = 0,

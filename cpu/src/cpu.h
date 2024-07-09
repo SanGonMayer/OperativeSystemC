@@ -20,7 +20,7 @@
 #include "tlb.h"
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
-
+#include <utils/instrucciones_memoria.h>
 /**
 * @fn    etapa_fetch
 * @brief pide la instruccion a partir de una posicion de memoria, devuelve instruccion
