@@ -190,7 +190,6 @@ void save_bitmap(t_bitarray* bitmap) {
     fclose(bitmap_file);
 }
 
-
 void io_fs_create(char* filename) {
     if (access(filename, F_OK) == 0) {
         printf("El archivo ya existe\n");

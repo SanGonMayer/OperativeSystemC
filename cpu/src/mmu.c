@@ -75,7 +75,7 @@ t_list* obtener_direcciones_logicas_escritura_stdin(uint32_t pid, int direccion_
 
         char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
         int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
-        t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, fragmento_valor);
+        t_peticion_acceso_usuario* peticion = crear_peticion_escritura_stdin(direccion_fisica, tamanio_escritura);
 
         list_add(peticiones, peticion);
 

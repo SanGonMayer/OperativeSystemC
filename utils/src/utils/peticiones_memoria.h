@@ -36,6 +36,7 @@ typedef struct{
 } t_peticion_acceso_usuario;
 
 t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int direccion_fisica);
+t_peticion_acceso_usuario* crear_peticion_escritura_stdin(int direccion_fisica, int tamanio_a_leer);
 t_peticion_acceso_usuario* crear_peticion_escritura(int direccion_fisica, char* string);
 void destruir_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion);
 t_buffer* serializar_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion);
