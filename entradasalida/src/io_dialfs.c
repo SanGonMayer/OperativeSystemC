@@ -12,11 +12,11 @@ void get_comandos(){
 
     comandos = dictionary_create();
 
-    dictionary_put(comandos, "IO_FS_CREATE", IO_DIALFS_CREATE);
-    dictionary_put(comandos, "IO_FS_DELETE", IO_DIALFS_DELETE);
-    dictionary_put(comandos, "IO_FS_TRUNCATE", IO_DIALFS_TRUNCATE);
-    dictionary_put(comandos, "IO_FS_WRITE", IO_DIALFS_WRITE);
-    dictionary_put(comandos, "IO_FS_READ", IO_DIALFS_READ);
+    dictionary_put(comandos, "IO_FS_CREATE", (void*)IO_DIALFS_CREATE);
+    dictionary_put(comandos, "IO_FS_DELETE", (void*)IO_DIALFS_DELETE);
+    dictionary_put(comandos, "IO_FS_TRUNCATE", (void*)IO_DIALFS_TRUNCATE);
+    dictionary_put(comandos, "IO_FS_WRITE", (void*)IO_DIALFS_WRITE);
+    dictionary_put(comandos, "IO_FS_READ", (void*)IO_DIALFS_READ);
 
 }
 
@@ -272,6 +272,28 @@ void compactar_fs() {
     log_info(g_logger, "Compactación del sistema de archivos completada");
 }
 
+bool buscar_bloques_libres_contiguos(t_bitarray* bitmap, int block_count, int required_blocks, int* start_block) {
+    int free_blocks = 0;
+    *start_block = -1;
+
+    for (int i = 0; i < block_count; i++) {
+        if (!bitarray_test_bit(bitmap, i)) {
+            if (*start_block == -1) {
+                *start_block = i;
+            }
+            free_blocks++;
+            if (free_blocks >= required_blocks) {
+                return true; // Suficientes bloques libres encontrados
+            }
+        } else {
+            *start_block = -1;
+            free_blocks = 0;
+        }
+    }
+
+    return false; // No se encontraron suficientes bloques libres
+}
+
 void io_fs_truncate(char* filename, int new_size) {
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -282,49 +304,17 @@ void io_fs_truncate(char* filename, int new_size) {
     int initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
     int old_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
     int block_size = g_config_io->block_size;
+
     int old_blocks = (old_size + block_size - 1) / block_size;
     int new_blocks = (new_size + block_size - 1) / block_size;
 
     if (new_blocks > old_blocks) {
-        int free_blocks = 0;
         int start_block = -1;
 
-        for (int i = 0; i < g_config_io->block_count; i++) {
-            if (!bitarray_test_bit(bitmap, i)) {
-                if (start_block == -1) {
-                    start_block = i;
-                }
-                free_blocks++;
-                if (free_blocks >= (new_blocks - old_blocks)) {
-                    break;
-                }
-            } else {
-                start_block = -1;
-                free_blocks = 0;
-            }
-        }
-
-        if (free_blocks < (new_blocks - old_blocks)) {
+        if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks - old_blocks, &start_block)) {
             compactar_fs();
-            
-            free_blocks = 0;
-            start_block = -1;
-            for (int i = 0; i < g_config_io->block_count; i++) {
-                if (!bitarray_test_bit(bitmap, i)) {
-                    if (start_block == -1) {
-                        start_block = i;
-                    }
-                    free_blocks++;
-                    if (free_blocks >= (new_blocks - old_blocks)) {
-                        break;
-                    }
-                } else {
-                    start_block = -1;
-                    free_blocks = 0;
-                }
-            }
 
-            if (free_blocks < (new_blocks - old_blocks)) {
+            if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks - old_blocks, &start_block)) {
                 log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
                 return;
             }
@@ -335,16 +325,19 @@ void io_fs_truncate(char* filename, int new_size) {
         }
 
         save_bitmap(bitmap);
+        initial_block = start_block;
     } else if (new_blocks < old_blocks) {
         for (int i = initial_block + new_blocks; i < initial_block + old_blocks; i++) {
             bitarray_clean_bit(bitmap, i);
         }
         save_bitmap(bitmap);
     }
+
     log_info(g_logger, "Truncando archivo %s de %d a %d bytes", filename, old_size, new_size);
     save_metadata(filename, initial_block, new_size);
     config_destroy(metadata);
 }
+
 
 void io_fs_write(t_instruccion_io* instruccion) {
     
