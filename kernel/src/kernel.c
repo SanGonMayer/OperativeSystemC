@@ -173,9 +173,21 @@ void esperar_quantum(t_PCB* pcb){
     log_info(g_logger, "Esperando quantum %d ms", pcb->quantum );
     usleep(pcb->quantum * 1000);
     if(g_exec != NULL && g_exec->PID == pcb->PID){
+        
+        sem_wait(&g_mutex_desalojoVRR);
+        t_list * procesos_finalizados = pids_exit();
+        t_list_iterator* iterator = list_iterator_create(procesos_finalizados);
+
+        while(list_iterator_has_next(iterator)){
+            uint32_t* pid_finalizado = list_iterator_next(iterator);
+
+            if(pcb->PID == pid_finalizado){
+                sem_post(&g_mutex_desalojoVRR);
+                return;
+        }
         enviar_interrupcion(g_conexion_cpu_interrupt, &pcb->PID, INTERRUPCION_QUANTUM);
-    }
-}
+    }}
+} 
 
 void ejecutar_cpu_RR(t_PCB* pcb){
 
@@ -300,6 +312,7 @@ void atender_desalojo(t_desalojo* desalojo){
         {
             liberar_cola_exec();
             enviar_proceso_a_ready(desalojo->pcb);
+            sem_post(&g_mutex_desalojoVRR);
             return;
         }
         case INTERRUPCION_KILL:

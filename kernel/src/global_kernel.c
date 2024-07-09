@@ -33,6 +33,7 @@ sem_t g_mutex_socket_memoria;
 sem_t g_mutex_cola_exit;
 sem_t g_hay_elementos_en_exit;
 sem_t g_mutex_cola_auxiliar;
+sem_t g_mutex_desalojoVRR;
 
 sem_t g_mutex_acceso_interfaces;
 

@@ -128,6 +128,7 @@ int main(void){
     sem_init(&g_mutex_cola_ready, 0,1);
     cola_exec = queue_create(); // No se usa
     sem_init(&g_disponible_exec, 0, 1);
+    sem_init(&g_mutex_desalojoVRR,0,1);
 
     init_cola_exit();
 

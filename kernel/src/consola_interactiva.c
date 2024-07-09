@@ -121,6 +121,7 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
 
         case FINALIZAR_PROCESO:
             printf("Se seleccionó la opción Finalizar Proceso\n");
+            sem_wait(&g_mutex_desalojoVRR);
             uint32_t pid = (uint32_t)atoi(args[1]);
             t_PCB* pcb = buscar_pid_en_sistema(pid);
             if(pcb == NULL){
@@ -133,7 +134,9 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
                 }else{
                     finalizar_proceso(pcb);
                 }
+            
             }
+            sem_post(&g_mutex_desalojoVRR);
             break;
 
         case DETENER_PLANIFICACION:

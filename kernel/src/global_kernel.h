@@ -52,6 +52,7 @@ extern t_temporal* timer;
 extern int g_ms_transcurridos;
 extern sem_t g_tiempo_calculado;
 extern sem_t g_hay_elementos_para_ejecutar;
+extern sem_t g_mutex_desalojoVRR;
 
 extern t_dictionary* g_diccionario_recursos;
 
