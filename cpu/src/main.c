@@ -301,7 +301,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "Se ejecutó IO_FS_WRITE %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
             buffer_destroy(buffer);
-        return;
+            return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_READ")) {
             char* interfaz = instruccion_separada[1];
             char* nombre_archivo = instruccion_separada[2];
