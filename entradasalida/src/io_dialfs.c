@@ -1,4 +1,6 @@
 #include "io_dialfs.h"
+#include <commons/log.h>
+#include <commons/string.h>
 
 static int blocks_fd;
 static int bitmap_fd;
@@ -231,10 +233,10 @@ void io_fs_delete(char* filename) {
         bitarray_clean_bit(bitmap, initial_block + i);
     }
 
-    char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
+    char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
     remove(metadata_path);
     config_destroy(metadata);
+    free(metadata_path);
 }
 
 void compactar_fs() {
@@ -270,6 +272,19 @@ void compactar_fs() {
     save_bitmap(bitmap);
     usleep(g_config_io->retraso_compactacion * 1000);
     log_info(g_logger, "Compactación del sistema de archivos completada");
+} 
+
+bool bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(int bloque_inicial, int cantidad_bloques_actual, int bloques_necesarios){
+    int bloque_final = bloque_inicial + cantidad_bloques_actual;
+    int bloques_delta = bloques_necesarios - cantidad_bloques_actual;
+
+    for(int i = bloque_final; i < bloque_final + bloques_delta; i++){
+        if(bitarray_test_bit(bitmap, i)){
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool buscar_bloques_libres_contiguos(t_bitarray* bitmap, int block_count, int required_blocks, int* start_block) {
@@ -294,6 +309,12 @@ bool buscar_bloques_libres_contiguos(t_bitarray* bitmap, int block_count, int re
     return false; // No se encontraron suficientes bloques libres
 }
 
+void liberar_bloques(int initial_block, int block_count) {
+    for (int i = initial_block; i < initial_block + block_count; i++) {
+        bitarray_clean_bit(bitmap, i);
+    }
+}
+
 void io_fs_truncate(char* filename, int new_size) {
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -306,21 +327,47 @@ void io_fs_truncate(char* filename, int new_size) {
     int block_size = g_config_io->block_size;
 
     int old_blocks = (old_size + block_size - 1) / block_size;
+    old_blocks = old_size == 0 ? 1 : old_blocks;
+
     int new_blocks = (new_size + block_size - 1) / block_size;
 
     if (new_blocks > old_blocks) {
         int start_block = -1;
 
-        if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks - old_blocks, &start_block)) {
-            compactar_fs();
+        if(
+            !bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(initial_block, old_blocks, new_blocks)
+        ){
+            if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
+                compactar_fs();
 
-            if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks - old_blocks, &start_block)) {
-                log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
-                return;
+                if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
+                    log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
+                    return;
+                }
             }
+
+            liberar_bloques(initial_block, old_blocks);
+
+            // Mover bloques viejos usados a bloques nuevos
+            // deja persistidos los bloques en el archivo
+
+            void* data = malloc(block_size);
+            for (int i = 0; i < old_blocks; i++) {
+                lseek(blocks_fd, (initial_block + i) * block_size, SEEK_SET);
+                read(blocks_fd, data, block_size);
+
+                lseek(blocks_fd, (start_block + i) * block_size, SEEK_SET);
+                write(blocks_fd, data, block_size);
+            }
+            free(data);
+
+
+        }else{
+            start_block = initial_block;
         }
 
-        for (int i = start_block; i < start_block + (new_blocks - old_blocks); i++) {
+
+        for (int i = start_block; i < start_block + (new_blocks); i++) {
             bitarray_set_bit(bitmap, i);
         }
 
@@ -335,6 +382,7 @@ void io_fs_truncate(char* filename, int new_size) {
 
     log_info(g_logger, "Truncando archivo %s de %d a %d bytes", filename, old_size, new_size);
     save_metadata(filename, initial_block, new_size);
+
     config_destroy(metadata);
 }
 
@@ -392,7 +440,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
     char* filename = instruccion->nombre_archivo;
     int size = instruccion->tamanio;
     int offset = instruccion->puntero_archivo;  // Usar puntero_archivo como offset
-    char* data = malloc(size);
+    char* data = string_new();
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -415,27 +463,34 @@ void io_fs_read(t_instruccion_io* instruccion) {
     int block_end = (offset + size - 1) / g_config_io->block_size;
     int block_offset = offset % g_config_io->block_size;
 
-    char* current_data = string_duplicate(data);
 
     for (int i = block_start; i <= block_end; i++) {
+
         int read_size = g_config_io->block_size - block_offset;
         if (i == block_end) {
             read_size = (offset + size) % g_config_io->block_size;
         }
 
         lseek(blocks_fd, (initial_block + i) * g_config_io->block_size + block_offset, SEEK_SET);
-        read(blocks_fd, current_data, read_size);
-        current_data += read_size;
+        char* buffer = malloc(read_size + 1);
+        read(blocks_fd, buffer, read_size);
+        buffer[read_size] = '\0';
+        string_append(&data, string_duplicate(buffer));
+
+        free(buffer);
         block_offset = 0;
     }
 
     config_destroy(metadata);
 
+    log_info(g_logger, "Leido de archivo %s: %s", filename, data);
     // Escribir en la memoria
     actualizar_peticiones_con_valor(instruccion->peticionesMemoria, data);
 
     
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
     guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
+
+    free(data);
 
 }
