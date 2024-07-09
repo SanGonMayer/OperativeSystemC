@@ -129,12 +129,20 @@ t_config* load_metadata(const char* filename) {
 void save_metadata(const char* filename, int initial_block, int file_size) {
     char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
 
-    t_config* metadata = config_create(metadata_path);
+    // Crear archivo de metadata si no existe
+    FILE* file = fopen(metadata_path, "w");
+    if (file == NULL) {
+        log_error(g_logger, "Error al crear el archivo de metadata %s", metadata_path);
+        free(metadata_path);
+        return;
+    }
+    fclose(file);
 
+    t_config* metadata = config_create(metadata_path);
     if (metadata == NULL) {
-        metadata = config_create(metadata_path);
-        config_save_in_file(metadata, metadata_path);
-        metadata = config_create(metadata_path);
+        log_error(g_logger, "Error al crear la configuración de metadata para %s", metadata_path);
+        free(metadata_path);
+        return;
     }
 
     char initial_block_str[10];
@@ -144,8 +152,12 @@ void save_metadata(const char* filename, int initial_block, int file_size) {
 
     config_set_value(metadata, "BLOQUE_INICIAL", initial_block_str);
     config_set_value(metadata, "TAMANIO_ARCHIVO", file_size_str);
-    config_save(metadata);
+
+    // Guardar configuración directamente en el archivo
+    config_save_in_file(metadata, metadata_path);
     config_destroy(metadata);
+
+    free(metadata_path);
 }
 
 t_bitarray* load_bitmap() {
@@ -344,6 +356,8 @@ void io_fs_write(t_instruccion_io* instruccion) {
 
     data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria);
     
+    log_info(g_logger, "String leido en memoria: %s", data);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
