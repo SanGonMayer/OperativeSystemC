@@ -164,6 +164,8 @@ void procesar_pedido_marco(int socket){
     t_peticion_marco* peticion = deserializar_peticion_marco(buffer);
     int nro_marco = leer_nro_marco(peticion->pid, peticion->pagina);
 
+    log_info(g_logger, "PID: %d - Pagina: %d - Marco: %d", peticion->pid, peticion->pagina, nro_marco);
+
     t_buffer* respuesta = buffer_create(sizeof(uint32_t));
     buffer_add_int(respuesta, nro_marco);
 
@@ -201,7 +203,7 @@ void procesar_acceso_espacio_usuario(int socket){
         char valor [peticion->tamanio_a_leer + 1];
         leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
         uint32_t tamanio_respuesta = peticion->tamanio_a_leer;
-        log_info(g_logger, "Accion: LECTURA - Direccion fisica: %d - Tamano: %d ", peticion->direccion_fisica, peticion->tamanio_a_leer);
+        log_info(g_logger, "PID: %d - Accion: LEER - Direccion fisica: %d - Tamano: %d ", peticion->pid ,peticion->direccion_fisica, peticion->tamanio_a_leer);
         t_buffer* respuesta = buffer_create(tamanio_respuesta + sizeof(uint32_t));
         buffer_add_string(respuesta,tamanio_respuesta, valor);
         enviar_buffer(socket, respuesta, g_logger);
@@ -210,7 +212,7 @@ void procesar_acceso_espacio_usuario(int socket){
 
     if(peticion->tipo_acceso == ESCRITURA){
         escribir_en_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, peticion->string);
-        log_info(g_logger, "Accion: ESCRITURA - Direccion fisica: %d - Tamano: %d", peticion->direccion_fisica, peticion->tamanio_a_leer);
+        log_info(g_logger, "PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamano: %d ", peticion->pid ,peticion->direccion_fisica, peticion->tamanio_a_leer);
         responder_ok(socket);
     }
 

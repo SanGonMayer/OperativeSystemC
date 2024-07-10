@@ -65,9 +65,10 @@ t_peticion_resize* deserializar_peticion_resize(t_buffer* buffer){
 }
 
 
-t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int direccion_fisica){
+t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t pid,uint32_t tamanio_a_leer, int direccion_fisica){
     t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
 
+    peticion->pid = pid;
     peticion->tamanio_a_leer = tamanio_a_leer;
     peticion->tipo_acceso = LECTURA;
     peticion->direccion_fisica = direccion_fisica;
@@ -76,9 +77,10 @@ t_peticion_acceso_usuario* crear_peticion_lectura(uint32_t tamanio_a_leer, int d
     return peticion;
 }
 
-t_peticion_acceso_usuario* crear_peticion_escritura_stdin(int direccion_fisica, int tamanio_a_leer){
+t_peticion_acceso_usuario* crear_peticion_escritura_stdin(uint32_t pid, int direccion_fisica, int tamanio_a_leer){
     t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
 
+    peticion->pid = pid;
     peticion->tamanio_a_leer = tamanio_a_leer;
     peticion->tipo_acceso = ESCRITURA;
     peticion->direccion_fisica = direccion_fisica;
@@ -87,9 +89,10 @@ t_peticion_acceso_usuario* crear_peticion_escritura_stdin(int direccion_fisica, 
     return peticion;
 }
 
-t_peticion_acceso_usuario* crear_peticion_escritura(int direccion_fisica, char* string){
+t_peticion_acceso_usuario* crear_peticion_escritura(uint32_t pid,int direccion_fisica, char* string){
     t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
 
+    peticion->pid = pid;
     peticion->tamanio_a_leer = string_length(string);
     peticion->tipo_acceso = ESCRITURA;
     peticion->direccion_fisica = direccion_fisica;
@@ -110,7 +113,7 @@ void destruir_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion){
 }
 
 t_buffer* serializar_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion){
-    int size = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int);
+    int size = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int);
 
     if(peticion->string != NULL){
         size += sizeof(uint32_t) + strlen(peticion->string) + 1;
@@ -118,6 +121,7 @@ t_buffer* serializar_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion
 
     t_buffer* buffer = buffer_create(size);
 
+    buffer_add_uint32(buffer, peticion->pid);
     buffer_add_uint32(buffer, peticion->tamanio_a_leer);
     buffer_add_uint32(buffer, peticion->tipo_acceso);
     buffer_add_int(buffer, peticion->direccion_fisica);
@@ -132,6 +136,7 @@ t_buffer* serializar_peticion_acceso_usuario(t_peticion_acceso_usuario* peticion
 t_peticion_acceso_usuario* deserializar_peticion_acceso_usuario(t_buffer* buffer){
     t_peticion_acceso_usuario* peticion = malloc(sizeof(t_peticion_acceso_usuario));
 
+    peticion->pid = buffer_read_uint32(buffer);
     peticion->tamanio_a_leer = buffer_read_uint32(buffer);
     peticion->tipo_acceso = buffer_read_uint32(buffer);
     peticion->direccion_fisica = buffer_read_int(buffer);

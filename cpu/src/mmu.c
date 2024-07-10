@@ -33,7 +33,7 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
     
     while(tamanio_total_lectura > 0){
         if(tamanio_disponible < tamanio_total_lectura){
-            t_peticion_acceso_usuario* peticion = crear_peticion_lectura(tamanio_disponible, direccion_fisica);
+            t_peticion_acceso_usuario* peticion = crear_peticion_lectura(pid,tamanio_disponible, direccion_fisica);
             list_add(peticiones, peticion);
             tamanio_total_lectura -= tamanio_disponible;
             direccion_logica += tamanio_disponible;
@@ -43,7 +43,7 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid, int direccion_logica,u
             direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
             //Calcular direccion logica siguiente
         } else {
-            t_peticion_acceso_usuario* peticion = crear_peticion_lectura(tamanio_total_lectura, direccion_fisica);
+            t_peticion_acceso_usuario* peticion = crear_peticion_lectura(pid,tamanio_total_lectura, direccion_fisica);
             list_add(peticiones, peticion);
             tamanio_total_lectura = 0;
         }        
@@ -75,7 +75,7 @@ t_list* obtener_direcciones_logicas_escritura_stdin(uint32_t pid, int direccion_
 
         char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
         int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
-        t_peticion_acceso_usuario* peticion = crear_peticion_escritura_stdin(direccion_fisica, tamanio_escritura);
+        t_peticion_acceso_usuario* peticion = crear_peticion_escritura_stdin(pid,direccion_fisica, tamanio_escritura);
 
         list_add(peticiones, peticion);
 
@@ -109,7 +109,7 @@ t_list* obtener_direcciones_logicas_escritura(uint32_t pid, int direccion_logica
 
         char* fragmento_valor = strndup(ptr_valor, tamanio_escritura);
         int direccion_fisica = obtener_direccion_fisica(pid, direccion_logica);
-        t_peticion_acceso_usuario* peticion = crear_peticion_escritura(direccion_fisica, fragmento_valor);
+        t_peticion_acceso_usuario* peticion = crear_peticion_escritura(pid,direccion_fisica, fragmento_valor);
 
         list_add(peticiones, peticion);
 
