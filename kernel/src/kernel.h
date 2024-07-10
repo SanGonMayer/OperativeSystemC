@@ -94,4 +94,6 @@ void procesar_io_fs_write(char* interfaz, char* nombre_archivo, int direccion, i
 
 void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, t_PCB* pcb, t_list* peticiones);
 
+void modificar_grado_multiprogramacion(int nuevo_grado);
+
 #endif

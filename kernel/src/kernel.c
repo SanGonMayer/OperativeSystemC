@@ -261,19 +261,17 @@ void finalizar_proceso(t_PCB* pcb){
 
     pcb->estado = EXIT;
     log_info(g_logger, "Proceso %d finalizado", pcb->PID);
-    
+
     agregar_a_cola_exit(pcb);
-    
+
     log_info(g_logger, "Finaliza el proceso %d - Motivo: %s", pcb->PID, "SUCCESS");
-    sem_post(&g_tope_multiprogramacion);
+    //sem_post(&g_tope_multiprogramacion);
     if(g_post_a_saltear_multiprogramacion > 0){
         g_post_a_saltear_multiprogramacion--;
-        g_grado_multiprogramacion--;
+        //g_grado_multiprogramacion--;
     }else{
         sem_post(&g_tope_multiprogramacion);
     }
-
-
 }
 
 void atender_desalojo(t_desalojo* desalojo){
@@ -1109,15 +1107,17 @@ void procesar_io_fs_read(char* interfaz, char* nombre_archivo, int direccion, in
 void modificar_grado_multiprogramacion(int nuevo_grado){
 
     if(g_grado_multiprogramacion > nuevo_grado){
-
+        //Bajar grado, no hacer los post
         g_post_a_saltear_multiprogramacion = g_grado_multiprogramacion - nuevo_grado;
-    }
-    
-    if(g_grado_multiprogramacion < nuevo_grado){
-
+    } else if(g_grado_multiprogramacion < nuevo_grado){
+        //Subir grado
         int diferencia = nuevo_grado - g_grado_multiprogramacion;
         for(int i = 0; i < diferencia; i++){
             sem_post(&g_tope_multiprogramacion);
         }
+    } else {
+        log_info(g_logger, "El grado de multiprogramacion ya es el deseado");
+        return;
     }
+    g_grado_multiprogramacion = nuevo_grado;
 }

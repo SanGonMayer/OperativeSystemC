@@ -90,7 +90,19 @@ void ejecutar_script(char** comandos){
     }
 }
 
+void detener_planificacion(){
+    sem_wait(&g_notif_corto_plazo);
+    sem_wait(&g_notif_largo_plazo);
+    g_planificacion_pausada = 1;
+}
 
+void iniciar_planificacion(){
+    g_planificacion_pausada = 0;
+    sem_post(&g_notif_corto_plazo);
+    sem_post(&g_notif_corto_plazo);
+    sem_post(&g_notif_largo_plazo);
+    sem_post(&g_notif_largo_plazo);
+}
 
 void ejecutar_comando(t_funciones_consola comando, char** args){
     switch (comando) {
@@ -138,25 +150,27 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
 
         case DETENER_PLANIFICACION:
             printf("Opción Detener planificacion\n");
-            
-            sem_wait(&g_notif_corto_plazo);
-            sem_wait(&g_notif_largo_plazo);
-            g_planificacion_pausada = 1;
+
+            detener_planificacion();
+
             break;
-        
+
         case INICIAR_PLANIFIACION:
             printf("Iniciando planificacion\n");
 
-            g_planificacion_pausada = 0;
-            sem_post(&g_notif_corto_plazo);
-            sem_post(&g_notif_corto_plazo);
-            sem_post(&g_notif_largo_plazo);
-            sem_post(&g_notif_largo_plazo);
-            
+            iniciar_planificacion();
+
             break;
-        
+
         case MULTIPROGRAMACION:
-            printf("Opción no válida\n");
+
+            detener_planificacion();
+
+            int grado_nuevo = (int)atoi(args[1]);
+            modificar_grado_multiprogramacion(grado_nuevo);
+
+            iniciar_planificacion();
+
             break;
         
         case PROCESO_ESTADO:
