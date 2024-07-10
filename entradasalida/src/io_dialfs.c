@@ -1,4 +1,8 @@
 #include "io_dialfs.h"
+#include <commons/collections/list.h>
+#include <commons/log.h>
+#include <commons/string.h>
+#include <dirent.h>
 
 static int blocks_fd;
 static int bitmap_fd;
@@ -12,26 +16,26 @@ void get_comandos(){
 
     comandos = dictionary_create();
 
-    dictionary_put(comandos, "IO_FS_CREATE", IO_DIALFS_CREATE);
-    dictionary_put(comandos, "IO_FS_DELETE", IO_DIALFS_DELETE);
-    dictionary_put(comandos, "IO_FS_TRUNCATE", IO_DIALFS_TRUNCATE);
-    dictionary_put(comandos, "IO_FS_WRITE", IO_DIALFS_WRITE);
-    dictionary_put(comandos, "IO_FS_READ", IO_DIALFS_READ);
+    dictionary_put(comandos, "IO_FS_CREATE", (void*)IO_DIALFS_CREATE);
+    dictionary_put(comandos, "IO_FS_DELETE", (void*)IO_DIALFS_DELETE);
+    dictionary_put(comandos, "IO_FS_TRUNCATE", (void*)IO_DIALFS_TRUNCATE);
+    dictionary_put(comandos, "IO_FS_WRITE", (void*)IO_DIALFS_WRITE);
+    dictionary_put(comandos, "IO_FS_READ", (void*)IO_DIALFS_READ);
 
 }
 
 void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion){
     switch (operacion) {
         case IO_DIALFS_CREATE:
-            io_fs_create(instruccion->nombre_archivo);
+            io_fs_create(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_DELETE:
-            io_fs_delete(instruccion->nombre_archivo);
+            io_fs_delete(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_TRUNCATE:
-            io_fs_truncate(instruccion->nombre_archivo, instruccion->tamanio);
+            io_fs_truncate(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_WRITE:
@@ -52,6 +56,7 @@ void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
 
     if(dictionary_has_key(comandos, instruccion->instruccion)){
         t_operacion_dialfs operacion = (t_operacion_dialfs) dictionary_get(comandos, instruccion->instruccion);
+        log_info(g_logger, "PID: %d - Operacion: %s", instruccion->pid, instruccion->instruccion);
         ejecutar_instruccion(fd, operacion, instruccion);
     }else{
         log_error(g_logger, "ingresaste una funcion no valida");
@@ -89,7 +94,7 @@ void initialize_fs() {
     // Inicializar bitmap
     char* bitmap_data = malloc(bitmap_size);
     if (bitmap_data == NULL) {
-        log_error(g_logger, "Error al asignar memoria para el bitmap");
+        log_info(g_logger, "Error al asignar memoria para el bitmap");
         close(blocks_fd);
         close(bitmap_fd);
         exit(EXIT_FAILURE);
@@ -182,7 +187,7 @@ t_bitarray* load_bitmap() {
 void save_bitmap(t_bitarray* bitmap) {
     FILE* bitmap_file = fopen("bitmap.dat", "wb");
     if (bitmap_file == NULL) {
-        perror("Error al abrir el archivo de bitmap");
+        log_error(g_logger,"Error al abrir el archivo de bitmap");
         return;
     }
     //Revisar
@@ -190,9 +195,14 @@ void save_bitmap(t_bitarray* bitmap) {
     fclose(bitmap_file);
 }
 
-void io_fs_create(char* filename) {
+void io_fs_create(t_instruccion_io *instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+
+    log_info(g_logger, "PID: %d - Crear archivo: %s",instruccion->pid ,filename);
+
     if (access(filename, F_OK) == 0) {
-        printf("El archivo ya existe\n");
+        log_info(g_logger,"El archivo ya existe\n");
         return;
     }
 
@@ -208,15 +218,19 @@ void io_fs_create(char* filename) {
     save_bitmap(bitmap);
 
     if (initial_block == -1) {
-        printf("No hay bloques disponibles\n");
+        log_info(g_logger,"No hay bloques disponibles\n");
         return;
     }
 
-    log_info(g_logger, "Creando archivo %s en el bloque %d", filename, initial_block);
     save_metadata(filename, initial_block, 0);
 }
 
-void io_fs_delete(char* filename) {
+void io_fs_delete(t_instruccion_io* instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+
+    log_info(g_logger, "PID: %d - Eliminar archivo: %s",instruccion->pid ,filename);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
@@ -231,48 +245,140 @@ void io_fs_delete(char* filename) {
         bitarray_clean_bit(bitmap, initial_block + i);
     }
 
-    char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", g_config_io->path_base_dialfs, filename);
+    char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
     remove(metadata_path);
     config_destroy(metadata);
+    free(metadata_path);
 }
 
-void compactar_fs() {
-    log_info(g_logger, "Iniciando compactación del sistema de archivos");
+t_list* get_fcb_list() {
+    t_list* fcb_list = list_create();
+    DIR* dir = opendir(g_config_io->path_base_dialfs);
+    struct dirent* entry;
 
-    int block_size = g_config_io->block_size;
-    int block_count = g_config_io->block_count;
-    int free_block_index = -1;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) {
 
-    for (int i = 0; i < block_count; i++) {
-        if (!bitarray_test_bit(bitmap, i)) {
-            if (free_block_index == -1) {
-                free_block_index = i;
+            if(string_contains(entry->d_name, ".txt")){
+                t_config* metadata = load_metadata(entry->d_name);
+                t_fcb* fcb = malloc(sizeof(t_fcb));
+                fcb->path = string_duplicate(entry->d_name);
+                fcb->metadata = metadata;
+                list_add(fcb_list,  fcb);
             }
-        } else if (free_block_index != -1) {
-            // Mover bloque ocupado al bloque libre
-            void* data = malloc(block_size);
-            lseek(blocks_fd, i * block_size, SEEK_SET);
-            read(blocks_fd, data, block_size);
-
-            lseek(blocks_fd, free_block_index * block_size, SEEK_SET);
-            write(blocks_fd, data, block_size);
-
-            // Actualizar el bitmap
-            bitarray_clean_bit(bitmap, i);
-            bitarray_set_bit(bitmap, free_block_index);
-
-            free(data);
-            free_block_index++;
         }
     }
 
-    save_bitmap(bitmap);
-    usleep(g_config_io->retraso_compactacion * 1000);
-    log_info(g_logger, "Compactación del sistema de archivos completada");
+    closedir(dir);
+    return fcb_list;
 }
 
-void io_fs_truncate(char* filename, int new_size) {
+void compactar_fs() {
+
+    t_list* fcbs = get_fcb_list();
+
+    int tamanio_bloques_usados = 0;
+    int bloques_libres = 0;
+    int bloques_usados = 0;
+
+    for (int i = 0; i < g_config_io->block_count; i++) {
+        if (bitarray_test_bit(bitmap, i)) {
+            bloques_usados++;
+            tamanio_bloques_usados += g_config_io->block_size;
+        } else {
+            bloques_libres++;
+        }
+    }
+
+    void* buffer = malloc(tamanio_bloques_usados);
+    int offset = 0;
+
+    t_list_iterator* it = list_iterator_create(fcbs);
+    while(list_iterator_has_next(it)){
+        t_fcb* fcb = list_iterator_next(it);
+        int initial_block = config_get_int_value(fcb->metadata, "BLOQUE_INICIAL");
+        int file_size = config_get_int_value(fcb->metadata, "TAMANIO_ARCHIVO");
+        int blocks_to_read = (file_size + g_config_io->block_size - 1) / g_config_io->block_size;
+
+        int new_initial_block = offset / g_config_io->block_size;
+
+        for (int i = 0; i < blocks_to_read; i++) {
+            lseek(blocks_fd, (initial_block + i) * g_config_io->block_size, SEEK_SET);
+            read(blocks_fd, buffer + offset, g_config_io->block_size);
+            offset += g_config_io->block_size;
+        }
+
+        save_metadata(fcb->path, new_initial_block, file_size);
+    }
+
+    list_iterator_destroy(it);
+
+    for (int i = 0; i < bloques_usados; i++) {
+        lseek(blocks_fd, i * g_config_io->block_size, SEEK_SET);
+        write(blocks_fd, buffer + i * g_config_io->block_size, g_config_io->block_size);
+        bitarray_set_bit(bitmap, i);
+    }
+
+    free(buffer);
+
+    for (int i = bloques_usados; i < g_config_io->block_count; i++) {
+        bitarray_clean_bit(bitmap, i);
+    }
+
+
+
+    save_bitmap(bitmap);
+    usleep(g_config_io->retraso_compactacion * 1000);
+}
+
+bool bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(int bloque_inicial, int cantidad_bloques_actual, int bloques_necesarios){
+    int bloque_final = bloque_inicial + cantidad_bloques_actual;
+    int bloques_delta = bloques_necesarios - cantidad_bloques_actual;
+
+    for(int i = bloque_final; i < bloque_final + bloques_delta; i++){
+        if(bitarray_test_bit(bitmap, i)){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool buscar_bloques_libres_contiguos(t_bitarray* bitmap, int block_count, int required_blocks, int* start_block) {
+    int free_blocks = 0;
+    *start_block = -1;
+
+    for (int i = 0; i < block_count; i++) {
+        if (!bitarray_test_bit(bitmap, i)) {
+            if (*start_block == -1) {
+                *start_block = i;
+            }
+            free_blocks++;
+            if (free_blocks >= required_blocks) {
+                return true; // Suficientes bloques libres encontrados
+            }
+        } else {
+            *start_block = -1;
+            free_blocks = 0;
+        }
+    }
+
+    return false; // No se encontraron suficientes bloques libres
+}
+
+void liberar_bloques(int initial_block, int block_count) {
+    for (int i = initial_block; i < initial_block + block_count; i++) {
+        bitarray_clean_bit(bitmap, i);
+    }
+}
+
+void io_fs_truncate(t_instruccion_io *instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+    int new_size = instruccion->tamanio;
+
+    log_info(g_logger, "PID: %d - Truncar archivo: %s - Tamaño: %d",instruccion->pid ,filename, instruccion->tamanio);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
@@ -282,69 +388,77 @@ void io_fs_truncate(char* filename, int new_size) {
     int initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
     int old_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
     int block_size = g_config_io->block_size;
+
     int old_blocks = (old_size + block_size - 1) / block_size;
+    old_blocks = old_size == 0 ? 1 : old_blocks;
+
     int new_blocks = (new_size + block_size - 1) / block_size;
 
     if (new_blocks > old_blocks) {
-        int free_blocks = 0;
         int start_block = -1;
 
-        for (int i = 0; i < g_config_io->block_count; i++) {
-            if (!bitarray_test_bit(bitmap, i)) {
-                if (start_block == -1) {
-                    start_block = i;
+        if(
+            !bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(initial_block, old_blocks, new_blocks)
+        ){
+            if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
+                
+                log_info(g_logger,"PID: %d - Inicio compactación.",instruccion->pid);
+                compactar_fs();
+                log_info(g_logger,"PID: %d - Fin compactación.",instruccion->pid);
+                metadata = load_metadata(filename);
+                if (metadata == NULL) {
+                    printf("El archivo no existe\n");
+                    return;
                 }
-                free_blocks++;
-                if (free_blocks >= (new_blocks - old_blocks)) {
-                    break;
+
+                initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
+
+                if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
+                    log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
+                    return;
                 }
-            } else {
-                start_block = -1;
-                free_blocks = 0;
             }
+
+            liberar_bloques(initial_block, old_blocks);
+
+            // Mover bloques viejos usados a bloques nuevos
+            // deja persistidos los bloques en el archivo
+
+            void* data = malloc(block_size);
+            for (int i = 0; i < old_blocks; i++) {
+                lseek(blocks_fd, (initial_block + i) * block_size, SEEK_SET);
+                read(blocks_fd, data, block_size);
+
+                lseek(blocks_fd, (start_block + i) * block_size, SEEK_SET);
+                write(blocks_fd, data, block_size);
+            }
+            free(data);
+
+
+        }else{
+            start_block = initial_block;
         }
 
-        if (free_blocks < (new_blocks - old_blocks)) {
-            compactar_fs();
-            
-            free_blocks = 0;
-            start_block = -1;
-            for (int i = 0; i < g_config_io->block_count; i++) {
-                if (!bitarray_test_bit(bitmap, i)) {
-                    if (start_block == -1) {
-                        start_block = i;
-                    }
-                    free_blocks++;
-                    if (free_blocks >= (new_blocks - old_blocks)) {
-                        break;
-                    }
-                } else {
-                    start_block = -1;
-                    free_blocks = 0;
-                }
-            }
 
-            if (free_blocks < (new_blocks - old_blocks)) {
-                log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
-                return;
-            }
-        }
-
-        for (int i = start_block; i < start_block + (new_blocks - old_blocks); i++) {
+        for (int i = start_block; i < start_block + (new_blocks); i++) {
             bitarray_set_bit(bitmap, i);
         }
 
         save_bitmap(bitmap);
+        initial_block = start_block;
     } else if (new_blocks < old_blocks) {
         for (int i = initial_block + new_blocks; i < initial_block + old_blocks; i++) {
             bitarray_clean_bit(bitmap, i);
         }
         save_bitmap(bitmap);
     }
+
     log_info(g_logger, "Truncando archivo %s de %d a %d bytes", filename, old_size, new_size);
     save_metadata(filename, initial_block, new_size);
+
     config_destroy(metadata);
 }
+
 
 void io_fs_write(t_instruccion_io* instruccion) {
     
@@ -353,9 +467,9 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int offset = instruccion->puntero_archivo;
     char* data = string_new();
 
+    log_info(g_logger, "PID: %d - Escribir archivo: %s - Tamaño a escribir: %d - Puntero archivo: %d",instruccion->pid ,filename, size, offset);
+
     data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria, g_logger);
-    
-    log_info(g_logger, "String leido en memoria: %s", data);
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -367,8 +481,11 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
 
     int end_offset = offset + size;
+    //ver de borrarlo o dejarlo
     if (end_offset > file_size) {
-        io_fs_truncate(filename, end_offset);
+        instruccion->tamanio = end_offset;
+        io_fs_truncate(instruccion);
+        instruccion->tamanio = size;
         config_destroy(metadata);
         metadata = load_metadata(filename);
         initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
@@ -399,7 +516,9 @@ void io_fs_read(t_instruccion_io* instruccion) {
     char* filename = instruccion->nombre_archivo;
     int size = instruccion->tamanio;
     int offset = instruccion->puntero_archivo;  // Usar puntero_archivo como offset
-    char* data = malloc(size);
+    char* data = string_new();
+
+    log_info(g_logger, "PID: %d - Leer archivo: %s - Tamaño a leer: %d - Puntero archivo: %d",instruccion->pid ,filename, size, offset);
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -422,17 +541,21 @@ void io_fs_read(t_instruccion_io* instruccion) {
     int block_end = (offset + size - 1) / g_config_io->block_size;
     int block_offset = offset % g_config_io->block_size;
 
-    char* current_data = string_duplicate(data);
 
     for (int i = block_start; i <= block_end; i++) {
+
         int read_size = g_config_io->block_size - block_offset;
         if (i == block_end) {
             read_size = (offset + size) % g_config_io->block_size;
         }
 
         lseek(blocks_fd, (initial_block + i) * g_config_io->block_size + block_offset, SEEK_SET);
-        read(blocks_fd, current_data, read_size);
-        current_data += read_size;
+        char* buffer = malloc(read_size + 1);
+        read(blocks_fd, buffer, read_size);
+        buffer[read_size] = '\0';
+        string_append(&data, string_duplicate(buffer));
+
+        free(buffer);
         block_offset = 0;
     }
 
@@ -444,5 +567,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
     
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
     guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
+
+    free(data);
 
 }

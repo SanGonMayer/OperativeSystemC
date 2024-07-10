@@ -22,8 +22,12 @@ Sistemas Operativos 2c2023
 Pruebas FS
 ../entradasalida/io_dialfs.config
 ../entradasalida/io_stdin.config
+../entradasalida/io_stdout.config
 INICIAR_PROCESO ../memoria/scripts_memoria/FS_1
 Fallout 1 Fallout 2 Fallout 3 Fallout: New Vegas Fallout 4 Fallout 76
+INICIAR_PROCESO ./scripts_memoria/FS_2
+
+INICIAR_PROCESO ./scripts_memoria/FS_3
 
 Iniciar los módulos.
 Ejecutar los siguientes comandos en la consola del Kernel

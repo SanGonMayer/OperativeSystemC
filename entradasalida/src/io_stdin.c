@@ -22,6 +22,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
         return;
     }
     
+    log_info(g_logger, "PID: %d - Operacion: %s", instruccion->pid, instruccion->instruccion);
+
     char* texto = stdin_leer_texto();
     
     if(string_length(texto)>instruccion->tamanio){

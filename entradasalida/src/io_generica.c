@@ -22,6 +22,8 @@ void procesar_instruccion_generica(int fd, t_instruccion_io* instruccion){
         return;
     }
 
+    log_info(g_logger, "PID: %d - Operacion: %s", instruccion->pid, instruccion->instruccion);
+
     int tiempo_sleep = instruccion->unidades_trabajo * g_config_io->tiempo_unidad_trabajo;
 
     log_info(g_logger, "Durmiendo %d ms", tiempo_sleep);
