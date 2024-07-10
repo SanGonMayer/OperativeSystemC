@@ -719,7 +719,7 @@ void planificador_VRR(){
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
-    log_info(g_logger, "Enviando interrupcion al CPU VRR %d", motivo);
+    log_info(g_logger, "Enviando interrupcion ");
     t_buffer* buffer = buffer_create(sizeof(uint32_t) + sizeof(uint32_t));
     buffer_add_uint32(buffer, *PID);
     buffer_add_uint32(buffer, motivo);
