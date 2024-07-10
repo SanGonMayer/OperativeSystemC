@@ -28,6 +28,11 @@ typedef enum {
     IO_DIALFS_READ = 4
 } t_operacion_dialfs;
 
+typedef struct {
+    char* path;
+    t_config* metadata;
+} t_fcb;
+
 void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion);
 void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion);
 void get_comandos();

@@ -1,6 +1,8 @@
 #include "io_dialfs.h"
+#include <commons/collections/list.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <dirent.h>
 
 static int blocks_fd;
 static int bitmap_fd;
@@ -239,40 +241,87 @@ void io_fs_delete(char* filename) {
     free(metadata_path);
 }
 
+t_list* get_fcb_list() {
+    t_list* fcb_list = list_create();
+    DIR* dir = opendir(g_config_io->path_base_dialfs);
+    struct dirent* entry;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) {
+
+            if(string_contains(entry->d_name, ".txt")){
+                t_config* metadata = load_metadata(entry->d_name);
+                t_fcb* fcb = malloc(sizeof(t_fcb));
+                fcb->path = string_duplicate(entry->d_name);
+                fcb->metadata = metadata;
+                list_add(fcb_list,  fcb);
+            }
+        }
+    }
+
+    closedir(dir);
+    return fcb_list;
+}
+
 void compactar_fs() {
     log_info(g_logger, "Iniciando compactación del sistema de archivos");
 
-    int block_size = g_config_io->block_size;
-    int block_count = g_config_io->block_count;
-    int free_block_index = -1;
+    t_list* fcbs = get_fcb_list();
 
-    for (int i = 0; i < block_count; i++) {
-        if (!bitarray_test_bit(bitmap, i)) {
-            if (free_block_index == -1) {
-                free_block_index = i;
-            }
-        } else if (free_block_index != -1) {
-            // Mover bloque ocupado al bloque libre
-            void* data = malloc(block_size);
-            lseek(blocks_fd, i * block_size, SEEK_SET);
-            read(blocks_fd, data, block_size);
+    int tamanio_bloques_usados = 0;
+    int bloques_libres = 0;
+    int bloques_usados = 0;
 
-            lseek(blocks_fd, free_block_index * block_size, SEEK_SET);
-            write(blocks_fd, data, block_size);
-
-            // Actualizar el bitmap
-            bitarray_clean_bit(bitmap, i);
-            bitarray_set_bit(bitmap, free_block_index);
-
-            free(data);
-            free_block_index++;
+    for (int i = 0; i < g_config_io->block_count; i++) {
+        if (bitarray_test_bit(bitmap, i)) {
+            bloques_usados++;
+            tamanio_bloques_usados += g_config_io->block_size;
+        } else {
+            bloques_libres++;
         }
     }
+
+    void* buffer = malloc(tamanio_bloques_usados);
+    int offset = 0;
+
+    t_list_iterator* it = list_iterator_create(fcbs);
+    while(list_iterator_has_next(it)){
+        t_fcb* fcb = list_iterator_next(it);
+        int initial_block = config_get_int_value(fcb->metadata, "BLOQUE_INICIAL");
+        int file_size = config_get_int_value(fcb->metadata, "TAMANIO_ARCHIVO");
+        int blocks_to_read = (file_size + g_config_io->block_size - 1) / g_config_io->block_size;
+
+        int new_initial_block = offset / g_config_io->block_size;
+
+        for (int i = 0; i < blocks_to_read; i++) {
+            lseek(blocks_fd, (initial_block + i) * g_config_io->block_size, SEEK_SET);
+            read(blocks_fd, buffer + offset, g_config_io->block_size);
+            offset += g_config_io->block_size;
+        }
+
+        save_metadata(fcb->path, new_initial_block, file_size);
+    }
+
+    list_iterator_destroy(it);
+
+    for (int i = 0; i < bloques_usados; i++) {
+        lseek(blocks_fd, i * g_config_io->block_size, SEEK_SET);
+        write(blocks_fd, buffer + i * g_config_io->block_size, g_config_io->block_size);
+        bitarray_set_bit(bitmap, i);
+    }
+
+    free(buffer);
+
+    for (int i = bloques_usados; i < g_config_io->block_count; i++) {
+        bitarray_clean_bit(bitmap, i);
+    }
+
+
 
     save_bitmap(bitmap);
     usleep(g_config_io->retraso_compactacion * 1000);
     log_info(g_logger, "Compactación del sistema de archivos completada");
-} 
+}
 
 bool bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(int bloque_inicial, int cantidad_bloques_actual, int bloques_necesarios){
     int bloque_final = bloque_inicial + cantidad_bloques_actual;
