@@ -9,9 +9,9 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
     instruccion = pedir_instruccion(socket, pcb, logger, diccionario);
     
     //Sumar program counter
-    uint32_t valorPCanterior = (uint32_t)dictionary_get(diccionario, "PC");
-    log_info(logger, "PC: %s", string_itoa(valorPCanterior));
-    dictionary_put(diccionario, "PC", (void*) (valorPCanterior + 1));
+    uint32_t valorPCactual = (uint32_t)dictionary_get(diccionario, "PC");
+    log_info(logger, "PID: %d - FETCH - Program Counter : %d", pcb->PID , string_itoa(valorPCactual));
+    dictionary_put(diccionario, "PC", (void*) (valorPCactual + 1));
     return instruccion;
 }
 

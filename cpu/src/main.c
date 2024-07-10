@@ -101,21 +101,22 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int valor = atoi(instruccion_separada[2]);
             //etapa execute
             ejecutar_set(registro, valor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SET en el registro %s y queda con valor %d", registro, dictionary_get(diccionario,registro));
+
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 
         }else if(string_equals_ignore_case(instruccion_separada[0], "SUM")){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sum(registroDestino, registroValor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SUM quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 
         }else if(string_equals_ignore_case(instruccion_separada[0], "SUB")){
             char* registroDestino = instruccion_separada[1];
             char* registroValor = instruccion_separada[2];
             //etapa execute
             ejecutar_sub(registroDestino, registroValor, pcb, diccionario);
-            log_info(logger, "Se ejecuto SUB quedando el %s con valor %d", registroDestino,dictionary_get(diccionario,registroDestino));
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 
         }else if(string_equals_ignore_case(instruccion_separada[0], "JNZ")){
             char* registro = instruccion_separada[1];
@@ -123,7 +124,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             //etapa execute
             log_info(logger, "valor del PC antes de jnz %d", dictionary_get(diccionario,"PC"));
             ejecutar_jnz(registro, valorPC-1, pcb, diccionario);
-            log_info(logger, "Se ejecuto JNZ %s %d", registro, valorPC);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             log_info(logger, "PC queda con valor %d", dictionary_get(diccionario,"PC"));
         }else if(string_equals_ignore_case(instruccion_separada[0], "IO_GEN_SLEEP")){
             char* dispositivo = instruccion_separada[1];
@@ -131,7 +132,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             desalojar_pcb(socket_dispatch,pcb, (int)IO_GEN_SLEEP, logger, diccionario);
             t_buffer* buffer = ejecutar_io_gen_sleep(dispositivo, unidadesDeTrabajo);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_GEN_SLEEP %s %d", dispositivo, unidadesDeTrabajo);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "IO_STDIN_READ")){
             char* dispositivo = instruccion_separada[1];
@@ -146,7 +147,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_stdin_read(pcb->PID, dispositivo, direccion_logica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_STDIN_READ %s %s %s", dispositivo, registro_direccion, registro_tamanio);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 
             return;
         }
@@ -163,7 +164,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_stdout_write(pcb->PID, dispositivo, direccion_logica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
-            log_info(logger, "Se ejecuto IO_STDOUT_WRITE %s %s %s", dispositivo, registro_direccion, registro_tamanio);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
             buffer_destroy(buffer);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
@@ -174,6 +175,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             int direccion_logica = (int)dictionary_get(diccionario, registro_direccion);
             
             ejecutar_mov_in(pcb->PID,registro_datos, direccion_logica, diccionario);
+
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             
         } else if(string_equals_ignore_case(instruccion_separada[0], "MOV_OUT")){
             //(Registro Direccion, Registro Datos)
@@ -185,6 +188,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             ejecutar_mov_out(pcb->PID,direccion_logica, valor, diccionario);
 
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
+
         } else if(string_equals_ignore_case(instruccion_separada[0], "COPY_STRING")){
             //(Tamanio)
             int tamanio = atoi(instruccion_separada[1]);
@@ -194,7 +199,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         } else if(string_equals_ignore_case(instruccion_separada[0], "EXIT")){
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
-            log_info(logger, "Se ejecuto EXIT");
+            log_info(logger, "PID: %d - Ejecutando: %s", pcb->PID, instruccion_separada[0]);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "RESIZE")){
             
@@ -215,7 +220,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             bool ok = recibir_ok(g_socket_memoria);
 
-            log_info(logger, "Se ejecuto RESIZE %d", tamanio);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s", pcb->PID, instruccion_separada[0], instruccion_separada[1]);
             if(!ok){
                 t_codigo_error error = recibir_codigo_error(g_socket_memoria);
                 if(error == ERROR_OUT_OF_MEMORY){
@@ -227,6 +232,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         }else if(string_equals_ignore_case(instruccion_separada[0], "SIGNAL")){
             char* recurso = string_duplicate(instruccion_separada[1]);
             desalojar_pcb(socket_dispatch,pcb, (int)SIGNAL, logger, diccionario);
+
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s", pcb->PID, instruccion_separada[0], instruccion_separada[1]);
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
@@ -240,6 +247,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         else if(string_equals_ignore_case(instruccion_separada[0], "WAIT")){
             char* recurso = string_duplicate(instruccion_separada[1]);
             desalojar_pcb(socket_dispatch,pcb, (int)WAIT, logger, diccionario);
+
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s", pcb->PID, instruccion_separada[0], instruccion_separada[1]);
             
             //este buffer se le manda a kernel con el string del nombre del recurso pedido
             //el kerel solo lo recibe si se trata de un SIGNAL o un WAIT
@@ -256,7 +265,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_fs_create(interfaz, nombre_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
-            log_info(logger, "Se ejecutó IO_FS_CREATE %s %s", interfaz, nombre_archivo);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             buffer_destroy(buffer);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_DELETE")) {
@@ -267,7 +276,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_fs_delete(interfaz, nombre_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
-            log_info(logger, "Se ejecutó IO_FS_DELETE %s %s", interfaz, nombre_archivo);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             buffer_destroy(buffer);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_TRUNCATE")) {
@@ -281,7 +290,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_fs_truncate(interfaz, nombre_archivo, tamanio);
             enviar_buffer(socket_dispatch, buffer, logger);
-            log_info(logger, "Se ejecutó IO_FS_TRUNCATE %s %s %s", interfaz, nombre_archivo, registro_tamanio);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
             buffer_destroy(buffer);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_WRITE")) {
@@ -299,7 +308,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_fs_write(pcb->PID,interfaz, nombre_archivo, direccion_logica, tamanio, puntero_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
-            log_info(logger, "Se ejecutó IO_FS_WRITE %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
             buffer_destroy(buffer);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_READ")) {
@@ -317,7 +326,7 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
 
             t_buffer* buffer = ejecutar_io_fs_read(pcb->PID,interfaz, nombre_archivo, direccion, tamanio, puntero_archivo);
             enviar_buffer(socket_dispatch, buffer, logger);
-            log_info(logger, "Se ejecutó IO_FS_READ %s %s %s %s %s", interfaz, nombre_archivo, registro_direccion, registro_tamanio, registro_puntero_archivo);
+            log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
             buffer_destroy(buffer);
             return;
         }
