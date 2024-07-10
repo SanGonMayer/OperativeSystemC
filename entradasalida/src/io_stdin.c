@@ -34,7 +34,7 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
     
     actualizar_peticiones_con_valor(instruccion->peticionesMemoria, texto);
 
-    guardar_en_memoria(g_socket_memoria,texto, instruccion->peticionesMemoria, g_logger);
+    guardar_en_memoria(instruccion->pid,g_socket_memoria,texto, instruccion->peticionesMemoria, g_logger);
 
     responder_ok(fd);
 }

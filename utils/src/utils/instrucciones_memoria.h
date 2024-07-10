@@ -11,9 +11,9 @@
 #include <commons/collections/list.h>
 #include <commons/log.h>
 
-char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria, t_log* logger);
+char* leer_de_memoria(uint32_t pid,int socket_memoria, int tamanio, t_list* peticionesMemoria, t_log* logger);
 
-void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemoria, t_log* g_logger);
+void guardar_en_memoria(uint32_t pid,int socket_memoria, char* texto, t_list* peticionesMemoria, t_log* g_logger);
 
 void actualizar_peticiones_con_valor(t_list* peticionesMemoria, char* valor);
 

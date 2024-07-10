@@ -138,7 +138,7 @@ bool ajustar_tamanio_proceso(uint32_t pid, uint32_t nuevo_tamanio){
     return true;
 }
 
-void leer_de_memoria(uint32_t direccion_fisica, uint32_t tamanio, char* buffer){
+void leer_de_direccion_fisica(uint32_t direccion_fisica, uint32_t tamanio, char* buffer){
     void* direccion_fisica_real = memoria->espacio_contiguo + direccion_fisica;
     
     for (int i = 0; i < tamanio; i++) {
@@ -201,7 +201,7 @@ void procesar_acceso_espacio_usuario(int socket){
 
     if(peticion->tipo_acceso == LECTURA){
         char valor [peticion->tamanio_a_leer + 1];
-        leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
+        leer_de_direccion_fisica(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
         uint32_t tamanio_respuesta = peticion->tamanio_a_leer;
         log_info(g_logger, "PID: %d - Accion: LEER - Direccion fisica: %d - Tamano: %d ", peticion->pid ,peticion->direccion_fisica, peticion->tamanio_a_leer);
         t_buffer* respuesta = buffer_create(tamanio_respuesta + sizeof(uint32_t));

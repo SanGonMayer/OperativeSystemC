@@ -469,7 +469,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
 
     log_info(g_logger, "PID: %d - Escribir archivo: %s - Tamaño a escribir: %d - Puntero archivo: %d",instruccion->pid ,filename, size, offset);
 
-    data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria, g_logger);
+    data = leer_de_memoria(instruccion->pid,g_socket_memoria,size, instruccion->peticionesMemoria, g_logger);
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -566,7 +566,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
 
     
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
-    guardar_en_memoria(g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
+    guardar_en_memoria(instruccion->pid,g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
 
     free(data);
 

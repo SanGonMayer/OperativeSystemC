@@ -164,7 +164,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
         tamanio = sizeof(uint8_t);
     }
     t_list* peticiones = obtener_direcciones_logicas_lectura(pid, direccion_logica, tamanio);
-    char* mensaje = leer_de_memoria(g_socket_memoria, tamanio, peticiones, g_logger);
+    char* mensaje = leer_de_memoria(pid,g_socket_memoria, tamanio, peticiones, g_logger);
 
     uint32_t mensaje_diccionario;
 
@@ -188,7 +188,7 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
 
     t_list* peticiones = obtener_direcciones_logicas_escritura(pid, direccion_logica, valor_string);
 
-    guardar_en_memoria(g_socket_memoria, valor_string, peticiones, g_logger);
+    guardar_en_memoria(pid,g_socket_memoria, valor_string, peticiones, g_logger);
 
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
     return;
@@ -200,14 +200,14 @@ void ejecutar_copy_string(int tamanio, uint32_t pid, t_dictionary* diccionario){
 
     t_list* peticiones_lectura = obtener_direcciones_logicas_lectura(pid, direccion_logica_si, tamanio);
 
-    char* data = leer_de_memoria(g_socket_memoria, tamanio, peticiones_lectura, g_logger);
+    char* data = leer_de_memoria(pid,g_socket_memoria, tamanio, peticiones_lectura, g_logger);
 
     list_destroy_and_destroy_elements(peticiones_lectura, (void*)destruir_peticion_acceso_usuario);
 
     // Ahora escribir los datos en la dirección lógica DI
     t_list* peticiones_escritura = obtener_direcciones_logicas_escritura(pid, direccion_logica_di, data);
 
-    guardar_en_memoria(g_socket_memoria, data, peticiones_escritura, g_logger);
+    guardar_en_memoria(pid, g_socket_memoria, data, peticiones_escritura, g_logger);
 
     list_destroy_and_destroy_elements(peticiones_escritura, (void*)destruir_peticion_acceso_usuario);
 

@@ -1,7 +1,7 @@
 #include "instrucciones_memoria.h"
 
 
-void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemoria, t_log* g_logger) {
+void guardar_en_memoria(uint32_t pid,int socket_memoria, char* texto, t_list* peticionesMemoria, t_log* g_logger) {
 
     for(int i = 0; i < list_size(peticionesMemoria); i++){
         t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, i);
@@ -17,9 +17,14 @@ void guardar_en_memoria(int socket_memoria, char* texto, t_list* peticionesMemor
         eliminar_paquete(paquete);
     }
 
+    t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, 0);
+    int direccion_fisica = peticion->direccion_fisica;
+
+    log_info(g_logger, "PID %d - Acccion: ESCRIBIR - Direccion fisica: %d - Valor: %s", pid, direccion_fisica, texto);
+
 }
 
-char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria, t_log* logger) {
+char* leer_de_memoria(uint32_t pid,int socket_memoria, int tamanio, t_list* peticionesMemoria, t_log* logger) {
 
     char* mensaje = string_new();
     for(int i = 0; i < list_size(peticionesMemoria); i++){
@@ -40,6 +45,11 @@ char* leer_de_memoria(int socket_memoria, int tamanio, t_list* peticionesMemoria
     uint32_t length = string_length(mensaje);
 
     mensaje[length] = '\0';
+
+    t_peticion_acceso_usuario* peticion = list_get(peticionesMemoria, 0);
+    int direccion_fisica = peticion->direccion_fisica;
+
+    log_info(logger, "PID %d - Acccion: Leido - Direccion fisica: %d - Valor: %s", pid, direccion_fisica, mensaje);
 
     return mensaje;
 }
