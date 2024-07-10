@@ -127,7 +127,7 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
                 log_info(g_logger, "El PCB con pid %d no fue encontrado", pid);
             } else {
                 log_info(g_logger, "El PCB con pid %d fue encontrado con exito", pid);
-                
+                log_info(g_logger, "El estado del PCB es %d", pcb->estado);
                 if(pcb->estado == EXEC){
                     enviar_interrupcion(g_conexion_cpu_interrupt, &pid, (uint32_t)INTERRUPCION_KILL);
                 }else{
