@@ -719,7 +719,7 @@ void planificador_VRR(){
 }
 
 void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
-
+    log_info(g_logger, "Enviando interrupcion al CPU VRR %d", motivo);
     t_buffer* buffer = buffer_create(sizeof(uint32_t) + sizeof(uint32_t));
     buffer_add_uint32(buffer, *PID);
     buffer_add_uint32(buffer, motivo);
@@ -951,7 +951,6 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
     pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_new);
     sem_post(&g_mutex_cola_new);
 
-
     if(pcb == NULL){
         sem_wait(&g_mutex_cola_ready);
         pcb = buscar_y_eliminar_pid_en_cola(pid, g_cola_ready);
@@ -968,6 +967,12 @@ t_PCB* buscar_pid_en_sistema(uint32_t pid){
 
     if(pcb == NULL && g_exec != NULL && g_exec->PID == pid){
         pcb = g_exec;
+        
+        if(pcb != NULL){
+        log_info(g_logger, "PID ENCONTRANDO EN COLA EXEC");
+        log_info(g_logger, "PID: %d ESTADO: %d", pcb->PID, pcb->estado );
+        pcb->estado = EXEC;
+        }
     }
     
     if(pcb == NULL){
