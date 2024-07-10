@@ -154,6 +154,8 @@ int pedir_marco_a_memoria(uint32_t pid, int nro_pagina) {
     t_buffer* respuesta = recibir_buffer(g_socket_memoria);
     int nro_marco = buffer_read_int(respuesta);
 
+    log_info(g_logger, "PID: %d - OBTENER MARCO - Pagina: %d - Marco: %d", pid, nro_pagina, nro_marco);
+
     buffer_destroy(respuesta);
 
     return nro_marco;
