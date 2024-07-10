@@ -18,11 +18,11 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
         return;
     }
     
+    log_info(g_logger, "PID: %d - Operacion: %s", instruccion->pid, instruccion->instruccion);
+
     int tamanio = instruccion->tamanio;
     
     char* mensaje = leer_de_memoria(g_socket_memoria,tamanio, instruccion->peticionesMemoria, g_logger);
-    
-    log_info(g_logger, "Texto leido de memoria: %s", mensaje);
 
     responder_ok(fd);
 }

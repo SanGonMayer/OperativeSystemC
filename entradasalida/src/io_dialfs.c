@@ -187,7 +187,7 @@ t_bitarray* load_bitmap() {
 void save_bitmap(t_bitarray* bitmap) {
     FILE* bitmap_file = fopen("bitmap.dat", "wb");
     if (bitmap_file == NULL) {
-        perror("Error al abrir el archivo de bitmap");
+        log_error(g_logger,"Error al abrir el archivo de bitmap");
         return;
     }
     //Revisar
@@ -202,7 +202,7 @@ void io_fs_create(t_instruccion_io *instruccion) {
     log_info(g_logger, "PID: %d - Crear archivo: %s",instruccion->pid ,filename);
 
     if (access(filename, F_OK) == 0) {
-        printf("El archivo ya existe\n");
+        log_info(g_logger,"El archivo ya existe\n");
         return;
     }
 
