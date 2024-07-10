@@ -389,6 +389,14 @@ void io_fs_truncate(char* filename, int new_size) {
             if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
                 compactar_fs();
 
+                metadata = load_metadata(filename);
+                if (metadata == NULL) {
+                    printf("El archivo no existe\n");
+                    return;
+                }
+
+                initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
+
                 if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
                     log_info(g_logger,"No hay suficiente espacio libre después de la compactación\n");
                     return;
