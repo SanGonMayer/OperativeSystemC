@@ -10,6 +10,7 @@
 // registro puntero archivo
 
 t_instruccion_io* crear_instruccion_io(
+    int pid, 
     char* instruccion,
     int unidades_trabajo,
     int direccion,
@@ -19,6 +20,8 @@ t_instruccion_io* crear_instruccion_io(
     t_list* peticionesMemoria){
 
     t_instruccion_io* instruccion_io = malloc(sizeof(t_instruccion_io));
+
+    instruccion_io->pid = pid;
 
     instruccion_io->unidades_trabajo = unidades_trabajo;
 
@@ -71,6 +74,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     }
     t_buffer* buffer = buffer_create(
     sizeof(int) 
+    + sizeof(int) 
     + sizeof(uint32_t) 
     + strlen(instruccion_io->instruccion) + 1 
     + sizeof(int)
@@ -80,6 +84,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
     + sizeof(int)
     + sizeTotalLista
     );
+    buffer_add_int(buffer, instruccion_io->pid);
     buffer_add_int(buffer, instruccion_io->unidades_trabajo);
     buffer_add_string(buffer, strlen(instruccion_io->instruccion) + 1, instruccion_io->instruccion);
     buffer_add_int(buffer, instruccion_io->direccion);
@@ -93,6 +98,7 @@ t_buffer* serializar_instruccion_io(t_instruccion_io* instruccion_io){
 }
 
 t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
+    int pid = buffer_read_int(buffer);
     uint32_t unidades_trabajo = buffer_read_int(buffer);
     uint32_t length;
 
@@ -108,7 +114,7 @@ t_instruccion_io* deserializar_instruccion_io(t_buffer* buffer){
     buffer_read_lista(buffer, listaSize, peticionesMemoria);
 
     buffer_destroy(buffer);
-    t_instruccion_io* ins_io = crear_instruccion_io(instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo,peticionesMemoria);
+    t_instruccion_io* ins_io = crear_instruccion_io(pid,instruccion, unidades_trabajo, direccion, tamanio, nombre_archivo, puntero_archivo,peticionesMemoria);
 
     free(instruccion);
     free(nombre_archivo);

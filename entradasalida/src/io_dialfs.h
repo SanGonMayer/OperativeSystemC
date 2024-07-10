@@ -39,14 +39,14 @@ void get_comandos();
 //realizadas 
 void initialize_fs();
 void finalize_fs();
-void io_fs_create(char* filename);
-void io_fs_delete(char* filename);
+void io_fs_create(t_instruccion_io* instruccion);
+void io_fs_delete(t_instruccion_io* instruccion);
 t_config* load_metadata(const char* filename);
 void save_metadata(const char* filename, int initial_block, int file_size);
 t_bitarray* load_bitmap();
 void save_bitmap(t_bitarray* bitmap);
 void compactar_fs();
-void io_fs_truncate(char* filename, int new_size);
+void io_fs_truncate(t_instruccion_io* instruccion);
 void io_fs_write(t_instruccion_io* instruccion);
 void io_fs_read(t_instruccion_io* instruccion);
 

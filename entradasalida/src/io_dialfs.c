@@ -27,15 +27,15 @@ void get_comandos(){
 void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io* instruccion){
     switch (operacion) {
         case IO_DIALFS_CREATE:
-            io_fs_create(instruccion->nombre_archivo);
+            io_fs_create(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_DELETE:
-            io_fs_delete(instruccion->nombre_archivo);
+            io_fs_delete(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_TRUNCATE:
-            io_fs_truncate(instruccion->nombre_archivo, instruccion->tamanio);
+            io_fs_truncate(instruccion);
             responder_ok(fd);
             break;
         case IO_DIALFS_WRITE:
@@ -56,6 +56,7 @@ void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
 
     if(dictionary_has_key(comandos, instruccion->instruccion)){
         t_operacion_dialfs operacion = (t_operacion_dialfs) dictionary_get(comandos, instruccion->instruccion);
+        log_info(g_logger, "PID: %d - Operacion: %s", instruccion->pid, instruccion->instruccion);
         ejecutar_instruccion(fd, operacion, instruccion);
     }else{
         log_error(g_logger, "ingresaste una funcion no valida");
@@ -93,7 +94,7 @@ void initialize_fs() {
     // Inicializar bitmap
     char* bitmap_data = malloc(bitmap_size);
     if (bitmap_data == NULL) {
-        log_error(g_logger, "Error al asignar memoria para el bitmap");
+        log_info(g_logger, "Error al asignar memoria para el bitmap");
         close(blocks_fd);
         close(bitmap_fd);
         exit(EXIT_FAILURE);
@@ -194,7 +195,12 @@ void save_bitmap(t_bitarray* bitmap) {
     fclose(bitmap_file);
 }
 
-void io_fs_create(char* filename) {
+void io_fs_create(t_instruccion_io *instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+
+    log_info(g_logger, "PID: %d - Crear archivo: %s",instruccion->pid ,filename);
+
     if (access(filename, F_OK) == 0) {
         printf("El archivo ya existe\n");
         return;
@@ -212,15 +218,19 @@ void io_fs_create(char* filename) {
     save_bitmap(bitmap);
 
     if (initial_block == -1) {
-        printf("No hay bloques disponibles\n");
+        log_info(g_logger,"No hay bloques disponibles\n");
         return;
     }
 
-    log_info(g_logger, "Creando archivo %s en el bloque %d", filename, initial_block);
     save_metadata(filename, initial_block, 0);
 }
 
-void io_fs_delete(char* filename) {
+void io_fs_delete(t_instruccion_io* instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+
+    log_info(g_logger, "PID: %d - Eliminar archivo: %s",instruccion->pid ,filename);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
@@ -264,7 +274,6 @@ t_list* get_fcb_list() {
 }
 
 void compactar_fs() {
-    log_info(g_logger, "Iniciando compactación del sistema de archivos");
 
     t_list* fcbs = get_fcb_list();
 
@@ -320,7 +329,6 @@ void compactar_fs() {
 
     save_bitmap(bitmap);
     usleep(g_config_io->retraso_compactacion * 1000);
-    log_info(g_logger, "Compactación del sistema de archivos completada");
 }
 
 bool bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(int bloque_inicial, int cantidad_bloques_actual, int bloques_necesarios){
@@ -364,7 +372,13 @@ void liberar_bloques(int initial_block, int block_count) {
     }
 }
 
-void io_fs_truncate(char* filename, int new_size) {
+void io_fs_truncate(t_instruccion_io *instruccion) {
+
+    char* filename = instruccion->nombre_archivo;
+    int new_size = instruccion->tamanio;
+
+    log_info(g_logger, "PID: %d - Truncar archivo: %s - Tamaño: %d",instruccion->pid ,filename, instruccion->tamanio);
+
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
@@ -387,8 +401,10 @@ void io_fs_truncate(char* filename, int new_size) {
             !bloque_inicial_actual_puede_asignar_mas_de_forma_contigua(initial_block, old_blocks, new_blocks)
         ){
             if (!buscar_bloques_libres_contiguos(bitmap, g_config_io->block_count, new_blocks, &start_block)) {
+                
+                log_info(g_logger,"PID: %d - Inicio compactación.",instruccion->pid);
                 compactar_fs();
-
+                log_info(g_logger,"PID: %d - Fin compactación.",instruccion->pid);
                 metadata = load_metadata(filename);
                 if (metadata == NULL) {
                     printf("El archivo no existe\n");
@@ -451,9 +467,9 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int offset = instruccion->puntero_archivo;
     char* data = string_new();
 
+    log_info(g_logger, "PID: %d - Escribir archivo: %s - Tamaño a escribir: %d - Puntero archivo: %d",instruccion->pid ,filename, size, offset);
+
     data = leer_de_memoria(g_socket_memoria,size, instruccion->peticionesMemoria, g_logger);
-    
-    log_info(g_logger, "String leido en memoria: %s", data);
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -465,8 +481,11 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
 
     int end_offset = offset + size;
+    //ver de borrarlo o dejarlo
     if (end_offset > file_size) {
-        io_fs_truncate(filename, end_offset);
+        instruccion->tamanio = end_offset;
+        io_fs_truncate(instruccion);
+        instruccion->tamanio = size;
         config_destroy(metadata);
         metadata = load_metadata(filename);
         initial_block = config_get_int_value(metadata, "BLOQUE_INICIAL");
@@ -498,6 +517,8 @@ void io_fs_read(t_instruccion_io* instruccion) {
     int size = instruccion->tamanio;
     int offset = instruccion->puntero_archivo;  // Usar puntero_archivo como offset
     char* data = string_new();
+
+    log_info(g_logger, "PID: %d - Leer archivo: %s - Tamaño a leer: %d - Puntero archivo: %d",instruccion->pid ,filename, size, offset);
 
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
@@ -540,7 +561,6 @@ void io_fs_read(t_instruccion_io* instruccion) {
 
     config_destroy(metadata);
 
-    log_info(g_logger, "Leido de archivo %s: %s", filename, data);
     // Escribir en la memoria
     actualizar_peticiones_con_valor(instruccion->peticionesMemoria, data);
 

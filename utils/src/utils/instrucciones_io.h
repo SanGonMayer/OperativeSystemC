@@ -6,6 +6,7 @@
 #include <semaphore.h>
 
 typedef struct {
+    int pid;
     int unidades_trabajo;
     char* instruccion;
     int direccion;
@@ -34,6 +35,7 @@ typedef struct{
 } t_instruccion_stdin;
 
 t_instruccion_io* crear_instruccion_io(
+    int pid,
     char* instruccion,
     int unidades_trabajo,
     int direccion,
