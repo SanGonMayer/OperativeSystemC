@@ -201,6 +201,7 @@ void procesar_acceso_espacio_usuario(int socket){
         char valor [peticion->tamanio_a_leer + 1];
         leer_de_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, valor);
         uint32_t tamanio_respuesta = peticion->tamanio_a_leer;
+        log_info(g_logger, "Accion: %s - Direccion fisica: %d - Tamano: %d ", peticion->tipo_acceso, peticion->direccion_fisica, peticion->tamanio_a_leer);
         t_buffer* respuesta = buffer_create(tamanio_respuesta + sizeof(uint32_t));
         buffer_add_string(respuesta,tamanio_respuesta, valor);
         enviar_buffer(socket, respuesta, g_logger);
@@ -209,6 +210,7 @@ void procesar_acceso_espacio_usuario(int socket){
 
     if(peticion->tipo_acceso == ESCRITURA){
         escribir_en_memoria(peticion->direccion_fisica, peticion->tamanio_a_leer, peticion->string);
+        log_info(g_logger, "Accion: %s - Direccion fisica: %d - Tamano: %d ", peticion->tipo_acceso, peticion->direccion_fisica, peticion->tamanio_a_leer);
         responder_ok(socket);
     }
 
