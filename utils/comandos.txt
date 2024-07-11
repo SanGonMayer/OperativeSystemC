@@ -1,8 +1,18 @@
 paths config io
 ../entradasalida/io_stdin.config
 ../entradasalida/io_stdout.config
-../entradasalida/io_generica.config
+../entradasalida/generica.config
+../entradasalida/espera.config
+../entradasalida/slp1.config
 ../entradasalida/io_dialfs.config
+EJECUTAR_SCRIPT ./scripts_kernel/PRUEBA_SALVATIONS_EDGE
+
+MULTIPROGRAMACION 100
+
+FINALIZAR_PROCESO
+DETENER_PLANIFICACION
+PROCESO_ESTADO
+INICIAR_PLANIFICACION
 
 INICIAR_PROCESO ../memoria/scripts_memoria/instrucciones.dummy
 INICIAR_PROCESO ../memoria/scripts_memoria/io_b.dummy
@@ -46,7 +56,7 @@ Esperar a que finalicen 3 procesos.
 WAR, WAR NEVER CHANGES...
 
 Prueba salvation
-EJECUTAR_SCRIPT ./scripts_kernel/PRUEBA_SALVATIONS_EDGE
+
 INICIAR_PROCESO ../memoria/scripts_memoria/CIRCLE
 INICIAR_PROCESO ../memoria/scripts_memoria/CUBE
 INICIAR_PROCESO ../memoria/scripts_memoria/PIRAMID
@@ -54,9 +64,4 @@ INICIAR_PROCESO ../memoria/scripts_memoria/SPHERE
 INICIAR_PROCESO ../memoria/scripts_memoria/SQUARE
 INICIAR_PROCESO ../memoria/scripts_memoria/TRIANGLE
 
-MULTIPROGRAMACION 100
 
-FINALIZAR_PROCESO
-DETENER_PLANIFICACION
-PROCESO_ESTADO
-INICIAR_PLANIFICACION
