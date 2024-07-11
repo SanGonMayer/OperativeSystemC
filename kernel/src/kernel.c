@@ -112,12 +112,16 @@ void iniciar_proceso(char* path){
     list_add(g_lista_procesos_gral, pcb);
     sem_post(&g_mutex_lista_procesos_gral);
 
-    sem_wait(&g_tope_multiprogramacion);
-    preparar_proceso_a_ready();
+    //Esta linea bloquea la consola
+    //sem_wait(&g_tope_multiprogramacion);
+    pthread_t hilo_envios_a_ready;
+    pthread_create(&hilo_envios_a_ready, NULL, (void*)preparar_proceso_a_ready, NULL);
+    pthread_detach(hilo_envios_a_ready);
 }
 
-
 void preparar_proceso_a_ready(){
+    sem_wait(&g_tope_multiprogramacion);
+
     sem_wait(&g_mutex_cola_new);
     t_PCB* pcb = queue_pop(g_cola_new);
     sem_post(&g_mutex_cola_new);
