@@ -32,7 +32,7 @@ void tlb_destroy() {
 
 t_tlb* tlb_create(int capacidad) {
     t_tlb* new_tlb = malloc(sizeof(t_tlb));
-    new_tlb->entradas = malloc(sizeof(t_tlb_entry) * capacidad);
+    new_tlb->entradas = list_create();
     new_tlb->capacidad = capacidad;
     return new_tlb;
 }
