@@ -1,30 +1,19 @@
-# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo
-x-terminal-emulator -e "bash -c 'cd entradasalida && make && ./bin/entradasalida MONITOR ../entradasalida/io_stdout.config; exec bash'" &
+#!/bin/bash
 
-# Esperar unos segundos para dar tiempo a que se abra la cuarta terminal
+# Navegar a la carpeta 'memoria' y ejecutar el comando make memcheck en una terminal, luego abrir un bash interactivo
+x-terminal-emulator -e "bash -c 'cd memoria && make memcheck; exec bash'" &
+
+# Esperar unos segundos para dar tiempo a que se abra la primera terminal
 sleep 2
 
-# (Parece que hay un duplicado, eliminé la segunda repetición para la carpeta 'io')
-# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo
-x-terminal-emulator -e "bash -c 'cd entradasalida && make && ./bin/entradasalida TECLADO ../entradasalida/io_stdin.config; exec bash'" &
+# Navegar a la carpeta 'cpu' y ejecutar el comando make memcheck en una segunda terminal, luego abrir un bash interactivo
+x-terminal-emulator -e "bash -c 'cd cpu && make memcheck; exec bash'" &
 
-# Esperar unos segundos para dar tiempo a que se abra la cuarta terminal
+# Esperar unos segundos para dar tiempo a que se abra la segunda terminal
 sleep 2
 
-# (Parece que hay un duplicado, eliminé la segunda repetición para la carpeta 'io')
-# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo
-x-terminal-emulator -e "bash -c 'cd entradasalida && make && ./bin/entradasalida GENERICA ../entradasalida/generica.config; exec bash'" &
+# Navegar a la carpeta 'kernel' y ejecutar el comando make memcheck en una tercera terminal, luego abrir un bash interactivo
+x-terminal-emulator -e "bash -c 'cd kernel && make memcheck; exec bash'" &
 
-# Esperar unos segundos para dar tiempo a que se abra la cuarta terminal
-sleep 2
-
-# (Parece que hay un duplicado, eliminé la segunda repetición para la carpeta 'io')
-# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo
-x-terminal-emulator -e "bash -c 'cd entradasalida && make && ./bin/entradasalida SLP1 ../entradasalida/slp1.config; exec bash'" &
-
-# Esperar unos segundos para dar tiempo a que se abra la cuarta terminal
-sleep 2
-
-# (Parece que hay un duplicado, eliminé la segunda repetición para la carpeta 'io')
-# Navegar a la carpeta 'io' y ejecutar el comando make memcheck en una cuarta terminal, luego abrir un bash interactivo
-x-terminal-emulator -e "bash -c 'cd entradasalida && make && ./bin/entradasalida ESPERA ../entradasalida/espera.config; exec bash'" &
+# Esperar unos segundos para dar tiempo a que se abra la tercera terminal
+sleep 5
