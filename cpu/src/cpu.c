@@ -95,7 +95,7 @@ t_buffer* ejecutar_io_gen_sleep(char* dispositivo, int unidadesDeTrabajo){
 int sizeTotalDeLista(t_list *peticiones){
     int sizeLista = list_size(peticiones);
 
-    int size_por_peticion = sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(uint32_t);
+    int size_por_peticion = sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int) + sizeof(t_tipo_acceso) + sizeof(uint32_t);
 
     int sizeTotal =  sizeof(int) 
         + sizeLista * size_por_peticion;
