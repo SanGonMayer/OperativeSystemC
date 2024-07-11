@@ -13,6 +13,12 @@ TECLADO
 MONITOR
 GENERICA
 
+Pruebas Memoria 
+INICIAR_PROCESO ./scripts_memoria/MEMORIA_1
+INICIAR_PROCESO ./scripts_memoria/MEMORIA_2
+INICIAR_PROCESO ./scripts_memoria/MEMORIA_3
+
+
 EJECUTAR_SCRIPT ./scripts_kernel/PRUEBA_IO
 
 WAR NEVER CHANGES...
