@@ -10,7 +10,7 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
     
     //Sumar program counter
     uint32_t valorPCactual = (uint32_t)dictionary_get(diccionario, "PC");
-    log_info(logger, "PID: %d - FETCH - Program Counter : %d", pcb->PID , string_itoa(valorPCactual));
+    log_info(logger, "PID: %d - FETCH - Program Counter : %s", pcb->PID , string_itoa(valorPCactual));
     dictionary_put(diccionario, "PC", (void*) (valorPCactual + 1));
     return instruccion;
 }
