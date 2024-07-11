@@ -13,6 +13,7 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
     log_info(logger, "PID: %d - FETCH - Program Counter : %s", pcb->PID , string_itoa(valorPCactual));
     dictionary_put(diccionario, "PC", (void*) (valorPCactual + 1));
     return instruccion;
+
 }
 
 char* recibir_instruccion(int socket){

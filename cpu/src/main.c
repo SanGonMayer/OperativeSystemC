@@ -340,6 +340,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         }
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
     }
+    
+    free(instruccion);
 }
 
 void servidor_dispatch(int* socket_memoria){
