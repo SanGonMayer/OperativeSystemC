@@ -66,6 +66,11 @@ void tlb_replace_entry(t_tlb* tlb, int pid, int pagina, int marco) {
 }
 
 void tlb_add(int pid, int pagina, int marco) {
+    if (tlb->entradas == NULL){
+        log_error(g_logger, "TLB no inicializada");
+        return;
+    }
+    
     if (list_size(tlb->entradas) < tlb->capacidad) {
         t_tlb_entry* new_entry = malloc(sizeof(t_tlb_entry));
         new_entry->pid = pid;
@@ -79,6 +84,12 @@ void tlb_add(int pid, int pagina, int marco) {
 }
 
 bool tlb_get_marco(int pid, int pagina, int* marco) {
+    
+    if (tlb->entradas == NULL){
+        log_error(g_logger, "TLB no inicializada");
+        return false;
+    }
+
     for (int i = 0; i < list_size(tlb->entradas); ++i) {
         t_tlb_entry *entry = list_get(tlb->entradas, i);
         if (entry->pid == pid && entry->pagina == pagina) {
