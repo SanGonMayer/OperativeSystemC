@@ -662,7 +662,7 @@ void planificador_RR(){
         
         if(g_planificacion_pausada == 1){
         sem_wait(&g_notif_corto_plazo);
-    }
+        }
 
         sem_wait(&g_mutex_cola_signal);
         
@@ -690,7 +690,7 @@ void planificador_VRR(){
 
         if(g_planificacion_pausada == 1){
         sem_wait(&g_notif_corto_plazo);
-    }
+        }
 
         sem_wait(&g_mutex_cola_signal);
         
@@ -998,6 +998,8 @@ void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
         t_instruccion_io* instruccion_io = crear_instruccion_io(item->pcb->PID,"IO_FS_CREATE", 0, 0, 0, nombre_archivo, 0,NULL);
+        
+        item->instruccion = malloc(sizeof(t_instruccion_io));
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);

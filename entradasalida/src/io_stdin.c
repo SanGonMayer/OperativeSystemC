@@ -37,6 +37,8 @@ void procesar_instruccion_stdin(int fd, t_instruccion_io* instruccion) {
     guardar_en_memoria(instruccion->pid,g_socket_memoria,texto, instruccion->peticionesMemoria, g_logger);
 
     responder_ok(fd);
+
+    free(texto);
 }
 
 char* stdin_leer_texto() {

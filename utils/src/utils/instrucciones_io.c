@@ -153,5 +153,9 @@ void destruir_instruccion_io(t_instruccion_io* instruccion_io){
     if(instruccion_io->nombre_archivo != NULL){
         free(instruccion_io->nombre_archivo);
     }
+    if(instruccion_io->peticionesMemoria != NULL){
+        list_destroy_and_destroy_elements(instruccion_io->peticionesMemoria, (void*)destruir_peticion_acceso_usuario);
+    }
+
     free(instruccion_io);
 }
