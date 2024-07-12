@@ -70,4 +70,6 @@ void actualizar_pcb(t_PCB *pcb_viejo, const t_PCB *pcb_nuevo);
 
 t_PCB* recibir_pcb(int socket);
 
+void destroy_pcb(t_PCB* pcb);
+
 #endif

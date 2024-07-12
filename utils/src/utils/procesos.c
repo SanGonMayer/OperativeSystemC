@@ -113,3 +113,8 @@ t_PCB* deserializar_pcb(t_buffer* buffer){
 
     return pcb;
 }
+
+void destroy_pcb(t_PCB* pcb){
+    free(pcb->path);
+    free(pcb);
+}

@@ -510,6 +510,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
     }
 
     config_destroy(metadata);
+    free(data);
 }
 
 void io_fs_read(t_instruccion_io* instruccion) {
