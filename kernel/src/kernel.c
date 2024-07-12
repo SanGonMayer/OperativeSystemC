@@ -542,6 +542,14 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_CREATE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
+
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -554,6 +562,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_DELETE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -566,6 +581,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_TRUNCATE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -579,6 +601,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_WRITE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -597,6 +626,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_READ:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
