@@ -91,7 +91,7 @@ void procesar_cliente(int* fd){
         }
 
         buffer_destroy(buffer);
-        destruir_instruccion_io(instruccion->instruccion);
+        // destruir_instruccion_io(instruccion->instruccion);
         free(instruccion);
     }
 }
