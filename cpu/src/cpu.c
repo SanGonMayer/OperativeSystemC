@@ -351,7 +351,7 @@ int obtener_direccion_fisica(int pid, int direccion_logica){
         direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
 
         if(tlb_enabled())
-            tlb_add(pid, direccion_logica, direccion_fisica);
+            tlb_add(pid, pagina, direccion_fisica);
     }
 
     return direccion_fisica;
