@@ -20,4 +20,6 @@ t_buffer* serializar_paquete_instruccion(t_paquete_instruccion* pcb);
 
 t_paquete_instruccion* deserializar_paquete_instruccion(t_buffer* buffer);
 
+void destroy_paquete_instruccion(t_paquete_instruccion* instruccion);
+
 #endif /* INSTRUCCIONES_H_ */      

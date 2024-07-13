@@ -27,3 +27,6 @@ t_paquete_instruccion* deserializar_paquete_instruccion(t_buffer* buffer){
     return instruccion;
 }
 
+void destroy_paquete_instruccion(t_paquete_instruccion* instruccion){
+    free(instruccion);
+}

@@ -1,4 +1,6 @@
 #include "cpu.h"
+#include "utils/peticiones_memoria.h"
+#include <commons/collections/list.h>
 #include <commons/log.h>
 #include <stdint.h>
 
@@ -10,7 +12,8 @@ char* etapa_fetch(int socket, t_PCB* pcb, t_log* logger, t_dictionary* diccionar
     
     //Sumar program counter
     uint32_t valorPCactual = (uint32_t)dictionary_get(diccionario, "PC");
-    log_info(logger, "PID: %d - FETCH - Program Counter : %s", pcb->PID , string_itoa(valorPCactual));
+
+    log_info(logger, "PID: %d - FETCH - Program Counter : %d", pcb->PID , valorPCactual);
     dictionary_put(diccionario, "PC", (void*) (valorPCactual + 1));
     return instruccion;
 
@@ -34,6 +37,8 @@ t_interrupcion_dispatch* recibir_interrupcion(int socket){
     interrupcion->pid = buffer_read_uint32(buffer);
     interrupcion->motivo = buffer_read_uint32(buffer);
 
+    buffer_destroy(buffer);
+
     return interrupcion;
 }
 
@@ -50,6 +55,7 @@ char* pedir_instruccion(int socket, t_PCB* pcb, t_log* logger, t_dictionary* dic
     }
 
     eliminar_paquete(paquete);
+    destroy_paquete_instruccion(paquete_instruccion);
 
     return recibir_instruccion(socket);
 }
@@ -154,6 +160,7 @@ uint32_t length = strlen(dispositivo) + 1;
 
     buffer_add_string(buffer, length, dispositivo);
 
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
     return buffer;
 }
 
@@ -176,7 +183,7 @@ void ejecutar_mov_in(uint32_t pid,char* registro_datos, int direccion_logica, t_
     dictionary_put(diccionario, registro_datos, (void*)mensaje_diccionario);
     
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
-
+    free(mensaje);
     return;
 }
 
@@ -192,6 +199,7 @@ void ejecutar_mov_out(uint32_t pid, int direccion_logica, uint32_t valor, t_dict
     guardar_en_memoria(pid,g_socket_memoria, valor_string, peticiones, g_logger);
 
     list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
+    free(valor_string);
     return;
 }   
 
@@ -263,7 +271,7 @@ t_buffer* ejecutar_io_fs_write(uint32_t pid, char* interfaz, char* nombre_archiv
     buffer_add_int(buffer, registro_tamanio);
     buffer_add_int(buffer, registro_puntero_archivo);
     buffer_add_lista(buffer, sizeLista, peticiones);
-
+    list_destroy_and_destroy_elements(peticiones, (void*)destruir_peticion_acceso_usuario);
     return buffer;
 }
 

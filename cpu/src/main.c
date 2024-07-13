@@ -87,6 +87,15 @@ t_interrupcion_dispatch* check_interrupt(t_PCB* pcb, t_log* logger){
     return NULL;
 }
 
+void liberar_lista_char(char** lista){
+    int i = 0;
+    while(lista[i] != NULL){
+        free(lista[i]);
+        i++;
+    }
+    free(lista);
+}
+
 void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_log* logger, t_dictionary* diccionario){
     char* instruccion;
     log_info(logger, "Se inicia el ciclo de ejecucion");
@@ -133,6 +142,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             t_buffer* buffer = ejecutar_io_gen_sleep(dispositivo, unidadesDeTrabajo);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "IO_STDIN_READ")){
             char* dispositivo = instruccion_separada[1];
@@ -148,7 +159,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             t_buffer* buffer = ejecutar_io_stdin_read(pcb->PID, dispositivo, direccion_logica, tamanio);
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
-
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }
         else if(string_equals_ignore_case(instruccion_separada[0], "IO_STDOUT_WRITE")){
@@ -166,6 +178,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch,buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "MOV_IN")){
             //(Registro Datos, Registro Dirección)
@@ -200,6 +214,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             // desalojar_pcb(socket_dispatch,pcb, (int)FINALIZACION, logger, diccionario);
             desalojar_pcb(socket_dispatch,pcb, FINALIZACION, logger, diccionario);
             log_info(logger, "PID: %d - Ejecutando: %s", pcb->PID, instruccion_separada[0]);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }else if(string_equals_ignore_case(instruccion_separada[0], "RESIZE")){
             
@@ -227,6 +243,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
                     log_error(logger, "Error al hacer el resize, no hay memoria suficiente");
                     desalojar_pcb(socket_dispatch, pcb, (int)ERROR_OUT_OF_MEMORY, logger, diccionario);
                 }
+                free(instruccion);
+                liberar_lista_char(instruccion_separada);
                 return;
             }
         }else if(string_equals_ignore_case(instruccion_separada[0], "SIGNAL")){
@@ -241,7 +259,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
-
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }
         else if(string_equals_ignore_case(instruccion_separada[0], "WAIT")){
@@ -256,6 +275,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             buffer_add_string(buffer, string_length(recurso), recurso);
 
             enviar_buffer(socket_dispatch, buffer, logger);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_CREATE")) {
             char* interfaz = instruccion_separada[1];
@@ -267,6 +288,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_DELETE")) {
             char* interfaz = instruccion_separada[1];
@@ -278,6 +301,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_TRUNCATE")) {
             char* interfaz = instruccion_separada[1];
@@ -292,6 +317,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_WRITE")) {
             char* interfaz = instruccion_separada[1];
@@ -310,6 +337,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         } else if (string_equals_ignore_case(instruccion_separada[0], "IO_FS_READ")) {
             char* interfaz = instruccion_separada[1];
@@ -328,6 +357,8 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
             enviar_buffer(socket_dispatch, buffer, logger);
             log_info(logger, "PID: %d - Ejecutando: %s - Parametros: %s %s %s %s %s", pcb->PID, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
             buffer_destroy(buffer);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
             return;
         }
 
@@ -336,8 +367,14 @@ void ciclo_de_ejecucion(int socket_memoria,int socket_dispatch, t_PCB* pcb, t_lo
         if(interrupcion != NULL){
             log_info(g_logger, "Se detecto una interrupcion");
             desalojar_pcb(socket_dispatch, pcb, (int)interrupcion->motivo, logger, diccionario);
+            free(instruccion);
+            liberar_lista_char(instruccion_separada);
+            free(interrupcion);
             return;
         }
+
+        liberar_lista_char(instruccion_separada);
+        free(instruccion);
         instruccion = etapa_fetch(socket_memoria, pcb, logger, diccionario);
     }
     
@@ -368,6 +405,7 @@ void servidor_dispatch(int* socket_memoria){
                 ciclo_de_ejecucion(*socket_memoria,cliente_dispatch_fd, pcb, g_logger, diccionario);
                 
                 dictionary_destroy(diccionario);
+                destroy_pcb(pcb);
             break;
             
             default:

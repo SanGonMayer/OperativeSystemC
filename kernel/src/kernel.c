@@ -542,6 +542,14 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_CREATE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
+
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -554,6 +562,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_DELETE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -566,6 +581,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_TRUNCATE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -579,6 +601,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_WRITE:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -597,6 +626,13 @@ void atender_desalojo(t_desalojo* desalojo){
         }
         case IO_FS_READ:
         {
+            if(string_equals_ignore_case(algoritmo_planificacion, "VRR")){
+                if(g_ms_transcurridos < desalojo->pcb->quantum){
+                sem_wait(&g_tiempo_calculado);
+                desalojo->pcb->quantum -= g_ms_transcurridos;
+                desalojo->pcb->readyplus = 1;       
+                }
+            }
             t_buffer* buffer = recibir_buffer(g_conexion_cpu_dispatch);
             uint32_t *length = malloc(sizeof(uint32_t));
             char* interfaz = buffer_read_string(buffer, length);
@@ -662,7 +698,7 @@ void planificador_RR(){
         
         if(g_planificacion_pausada == 1){
         sem_wait(&g_notif_corto_plazo);
-    }
+        }
 
         sem_wait(&g_mutex_cola_signal);
         
@@ -690,7 +726,7 @@ void planificador_VRR(){
 
         if(g_planificacion_pausada == 1){
         sem_wait(&g_notif_corto_plazo);
-    }
+        }
 
         sem_wait(&g_mutex_cola_signal);
         
@@ -998,6 +1034,8 @@ void procesar_io_fs_create(char* interfaz, char* nombre_archivo, t_PCB* pcb) {
         t_parametro_cola_interfaz* item = malloc(sizeof(t_parametro_cola_interfaz));
         item->pcb = pcb;
         t_instruccion_io* instruccion_io = crear_instruccion_io(item->pcb->PID,"IO_FS_CREATE", 0, 0, 0, nombre_archivo, 0,NULL);
+        
+        item->instruccion = malloc(sizeof(t_instruccion_io));
         item->instruccion = instruccion_io;
 
         sem_wait(&interfaz_conectada->mutex);

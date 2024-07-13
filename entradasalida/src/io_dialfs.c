@@ -65,6 +65,12 @@ void procesar_instruccion_dialfs(int fd, t_instruccion_io* instruccion) {
 }
 
 void initialize_fs() {
+
+    if (mkdir(g_config_io->path_base_dialfs, 0755) == -1 && errno != EEXIST) {
+        log_error(g_logger, "Error al crear el directorio base: %s", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
     blocks_path = string_from_format("%s/blocks.dat", g_config_io->path_base_dialfs);
     bitmap_path = string_from_format("%s/bitmap.dat", g_config_io->path_base_dialfs);
 
@@ -124,11 +130,19 @@ void finalize_fs() {
     //free de path?
     close(bitmap_fd);
     close(blocks_fd);
+
+    // free(bitmap_path);  
+    // free(blocks_path);
 }
 
 t_config* load_metadata(const char* filename) {
     char* metadata_path = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
-    return config_create(metadata_path);
+    
+    t_config* config = config_create(metadata_path);
+    
+    // free(metadata_path);
+
+    return config;
 }
 
 void save_metadata(const char* filename, int initial_block, int file_size) {
@@ -201,8 +215,11 @@ void io_fs_create(t_instruccion_io *instruccion) {
 
     log_info(g_logger, "PID: %d - Crear archivo: %s",instruccion->pid ,filename);
 
-    if (access(filename, F_OK) == 0) {
+    char* filepath = string_from_format("%s/%s", g_config_io->path_base_dialfs, filename);
+
+    if (access(filepath, F_OK) == 0) {
         log_info(g_logger,"El archivo ya existe\n");
+        //  free(filepath);
         return;
     }
 
@@ -223,6 +240,7 @@ void io_fs_create(t_instruccion_io *instruccion) {
     }
 
     save_metadata(filename, initial_block, 0);
+    // free(filepath);
 }
 
 void io_fs_delete(t_instruccion_io* instruccion) {
@@ -457,6 +475,8 @@ void io_fs_truncate(t_instruccion_io *instruccion) {
     save_metadata(filename, initial_block, new_size);
 
     config_destroy(metadata);
+
+    // free(filename);
 }
 
 
@@ -474,6 +494,8 @@ void io_fs_write(t_instruccion_io* instruccion) {
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
+        //   config_destroy(metadata);
+        //   free(data);
         return;
     }
 
@@ -481,7 +503,7 @@ void io_fs_write(t_instruccion_io* instruccion) {
     int file_size = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
 
     int end_offset = offset + size;
-    //ver de borrarlo o dejarlo
+    
     if (end_offset > file_size) {
         instruccion->tamanio = end_offset;
         io_fs_truncate(instruccion);
@@ -510,6 +532,9 @@ void io_fs_write(t_instruccion_io* instruccion) {
     }
 
     config_destroy(metadata);
+    free(data);
+    // free(filename);
+    // free(current_data);
 }
 
 void io_fs_read(t_instruccion_io* instruccion) {
@@ -534,6 +559,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
         printf("Error: Intento de lectura fuera del tamaño del archivo\n");
         free(data);
         config_destroy(metadata);
+        //   free(filename);
         return;
     }
 
@@ -568,6 +594,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
     guardar_en_memoria(instruccion->pid,g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
 
+    //   free(filename);
     free(data);
 
 }

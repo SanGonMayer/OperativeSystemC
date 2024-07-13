@@ -27,6 +27,7 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     log_info(g_logger, "%s", mensaje);
 
     responder_ok(fd);
+    free(mensaje);
 }
 
 bool stdout_soporta_instruccion(char* instruccion){
