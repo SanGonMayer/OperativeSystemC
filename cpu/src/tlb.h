@@ -21,6 +21,6 @@ void tlb_init(int size, char* algoritmo);
 t_tlb* tlb_create(int capacidad);
 void tlb_destroy();
 void tlb_add(int pid, int pagina, int marco);
-bool tlb_get_marco(int pid, int pagina, int* marco, int pagina);
+bool tlb_get_marco(int pid, int dir_logica, int* marco, int pagina);
 
 #endif
