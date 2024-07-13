@@ -131,8 +131,8 @@ void finalize_fs() {
     close(bitmap_fd);
     close(blocks_fd);
 
-    free(bitmap_path);  
-    free(blocks_path);
+    // free(bitmap_path);  
+    // free(blocks_path);
 }
 
 t_config* load_metadata(const char* filename) {
@@ -219,7 +219,7 @@ void io_fs_create(t_instruccion_io *instruccion) {
 
     if (access(filepath, F_OK) == 0) {
         log_info(g_logger,"El archivo ya existe\n");
-         free(filepath);
+        //  free(filepath);
         return;
     }
 
@@ -240,7 +240,7 @@ void io_fs_create(t_instruccion_io *instruccion) {
     }
 
     save_metadata(filename, initial_block, 0);
-    free(filepath);
+    // free(filepath);
 }
 
 void io_fs_delete(t_instruccion_io* instruccion) {
@@ -494,8 +494,8 @@ void io_fs_write(t_instruccion_io* instruccion) {
     t_config* metadata = load_metadata(filename);
     if (metadata == NULL) {
         printf("El archivo no existe\n");
-          config_destroy(metadata);
-          free(data);
+        //   config_destroy(metadata);
+        //   free(data);
         return;
     }
 
@@ -559,7 +559,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
         printf("Error: Intento de lectura fuera del tamaño del archivo\n");
         free(data);
         config_destroy(metadata);
-          free(filename);
+        //   free(filename);
         return;
     }
 
@@ -594,7 +594,7 @@ void io_fs_read(t_instruccion_io* instruccion) {
     //Ver si funciona por el g_socket_memoria o hay que pasarle un socket
     guardar_en_memoria(instruccion->pid,g_socket_memoria,data, instruccion->peticionesMemoria, g_logger);
 
-      free(filename);
+    //   free(filename);
     free(data);
 
 }
