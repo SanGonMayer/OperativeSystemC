@@ -12,6 +12,10 @@ void set_tamanio_pagina(int tamanio) {
     tamanio_pagina = tamanio;
 }
 
+int get_tamanio_pagina(){
+    return tamanio_pagina;
+}
+
 int calcular_paginas(int direccion_logica, uint32_t tamanio){
     int pagina_inicial = direccion_logica / tamanio_pagina;
     int pagina_final = (direccion_logica + tamanio) / tamanio_pagina;
