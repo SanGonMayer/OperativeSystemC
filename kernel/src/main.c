@@ -89,6 +89,10 @@ void procesar_cliente(int* fd){
             log_error(g_logger, "No se pudo ejecutar la instrucción enviada a la interfaz %s. Error: %d", interfaz->nombre, error);
             finalizar_proceso(instruccion->pcb);
         }
+
+        buffer_destroy(buffer);
+        destruir_instruccion_io(instruccion->instruccion);
+        free(instruccion);
     }
 }
 

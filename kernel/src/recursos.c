@@ -116,13 +116,16 @@ t_PCB* procesar_signal(char* nombre_recurso){
 }
 
 void liberar_recursos_proceso(t_PCB* pcb){
-    if(dictionary_has_key(recursos_proceso, string_itoa(pcb->PID))){
+    char* pid_str = string_itoa(pcb->PID);
+
+    if(dictionary_has_key(recursos_proceso, pid_str)){
         t_list* lista_recursos_proceso = dictionary_get(recursos_proceso, string_itoa(pcb->PID));
         
         list_iterate(lista_recursos_proceso, (void*) procesar_signal);
         list_destroy(lista_recursos_proceso);
         dictionary_remove(recursos_proceso, string_itoa(pcb->PID));
     }
+    free(pid_str);
 }
 
 t_PCB* quitar_proceso_bloqueado(int pid){
