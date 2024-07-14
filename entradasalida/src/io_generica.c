@@ -19,6 +19,7 @@ void procesar_instruccion_generica(int fd, t_instruccion_io* instruccion){
         
         log_error(g_logger, "Instruccion no soportada: %s", instruccion->instruccion);
         // que hay que hacer en este caso?
+        abort();
         return;
     }
 

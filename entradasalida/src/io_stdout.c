@@ -15,6 +15,7 @@ void procesar_instruccion_stdout(int fd, t_instruccion_io* instruccion){
     if(!stdout_soporta_instruccion(instruccion->instruccion)){
         log_error(g_logger, "Instruccion no soportada: %s", instruccion->instruccion);
         // que hay que hacer en este caso?
+        abort();
         return;
     }
     

@@ -83,7 +83,7 @@ void tlb_add(int pid, int pagina, int marco) {
     }
 }
 
-bool tlb_get_marco(int pid, int pagina, int* marco) {
+bool tlb_get_marco(int pid, int direccion_logica, int* marco, int pagina) {
     
     if (tlb->entradas == NULL){
         log_error(g_logger, "TLB no inicializada");
@@ -92,7 +92,7 @@ bool tlb_get_marco(int pid, int pagina, int* marco) {
 
     for (int i = 0; i < list_size(tlb->entradas); ++i) {
         t_tlb_entry *entry = list_get(tlb->entradas, i);
-        if (entry->pid == pid && entry->pagina == pagina) {
+        if (entry->pid == pid && entry->pagina == direccion_logica) {
             *marco = entry->marco;
             if (string_equals_ignore_case(tlb->algoritmo,"LRU")) {
                 entry->ultimo_uso = tlb->tiempo++;

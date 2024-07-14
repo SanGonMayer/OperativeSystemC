@@ -13,5 +13,6 @@ t_list* obtener_direcciones_logicas_lectura(uint32_t pid,int direccion_logica, u
 t_list* obtener_direcciones_logicas_escritura(uint32_t pid,int direccion_logica, char* valor);
 
 t_list* obtener_direcciones_logicas_escritura_stdin(uint32_t pid, int direccion_logica, int tamanio);
+int get_tamanio_pagina();
 
 #endif

@@ -48,6 +48,7 @@ void ejecutar_instruccion(int fd, t_operacion_dialfs operacion, t_instruccion_io
             break;
         default:
             log_error(g_logger, "Instruccion no existente");
+            abort();
             break;
     }
 }
@@ -292,7 +293,6 @@ t_list* get_fcb_list() {
 }
 
 void compactar_fs() {
-
     t_list* fcbs = get_fcb_list();
 
     int tamanio_bloques_usados = 0;

@@ -50,6 +50,9 @@ int enviar_pcb(int socket, t_PCB *pcb) {
     t_buffer* buffer = serializar_pcb(pcb);
     t_paquete* paquete = crear_paquete(ENVIO_PCB, buffer);
     int result = enviar_paquete(paquete, socket);
+
+    eliminar_paquete(paquete);
+    
     return result;
 }
 

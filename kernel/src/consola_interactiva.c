@@ -7,17 +7,29 @@
 #include "utils/files.h"
 #include <readline/history.h>
 
+static t_dictionary* comandos = NULL;
+
+void liberar_lista_char(char** lista){
+    int i = 0;
+    while(lista[i] != NULL){
+        free(lista[i]);
+        i++;
+    }
+    free(lista);
+}
+
 t_dictionary* get_comandos(){
+    if(comandos == NULL){
+        comandos = dictionary_create();
 
-    t_dictionary* comandos = dictionary_create();
-
-    dictionary_put(comandos, "EJECUTAR_SCRIPT", (void*) EJECUTAR_SCRIPT);
-    dictionary_put(comandos, "INICIAR_PROCESO", (void*) INICIAR_PROCESO);
-    dictionary_put(comandos, "FINALIZAR_PROCESO", (void*) FINALIZAR_PROCESO);
-    dictionary_put(comandos, "DETENER_PLANIFICACION", (void*) DETENER_PLANIFICACION);
-    dictionary_put(comandos, "INICIAR_PLANIFICACION", (void*) INICIAR_PLANIFIACION);
-    dictionary_put(comandos, "MULTIPROGRAMACION", (void*) MULTIPROGRAMACION);
-    dictionary_put(comandos, "PROCESO_ESTADO", (void*) PROCESO_ESTADO);
+        dictionary_put(comandos, "EJECUTAR_SCRIPT", (void*) EJECUTAR_SCRIPT);
+        dictionary_put(comandos, "INICIAR_PROCESO", (void*) INICIAR_PROCESO);
+        dictionary_put(comandos, "FINALIZAR_PROCESO", (void*) FINALIZAR_PROCESO);
+        dictionary_put(comandos, "DETENER_PLANIFICACION", (void*) DETENER_PLANIFICACION);
+        dictionary_put(comandos, "INICIAR_PLANIFICACION", (void*) INICIAR_PLANIFIACION);
+        dictionary_put(comandos, "MULTIPROGRAMACION", (void*) MULTIPROGRAMACION);
+        dictionary_put(comandos, "PROCESO_ESTADO", (void*) PROCESO_ESTADO);
+    }
 
     return comandos;
 }
@@ -25,6 +37,8 @@ t_dictionary* get_comandos(){
 void consola_interactiva(){
 
     char* linea_leida;
+
+    t_dictionary* comandos = get_comandos();
     
 	linea_leida = readline(">");
 
@@ -37,18 +51,19 @@ void consola_interactiva(){
 
         int opcion_funciones_consola;
 
-        t_dictionary* comandos = get_comandos();
-
         if(dictionary_has_key(comandos, funcion)){
 
             add_history(linea_leida);
 
             opcion_funciones_consola = (int) dictionary_get(comandos, funcion);
             ejecutar_comando(opcion_funciones_consola, linea_leida_separada);
+            liberar_lista_char(linea_leida_separada);
+            free(funcion);
         }else{
             log_error(g_logger, "ingresaste una funcion no valida");
+            free(funcion);
         }
-        
+        free(linea_leida);
         linea_leida = readline(">");
         // TODO liberar memoria
         // free(funcion);
@@ -65,14 +80,14 @@ char** leer_script(char* path){
     
     char* script = leer_archivo_txt(path);
     char** comandos = string_split(script, "\n");
-
+    free(script);
     return comandos;
 }
 
 void ejecutar_script(char** comandos){
     for(int i = 0; comandos[i] != NULL; i++){
-        char** comando = string_split(comandos[i], " ");
-        char* funcion = comando[0];
+        char** args = string_split(comandos[i], " ");
+        char* funcion = args[0];
         string_to_upper(funcion);
 
         int opcion_funciones_consola;
@@ -85,9 +100,11 @@ void ejecutar_script(char** comandos){
             log_error(g_logger, "ingresaste una funcion no valida");
             break;
         }
-        char ** args =  comando;
+
         ejecutar_comando(opcion_funciones_consola, args);
+        liberar_lista_char(args);
     }
+
 }
 
 void detener_planificacion(){
@@ -111,11 +128,12 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             printf("e\n");
             char** comandos = leer_script(args[1]);
             ejecutar_script(comandos);
+            liberar_lista_char(comandos);
             break;
 
         case INICIAR_PROCESO:
             printf("Se seleccionó la opción 2\n");
-            char* path = args[1];
+            char* path = string_duplicate(args[1]);
             
             string_trim(&path);
 
@@ -125,6 +143,7 @@ void ejecutar_comando(t_funciones_consola comando, char** args){
             }
 
             iniciar_proceso(path);
+            free(path);
             // pthread_t hilo_iniciar_proceso;
 
             // pthread_create(&hilo_iniciar_proceso, NULL, (void*)iniciar_proceso, path);

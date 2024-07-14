@@ -341,15 +341,22 @@ t_registrosCPU registros_cpu_from_dictionary(t_dictionary* dictionary){
 int obtener_direccion_fisica(int pid, int direccion_logica){
     bool tlb_hit = false;
     int direccion_fisica;
+    int tam_pagina = get_tamanio_pagina();
+    int pagina = direccion_logica / tam_pagina;
+    int marco;
 
     if(tlb_enabled())
-        tlb_hit = tlb_get_marco(pid, direccion_logica, &direccion_fisica);
+        tlb_hit = tlb_get_marco(pid, pagina, &marco, pagina);
 
-    if(!tlb_hit){
+    if(tlb_hit){
+        direccion_fisica = marco * tam_pagina + direccion_logica % tam_pagina;
+    }else{
         direccion_fisica = traducir_a_direccion_fisica(pid, direccion_logica);
 
-        if(tlb_enabled())
-            tlb_add(pid, direccion_logica, direccion_fisica);
+        if(tlb_enabled()){
+            marco = direccion_fisica / tam_pagina;
+            tlb_add(pid, pagina, marco);
+        }
     }
 
     return direccion_fisica;

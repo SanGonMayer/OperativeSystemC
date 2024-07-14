@@ -184,9 +184,7 @@ void esperar_quantum(t_PCB* pcb){
 void ejecutar_cpu_RR(t_PCB* pcb){
 
     int error;
-    log_info(g_logger, "Antes semaforo exec");
     sem_wait(&g_disponible_exec);
-    log_info(g_logger, "Despues semaforo exec");
     error = enviar_pcb(g_conexion_cpu_dispatch, pcb);
     pcb->estado = EXEC;
     g_exec = pcb;
@@ -235,9 +233,11 @@ void recibir_pcb_desalojado(t_PCB* pcb_ejecutando){
     int motivo;
     if (pcb_recibido == NULL){
         log_error(g_logger, "Error al recibir DESALOJO");
+        free(pcb_recibido->path);
         free(pcb_recibido);
     }else{
         actualizar_pcb(pcb_ejecutando, pcb_recibido);
+        free(pcb_recibido->path);
         free(pcb_recibido);
 
         // Posible condicion de carrera
@@ -290,24 +290,28 @@ void atender_desalojo(t_desalojo* desalojo){
         {
             liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
+            free(desalojo);
             return;
         }
         case ERROR_OUT_OF_MEMORY:
         {
             liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
+            free(desalojo);
             return;
         }
         case INTERRUPCION_QUANTUM: //CLOCK
         {
             liberar_cola_exec();
             enviar_proceso_a_ready(desalojo->pcb);
+            free(desalojo);
             return;
         }
         case INTERRUPCION_KILL:
         {
             liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
+            free(desalojo);
             return;
         }
         case IO_GEN_SLEEP:
@@ -370,7 +374,7 @@ void atender_desalojo(t_desalojo* desalojo){
             buffer_destroy(buffer);
             free(length);
             free(nombreInterfaz);
-
+            free(desalojo);
             break;
         }
         case IO_STDIN_READ:
@@ -435,7 +439,7 @@ void atender_desalojo(t_desalojo* desalojo){
             buffer_destroy(buffer);
             free(length);
             free(nombreInterfaz);
-
+            free(desalojo);
             break;
         }
         case IO_STDOUT_WRITE:
@@ -492,6 +496,8 @@ void atender_desalojo(t_desalojo* desalojo){
                 sem_post(&g_mutex_acceso_interfaces);
                 finalizar_proceso(desalojo->pcb);
             }
+
+            free(desalojo);
             break;
         }
         case SIGNAL:
@@ -515,6 +521,7 @@ void atender_desalojo(t_desalojo* desalojo){
 
             buffer_destroy(buffer);
             free(recurso_leido);
+            free(desalojo);
             break;
         }
         case WAIT:
@@ -538,6 +545,7 @@ void atender_desalojo(t_desalojo* desalojo){
             
             buffer_destroy(buffer);
             free(recurso_leido);
+            free(desalojo);
             break;
         }
         case IO_FS_CREATE:
@@ -558,6 +566,7 @@ void atender_desalojo(t_desalojo* desalojo){
             procesar_io_fs_create(interfaz, nombre_archivo, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
+            free(desalojo);
             break;
         }
         case IO_FS_DELETE:
@@ -577,6 +586,7 @@ void atender_desalojo(t_desalojo* desalojo){
             procesar_io_fs_delete(interfaz, nombre_archivo, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
+            free(desalojo);
             break;
         }
         case IO_FS_TRUNCATE:
@@ -597,6 +607,7 @@ void atender_desalojo(t_desalojo* desalojo){
             procesar_io_fs_truncate(interfaz, nombre_archivo, tamanio, desalojo->pcb);
             free(interfaz);
             free(nombre_archivo);
+            free(desalojo);
             break;
         }
         case IO_FS_WRITE:
@@ -622,6 +633,7 @@ void atender_desalojo(t_desalojo* desalojo){
             procesar_io_fs_write(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb, peticiones);
             free(interfaz);
             free(nombre_archivo);
+            free(desalojo);
             break;
         }
         case IO_FS_READ:
@@ -647,6 +659,7 @@ void atender_desalojo(t_desalojo* desalojo){
             procesar_io_fs_read(interfaz, nombre_archivo, direccion, tamanio, puntero_archivo, desalojo->pcb, peticiones);
             free(interfaz);
             free(nombre_archivo);
+            free(desalojo);
             break;
         }
         default:
@@ -654,6 +667,7 @@ void atender_desalojo(t_desalojo* desalojo){
             log_error(g_logger, "Motivo de desalojo no reconocido");
             liberar_cola_exec();
             finalizar_proceso(desalojo->pcb);
+            free(desalojo);
             break;
         }
     }
@@ -764,6 +778,8 @@ void enviar_interrupcion(int socket_interrupt, uint32_t* PID, uint32_t motivo){
     
     t_paquete* paquete = crear_paquete(ENVIO_INTERRUPCION, buffer); 
     enviar_paquete(paquete, socket_interrupt);
+
+    eliminar_paquete(paquete);
 }
 
 
@@ -845,6 +861,7 @@ void listar_procesos(){
     // listo Procesos en BLOCKED
 
     // bloqueados por Recursos
+    bool hay_procesos_bloqueados = false;
 
     t_list* procesos_bloqueados_recursos = get_procesos_bloqueados_recursos();
     if(!list_is_empty(procesos_bloqueados_recursos)){
@@ -855,6 +872,7 @@ void listar_procesos(){
             log_info(g_logger, "PID: %d - Estado: BLOCKED", pcb->PID);
         }
         list_iterator_destroy(blocked_iterator);
+        hay_procesos_bloqueados = true;
     }
 
     // bloqueados por IO
@@ -875,6 +893,7 @@ void listar_procesos(){
                     log_info(g_logger, "PID: %d - Estado: BLOCKED", parametro->pcb->PID);
                 }
                 list_iterator_destroy(blocked_iterator);
+                hay_procesos_bloqueados = true;
             }
             sem_post(&interfaz->mutex);
         }
@@ -882,6 +901,10 @@ void listar_procesos(){
     }
 
     sem_post(&g_mutex_acceso_interfaces);
+
+    if(!hay_procesos_bloqueados){
+        log_info(g_logger, "No hay procesos en BLOCKED");
+    }
 
 
     // listo Procesos en EXIT
